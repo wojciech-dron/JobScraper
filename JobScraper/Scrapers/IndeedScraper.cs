@@ -1,115 +1,147 @@
-﻿using JobScraper.Models;
+﻿using System.Text;
+using System.Web;
+using JobScraper.Models;
 using Microsoft.Playwright;
 
-namespace JobScraper.Scrapers
+namespace JobScraper.Scrapers;
+
+public class IndeedScraper
 {
-    public class IndeedScraper : JobScraper
+    private readonly string _searchUrl;
+    private readonly IBrowserContext _context;
+    private readonly ScraperConfig _config = new();
+
+    public IndeedScraper(IBrowserContext context)
     {
-        private readonly string _indeedUrl;
-        private readonly IBrowserContext _context;
+        var encodedJobSearchTerm = HttpUtility.UrlEncode(_config.SearchTerm);
+        var urlBuilder = new StringBuilder("https://pl.indeed.com/jobs")
+            .Append($"?q={encodedJobSearchTerm}")
+            .Append($"&fromage={_config.ListingAgeInDays}");
 
-        public IndeedScraper(string jobSearchTerm, int indeedListingAge, IBrowserContext context)
-        {
-            JobSearchTerm = jobSearchTerm;
-            var encodedJobSearchTerm = System.Web.HttpUtility.UrlEncode(jobSearchTerm);
-            var encodedLocation = System.Web.HttpUtility.UrlEncode(Location);
-            _indeedUrl =
-                // $"https://pl.indeed.com/jobs?q={encodedJobSearchTerm}&l={encodedLocation}&radius={Radius}&fromage={indeedListingAge}";
-                $"https://pl.indeed.com/jobs?q={encodedJobSearchTerm}&fromage={indeedListingAge}&sc=0kf%3Aattr%28DSQF7%29%3B";
-            _context = context;
-        }
+        if (_config.RemoteJobsOnly)
+            urlBuilder.Append("&sc=0kf%3Aattr%28DSQF7%29%3B"); // remote
 
-        public override async Task<List<Job>> ScrapeJobsAsync()
-        {
-            var jobs = new List<Job>();
+        if (!string.IsNullOrEmpty(_config.Location))
+            urlBuilder.Append($"&l={HttpUtility.UrlEncode(_config.Location)}");
 
-            var indeedPage = await _context.NewPageAsync();
-            await indeedPage.GotoAsync(_indeedUrl);
-            await indeedPage.WaitForTimeoutAsync(ScraperConfig.SecondsToWait * 1000);
-
-            var pageCount = 0;
-            var hasNextPage = true;
-
-            while (hasNextPage)
-            {
-                pageCount++;
-                Console.WriteLine($"Indeed scraping page {pageCount}...");
-
-                var indeedTitleElements = await indeedPage.QuerySelectorAllAsync("h2.jobTitle");
-                var titles = await Task.WhenAll(indeedTitleElements.Select(async t => await t.InnerTextAsync()));
-
-                var indeedCompanyElements = await indeedPage.QuerySelectorAllAsync("[data-testid='company-name']");
-                var companyNames =
-                    await Task.WhenAll(indeedCompanyElements.Select(async c => await c.InnerTextAsync()));
-
-                var indeedLocationElements = await indeedPage.QuerySelectorAllAsync("[data-testid='text-location']");
-                var locations =
-                    await Task.WhenAll(indeedLocationElements.Select(async l => (await l.InnerTextAsync()).Trim()));
-
-                for (var i = 0; i < titles.Length; i++)
-                {
-                    await indeedTitleElements[i].ClickAsync();
-                    await indeedPage.WaitForTimeoutAsync(ScraperConfig.SecondsToWait * 1000);
-
-                    var indeedJobDescriptionElement = await indeedPage.QuerySelectorAsync("#jobDescriptionText");
-                    var indeedDescription = await indeedJobDescriptionElement.InnerTextAsync();
-
-                    var indeedApplyUrlElement = await indeedPage.QuerySelectorAsync("span[data-indeed-apply-joburl], " +
-                        "button[href*='https://www.indeed.com/applystart?jk=']");
-                    string indeedApplyUrl = null;
-                    if (indeedApplyUrlElement != null)
-                    {
-                        var indeedApplyJobUrl =
-                            await indeedApplyUrlElement.GetAttributeAsync("data-indeed-apply-joburl");
-                        var href = await indeedApplyUrlElement.GetAttributeAsync("href");
-
-                        if (!string.IsNullOrEmpty(indeedApplyJobUrl))
-                            indeedApplyUrl = indeedApplyJobUrl;
-                        else if (!string.IsNullOrEmpty(href))
-                            indeedApplyUrl = href.Split('&')[0];
-                    }
-
-                    var foundKeywordsForJob = Keywords
-                        .Where(keyword => indeedDescription.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                        .ToList();
-
-                    if (ScraperConfig.AvoidJobKeywords.Any(uk =>
-                            titles[i].Contains(uk, StringComparison.OrdinalIgnoreCase)))
-                    {
-                        continue;
-                    }
-
-                    var job = new Job
-                    {
-                        Origin = "Indeed",
-                        SearchTerm = JobSearchTerm,
-                        Title = titles[i],
-                        CompanyName = companyNames[i],
-                        Location = locations[i],
-                        Description = indeedDescription,
-                        FoundKeywords = string.Join(",", foundKeywordsForJob),
-                        ApplyUrl = indeedApplyUrl,
-                        ScrapedAt = DateTime.Now,
-                    };
-
-                    jobs.Add(job);
-                }
-
-                var nextButton = await indeedPage.QuerySelectorAsync("a[data-testid='pagination-page-next']");
-                if (nextButton != null)
-                {
-                    await nextButton.ClickAsync();
-                    await indeedPage.WaitForTimeoutAsync(SecondsToWait * 1000);
-                }
-                else
-                {
-                    hasNextPage = false;
-                }
-            }
-
-            Console.WriteLine("Indeed scraping complete.");
-            return jobs;
-        }
+        _searchUrl = urlBuilder.ToString();
+        _context = context;
     }
 
+    public async Task<List<Job>> ScrapeJobsAsync()
+    {
+        var jobs = new List<Job>();
+
+        var indeedPage = await _context.NewPageAsync();
+        await indeedPage.GotoAsync(_searchUrl);
+        await indeedPage.WaitForTimeoutAsync(_config.SecondsToWait * 1000);
+
+        var pageCount = 0;
+
+        while (true)
+        {
+            pageCount++;
+            Console.WriteLine($"Indeed scraping page {pageCount}...");
+
+            var scrappedJobs = await ScrapeJobs(indeedPage);
+            jobs.AddRange(scrappedJobs);
+
+            break;
+
+            var nextButton = await indeedPage.QuerySelectorAsync("a[data-testid='pagination-page-next']");
+            if (nextButton is null)
+            {
+                Console.WriteLine("Indeed scraping complete.");
+                break;
+            }
+
+
+            await nextButton.ClickAsync();
+            await indeedPage.WaitForTimeoutAsync(_config.SecondsToWait * 1000);
+        }
+
+        foreach (var job in jobs)
+        {
+            Console.WriteLine($"Scraping job: {job.Title}.");
+            await ScrapeDetailsAsync(job);
+        }
+
+        return jobs;
+    }
+
+    private async Task<List<Job>> ScrapeJobs(IPage indeedPage)
+    {
+        var jobs = new List<Job>();
+
+        var titleElements = await indeedPage.QuerySelectorAllAsync("h2.jobTitle");
+        var titles = await Task.WhenAll(titleElements.Select(async t => await t.InnerTextAsync()));
+
+        var urls = await Task.WhenAll(titleElements.Select(async t =>
+        {
+            var anchorElement = await t.QuerySelectorAsync("a");
+            return anchorElement != null ? await anchorElement.GetAttributeAsync("href") : null;
+        }));
+
+        var companyElements = await indeedPage.QuerySelectorAllAsync("[data-testid='company-name']");
+        var companyNames =
+            await Task.WhenAll(companyElements.Select(async c => await c.InnerTextAsync()));
+
+        var ocationElements = await indeedPage.QuerySelectorAllAsync("[data-testid='text-location']");
+        var locations =
+            await Task.WhenAll(ocationElements.Select(async l => (await l.InnerTextAsync()).Trim()));
+
+        // Iterating foreach title
+        for (var i = 0; i < titles.Length; i++)
+        {
+            var job = new Job
+            {
+                Origin = "Indeed",
+                SearchTerm = _config.SearchTerm,
+                Title = titles[i],
+                CompanyName = companyNames[i],
+                OfferUrl = "https://pl.indeed.com" + urls[i],
+                Location = locations[i],
+                ScrapedAt = DateTime.Now
+            };
+
+            if (_config.AvoidJobKeywords.Any(uk => titles[i].Contains(uk, StringComparison.OrdinalIgnoreCase)))
+                continue;
+
+            jobs.Add(job);
+        }
+
+        return jobs;
+
+    }
+
+    async Task<Job> ScrapeDetailsAsync(Job job)
+    {
+        var indeedPage = await _context.NewPageAsync();
+        await indeedPage.GotoAsync(job.OfferUrl!);
+
+        var indeedJobDescriptionElement = await indeedPage.QuerySelectorAsync("#jobDescriptionText");
+        if (indeedJobDescriptionElement != null)
+        {
+            job.Description = await indeedJobDescriptionElement.InnerTextAsync();
+            job.FoundKeywords = _config.Keywords
+                .Where(keyword => job.Description.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+
+        var externalApplyElement = await indeedPage.QuerySelectorAsync("button[aria-haspopup='dialog']");
+        if (externalApplyElement is not null)
+        {
+            job.ApplyUrl = await externalApplyElement.GetAttributeAsync("href");
+            return job;
+        }
+
+        var indeedApplyElement = await indeedPage.QuerySelectorAsync(
+            "span[data-indeed-apply-joburl], button[href*='https://www.indeed.com/applystart?jk=']");
+        if (indeedApplyElement != null)
+        {
+            job.ApplyUrl = await indeedApplyElement.GetAttributeAsync("data-indeed-apply-joburl");
+        }
+
+        return job;
+    }
 }

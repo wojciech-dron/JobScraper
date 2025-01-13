@@ -14,6 +14,6 @@ public class JobDbContext : DbContext
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Job>().Property(p => p.Origin).IsRequired();
+        modelBuilder.ApplyConfiguration(new JobModelBuilder());
     }
 }

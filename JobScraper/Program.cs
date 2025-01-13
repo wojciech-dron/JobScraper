@@ -19,7 +19,7 @@ foreach (var searchTerm in searchTerms)
 {
     Console.WriteLine($"Now scraping {searchTerm} jobs...");
 
-    var indeedScraper = new IndeedScraper(searchTerm, 1, context);
+    var indeedScraper = new IndeedScraper(context);
     var indeedJobs = await indeedScraper.ScrapeJobsAsync();
     dbContext.Jobs.AddRange(indeedJobs);
 }
