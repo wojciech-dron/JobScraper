@@ -2,6 +2,8 @@
 using System.Web;
 using JobScraper.Models;
 using Microsoft.Playwright;
+using Polly;
+using Polly.Retry;
 
 namespace JobScraper.Scrapers;
 
@@ -11,6 +13,9 @@ public class IndeedScraper
     private readonly IBrowserContext _context;
     private readonly ScraperConfig _config = new();
 
+    public static readonly AsyncRetryPolicy<Job> RetryPolicy =
+        Policy<Job>.Handle<Exception>()
+            .WaitAndRetryAsync(2, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
     public IndeedScraper(IBrowserContext context)
     {
         var encodedJobSearchTerm = HttpUtility.UrlEncode(_config.SearchTerm);
@@ -28,13 +33,22 @@ public class IndeedScraper
         _context = context;
     }
 
-    public async Task<List<Job>> ScrapeJobsAsync()
+    public async Task<List<Job>> ScrapeJobs()
     {
         var jobs = new List<Job>();
 
         var indeedPage = await _context.NewPageAsync();
-        await indeedPage.GotoAsync(_searchUrl);
-        await indeedPage.WaitForTimeoutAsync(_config.SecondsToWait * 1000);
+        var retryAttempts = 0;
+        var jobsCount = 0;
+        do
+        {
+            retryAttempts++;
+            await indeedPage.GotoAsync(_searchUrl);
+            await indeedPage.WaitForTimeoutAsync(_config.WaitForListSeconds * 1000);
+            var titleElements = await indeedPage.QuerySelectorAllAsync("h2.jobTitle");
+            jobsCount = titleElements.Count;
+
+        } while (retryAttempts < 5 && jobsCount == 0);
 
         var pageCount = 0;
 
@@ -43,7 +57,7 @@ public class IndeedScraper
             pageCount++;
             Console.WriteLine($"Indeed scraping page {pageCount}...");
 
-            var scrappedJobs = await ScrapeJobs(indeedPage);
+            var scrappedJobs = await ScrapeJobsFromList(indeedPage);
             jobs.AddRange(scrappedJobs);
 
             break;
@@ -57,19 +71,19 @@ public class IndeedScraper
 
 
             await nextButton.ClickAsync();
-            await indeedPage.WaitForTimeoutAsync(_config.SecondsToWait * 1000);
+            await indeedPage.WaitForTimeoutAsync(_config.WaitForListSeconds * 1000);
         }
 
         foreach (var job in jobs)
         {
             Console.WriteLine($"Scraping job: {job.Title}.");
-            await ScrapeDetailsAsync(job);
+            await RetryPolicy.ExecuteAsync(async () => await ScrapeJobDetails(job));
         }
 
         return jobs;
     }
 
-    private async Task<List<Job>> ScrapeJobs(IPage indeedPage)
+    private async Task<List<Job>> ScrapeJobsFromList(IPage indeedPage)
     {
         var jobs = new List<Job>();
 
@@ -95,13 +109,12 @@ public class IndeedScraper
         {
             var job = new Job
             {
-                Origin = "Indeed",
-                SearchTerm = _config.SearchTerm,
                 Title = titles[i],
                 CompanyName = companyNames[i],
-                OfferUrl = "https://pl.indeed.com" + urls[i],
+                Origin = "Indeed",
                 Location = locations[i],
-                ScrapedAt = DateTime.Now
+                OfferUrl = "https://pl.indeed.com" + urls[i],
+                SearchTerm = _config.SearchTerm,
             };
 
             if (_config.AvoidJobKeywords.Any(uk => titles[i].Contains(uk, StringComparison.OrdinalIgnoreCase)))
@@ -114,12 +127,13 @@ public class IndeedScraper
 
     }
 
-    async Task<Job> ScrapeDetailsAsync(Job job)
+    public async Task<Job> ScrapeJobDetails(Job job)
     {
         var indeedPage = await _context.NewPageAsync();
-        await indeedPage.GotoAsync(job.OfferUrl!);
+        await indeedPage.WaitForTimeoutAsync(_config.WaitForDetailsSeconds * 1000);
+        await indeedPage.GotoAsync(job.OfferUrl);
 
-        var indeedJobDescriptionElement = await indeedPage.QuerySelectorAsync("#jobDescriptionText");
+        var indeedJobDescriptionElement = await indeedPage.QuerySelectorAsync("div.jobsearch-JobComponent-description");
         if (indeedJobDescriptionElement != null)
         {
             job.Description = await indeedJobDescriptionElement.InnerTextAsync();
