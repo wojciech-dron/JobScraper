@@ -4,7 +4,6 @@ using Microsoft.Playwright;
 namespace JobScraper.Scrapers
 {
     public class IndeedScraper : JobScraper
-
     {
         private readonly string _indeedUrl;
         private readonly IBrowserContext _context;
@@ -15,7 +14,8 @@ namespace JobScraper.Scrapers
             var encodedJobSearchTerm = System.Web.HttpUtility.UrlEncode(jobSearchTerm);
             var encodedLocation = System.Web.HttpUtility.UrlEncode(Location);
             _indeedUrl =
-                $"https://www.indeed.com/jobs?q={encodedJobSearchTerm}&l={encodedLocation}&radius={Radius}&fromage={indeedListingAge}";
+                // $"https://pl.indeed.com/jobs?q={encodedJobSearchTerm}&l={encodedLocation}&radius={Radius}&fromage={indeedListingAge}";
+                $"https://pl.indeed.com/jobs?q={encodedJobSearchTerm}&fromage={indeedListingAge}&sc=0kf%3Aattr%28DSQF7%29%3B";
             _context = context;
         }
 
@@ -38,11 +38,11 @@ namespace JobScraper.Scrapers
                 var indeedTitleElements = await indeedPage.QuerySelectorAllAsync("h2.jobTitle");
                 var titles = await Task.WhenAll(indeedTitleElements.Select(async t => await t.InnerTextAsync()));
 
-                var indeedCompanyElements = await indeedPage.QuerySelectorAllAsync("span.companyName");
+                var indeedCompanyElements = await indeedPage.QuerySelectorAllAsync("[data-testid='company-name']");
                 var companyNames =
                     await Task.WhenAll(indeedCompanyElements.Select(async c => await c.InnerTextAsync()));
 
-                var indeedLocationElements = await indeedPage.QuerySelectorAllAsync("div.companyLocation");
+                var indeedLocationElements = await indeedPage.QuerySelectorAllAsync("[data-testid='text-location']");
                 var locations =
                     await Task.WhenAll(indeedLocationElements.Select(async l => (await l.InnerTextAsync()).Trim()));
 
@@ -50,7 +50,6 @@ namespace JobScraper.Scrapers
                 {
                     await indeedTitleElements[i].ClickAsync();
                     await indeedPage.WaitForTimeoutAsync(ScraperConfig.SecondsToWait * 1000);
-
 
                     var indeedJobDescriptionElement = await indeedPage.QuerySelectorAsync("#jobDescriptionText");
                     var indeedDescription = await indeedJobDescriptionElement.InnerTextAsync();

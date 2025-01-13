@@ -2,6 +2,14 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobScraper", "JobScraper\JobScraper.csproj", "{6BE54D93-6C23-4496-888D-5A0976EBC6DD}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{65AF34A5-E855-4313-84FA-B9A5835E4266}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "solution items", "solution items", "{6CBDD1E8-9032-43E6-9C25-43995CD61126}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +20,8 @@ Global
 		{6BE54D93-6C23-4496-888D-5A0976EBC6DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6BE54D93-6C23-4496-888D-5A0976EBC6DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6BE54D93-6C23-4496-888D-5A0976EBC6DD}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{6BE54D93-6C23-4496-888D-5A0976EBC6DD} = {65AF34A5-E855-4313-84FA-B9A5835E4266}
 	EndGlobalSection
 EndGlobal

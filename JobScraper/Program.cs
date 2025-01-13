@@ -2,11 +2,7 @@
 using JobScraper.Data;
 using JobScraper.Scrapers;
 
-
-// todo: add linkedin pagination
-// todo: add zip recruiter and monster
-
-var searchTerms = new List<string> { "C#", "angular", "html" };
+var searchTerms = new List<string> { ".NET" };
 
 using var playwright = await Playwright.CreateAsync();
 await using var browser = await playwright.Firefox.LaunchAsync();
@@ -22,14 +18,10 @@ await dbContext.Database.EnsureCreatedAsync();
 foreach (var searchTerm in searchTerms)
 {
     Console.WriteLine($"Now scraping {searchTerm} jobs...");
-    var indeedScraper = new IndeedScraper(searchTerm, 1, context);
-    var linkedInScraper = new LinkedInScraper(searchTerm, 1, context);
-    
-    var indeedJobs = await indeedScraper.ScrapeJobsAsync();
-    var linkedInJobs = await linkedInScraper.ScrapeJobsAsync();
 
+    var indeedScraper = new IndeedScraper(searchTerm, 1, context);
+    var indeedJobs = await indeedScraper.ScrapeJobsAsync();
     dbContext.Jobs.AddRange(indeedJobs);
-    dbContext.Jobs.AddRange(linkedInJobs);
 }
 
 await dbContext.SaveChangesAsync();
