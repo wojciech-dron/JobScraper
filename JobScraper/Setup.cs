@@ -29,6 +29,7 @@ public static class Setup
 
         services.Configure<ScraperConfig>(configuration.GetSection(ScraperConfig.SectionName));
         services.AddScoped<IndeedListScraper>();
+        services.AddScoped<IndeedDetailsScraper>();
 
         return services;
     }
