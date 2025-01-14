@@ -1,51 +1,57 @@
-﻿using Microsoft.Playwright;
+﻿using Cocona;
+using EFCore.BulkExtensions;
+using JobScraper;
 using JobScraper.Data;
 using JobScraper.Scrapers;
 using Microsoft.EntityFrameworkCore;
 
-var searchTerms = new List<string> { ".NET" };
+var builder = CoconaApp.CreateBuilder(args);
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+builder.Configuration.AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true);
 
-using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.Firefox.LaunchAsync();
+await builder.Services.AddScrapperServicesAsync(builder.Configuration);
 
-var browserContext = await browser.NewContextAsync(new BrowserNewContextOptions
+var app = builder.Build();
+app.Run<Commands>();
+
+Console.WriteLine("Scrapper finished");
+
+
+public class Commands
 {
-    UserAgent = "Mozilla/5.0 (Windows NT 10.0; rv:114.0) Gecko/20100101 Firefox/114.0"
-});
-
-await using var dbContext = new JobDbContext();
-await dbContext.Database.EnsureCreatedAsync();
-
-foreach (var searchTerm in searchTerms)
-{
-    Console.WriteLine($"Now scraping {searchTerm} jobs...");
-
-    var indeedScraper = new IndeedScraper(browserContext);
-
-    await GetNewJobs(indeedScraper, dbContext);
-    // await RetryEmptyDetails(dbContext, indeedScraper);
-}
-
-await dbContext.SaveChangesAsync();
-Console.WriteLine("All finished scraping :)");
-
-async Task GetNewJobs(IndeedScraper indeedScraper2, JobDbContext dbContext1)
-{
-    var jobs = await indeedScraper2.ScrapeJobs();
-    dbContext1.Jobs.AddRange(jobs);
-    await dbContext1.SaveChangesAsync();
-}
-
-async Task RetryEmptyDetails(JobDbContext jobDbContext, IndeedScraper indeedScraper1)
-{
-    var jobs = await jobDbContext.Jobs.Where(j => j.Description == null).ToListAsync();
-    foreach (var job in jobs)
+    private readonly JobDbContext _dbContext;
+    private readonly ILogger<Commands> _logger;
+    public Commands(JobDbContext dbContext,
+        ILogger<Commands> logger)
     {
-        Console.WriteLine($"Scraping job: {job.Title}.");
-        await IndeedScraper.RetryPolicy.ExecuteAsync(async () =>
-            await indeedScraper1.ScrapeJobDetails(job));
+        _dbContext = dbContext;
+        _logger = logger;
+
     }
 
-    await jobDbContext.SaveChangesAsync();
-}
+    [Command("new")]
+    public async Task GetNewJobs([FromService] IndeedListScraper scraper)
+    {
+        _logger.LogInformation("Now scraping jobs...");
 
+        var jobs = await scraper.ScrapeJobs();
+        await _dbContext.BulkInsertOrUpdateAsync(jobs);
+    }
+
+    [Command("details")]
+    public async Task RetryEmptyDetails([FromService] IndeedDetailsScraper scraper)
+    {
+        var jobs = await _dbContext.Jobs
+            .Where(j => j.Description == null)
+            .ToListAsync();
+
+        foreach (var job in jobs)
+        {
+            _logger.LogInformation("Scraping job: {JobTitle}", job.Title);
+            await ScrapperBase.RetryPolicy.ExecuteAsync(async () =>
+                await scraper.ScrapeJobDetails(job));
+        }
+
+        await _dbContext.SaveChangesAsync();
+    }
+}

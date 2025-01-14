@@ -42,12 +42,22 @@ This project requires .NET and the Microsoft Playwright CLI. If you don't have t
 
 3. You can now build and run the project using the following commands:
 
-   ```bash
-   dotnet build
-   dotnet run
-   ```
+Build:
+```bash
+dotnet build
+```
+   
+Search new offers:
+```bash
+dotnet run new
+```
 
+Scrap details:
 
+```bash
+dotnet run details
+```
+,
 The scraper will crawl Indeed and LinkedIn with your search parameters, scrape the job data, and store the listings in your database setup.
 
 
