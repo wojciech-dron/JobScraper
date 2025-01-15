@@ -4,6 +4,9 @@ public class ScraperConfig
 {
     public static string SectionName => "ScraperConfig";
 
+    public string IndeedBaseUrl { get; set; } = "https://www.indeed.com";
+    public string JjitBaseUrl { get; set; } = "https://justjoin.it";
+
     public string SearchTerm { get; set; } = "C#";
     public string Location { get; set; } = "";
     public int ListingAgeInDays { get; set; } = 3;

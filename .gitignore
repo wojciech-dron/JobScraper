@@ -262,3 +262,5 @@ __pycache__/
 
 
 # JobScrapper
+/JobScraper/jobs/
+/JobScraper/Jobs.db

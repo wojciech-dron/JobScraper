@@ -12,6 +12,8 @@ builder.Configuration.AddJsonFile("appsettings.Development.json", optional: true
 await builder.Services.AddScrapperServicesAsync(builder.Configuration);
 
 var app = builder.Build();
+app.Services.PrepareDb();
+
 app.Run<Commands>();
 
 Console.WriteLine("Scrapper finished");
@@ -19,9 +21,9 @@ Console.WriteLine("Scrapper finished");
 
 public class Commands
 {
-    private readonly JobDbContext _dbContext;
+    private readonly JobsDbContext _dbContext;
     private readonly ILogger<Commands> _logger;
-    public Commands(JobDbContext dbContext,
+    public Commands(JobsDbContext dbContext,
         ILogger<Commands> logger)
     {
         _dbContext = dbContext;
@@ -31,6 +33,15 @@ public class Commands
 
     [Command("new")]
     public async Task GetNewJobs([FromService] IndeedListScraper scraper)
+    {
+        _logger.LogInformation("Now scraping jobs...");
+
+        var jobs = await scraper.ScrapeJobs();
+        await _dbContext.BulkInsertOrUpdateAsync(jobs);
+    }
+
+    [Command("new-jjit")]
+    public async Task GetNewJobs([FromService] JjitListScraper scraper)
     {
         _logger.LogInformation("Now scraping jobs...");
 

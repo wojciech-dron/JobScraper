@@ -10,12 +10,12 @@
 
     <ItemGroup>
       <PackageReference Include="Cocona" Version="2.2.0" />
-      <PackageReference Include="EFCore.BulkExtensions" Version="8.1.2" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
+      <PackageReference Include="EFCore.BulkExtensions" Version="9.0.0-rc.1" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.1">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
-      <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.1" />
       <PackageReference Include="Microsoft.Playwright" Version="1.49.0" />
       <PackageReference Include="Polly" Version="8.5.1" />
     </ItemGroup>

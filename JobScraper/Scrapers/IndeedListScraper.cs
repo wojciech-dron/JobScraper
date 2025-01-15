@@ -8,16 +8,21 @@ namespace JobScraper.Scrapers;
 
 public class IndeedListScraper : ScrapperBase
 {
+    private readonly string _baseUrl;
     public IndeedListScraper(IBrowser browser,
         IOptions<ScraperConfig> config,
         ILogger<IndeedListScraper> logger) : base(browser, config, logger)
-    { }
+    {
+        _baseUrl = Config.IndeedBaseUrl;
+
+    }
 
     private string BuildSearchUrl()
     {
         var encodedJobSearchTerm = HttpUtility.UrlEncode(Config.SearchTerm);
 
-        var urlBuilder = new StringBuilder("https://pl.indeed.com/jobs")
+        var urlBuilder = new StringBuilder(_baseUrl)
+            .Append("/jobs")
             .Append($"?q={encodedJobSearchTerm}")
             .Append($"&fromage={Config.ListingAgeInDays}");
 
@@ -34,11 +39,11 @@ public class IndeedListScraper : ScrapperBase
     {
         var jobs = new List<Job>();
         var searchUrl = BuildSearchUrl();
+        Logger.LogInformation("Indeed scraping for url {SearchUrl}", searchUrl);
 
         var indeedPage = await LoadUntilAsync(searchUrl, waitSeconds: Config.WaitForListSeconds);
 
         var pageCount = 0;
-
         while (true)
         {
             pageCount++;
@@ -46,7 +51,6 @@ public class IndeedListScraper : ScrapperBase
 
             var scrappedJobs = await ScrapeJobsFromList(indeedPage);
             jobs.AddRange(scrappedJobs);
-
 
             var nextButton = await indeedPage.QuerySelectorAsync("a[data-testid='pagination-page-next']");
             if (nextButton is null)
@@ -93,12 +97,8 @@ public class IndeedListScraper : ScrapperBase
                 CompanyName = companyNames[i],
                 Origin = "Indeed",
                 Location = locations[i],
-                OfferUrl = "https://pl.indeed.com" + urls[i],
-                SearchTerm = Config.SearchTerm,
+                OfferUrl = _baseUrl + urls[i],
             };
-
-            if (Config.AvoidJobKeywords.Any(uk => titles[i].Contains(uk, StringComparison.OrdinalIgnoreCase)))
-                continue;
 
             jobs.Add(job);
         }

@@ -21,7 +21,7 @@ public class IndeedDetailsScraper : ScrapperBase
         if (indeedJobDescriptionElement != null)
         {
             job.Description = await indeedJobDescriptionElement.InnerTextAsync();
-            job.FoundKeywords = Config.Keywords
+            job.MyKeywords = Config.Keywords
                 .Where(keyword => job.Description.Contains(keyword, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
@@ -29,7 +29,6 @@ public class IndeedDetailsScraper : ScrapperBase
         {
             await SaveScrenshoot(indeedPage, "jobs\\job-screenshot.png");
             await SavePage(indeedPage, "jobs\\job.html");
-
         }
 
         var externalApplyElement = await indeedPage.QuerySelectorAsync("button[aria-haspopup='dialog']");

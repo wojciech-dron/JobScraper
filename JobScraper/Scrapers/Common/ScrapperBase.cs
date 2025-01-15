@@ -43,18 +43,25 @@ public class ScrapperBase
         });
     }
 
-    protected static async Task SaveScrenshoot(IPage indeedPage, string path)
+    protected static async Task SaveScrenshoot(IPage page, string path)
     {
-        var screenshot = await indeedPage.ScreenshotAsync();
+        var directory = Path.GetDirectoryName(path);
+        if (directory is not null)
+            Directory.CreateDirectory(directory);
+
+        var screenshot = await page.ScreenshotAsync();
         await File.WriteAllBytesAsync(path, screenshot);
     }
 
-    protected static async Task SavePage(IPage indeedPage, string path)
+    protected static async Task SavePage(IPage page, string path)
     {
-        var htmlContent = await indeedPage.ContentAsync();
+        var directory = Path.GetDirectoryName(path);
+        if (directory is not null)
+            Directory.CreateDirectory(directory);
+
+        var htmlContent = await page.ContentAsync();
         await File.WriteAllTextAsync(path, htmlContent);
     }
-
 
     protected async Task<IPage> LoadUntilAsync(string url,
         Func<IPage, Task<bool>>? successCondition = null,

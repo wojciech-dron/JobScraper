@@ -16,22 +16,37 @@ public static class Setup
 
         services.AddSingleton(browser);
 
-        services.AddDbContext<JobDbContext>((services, options) =>
+        services.AddDbContext<JobsDbContext>((services, options) =>
         {
             var connectionString = services
                 .GetRequiredService<IConfiguration>()
                 .GetConnectionString("DefaultConnection");
 
             options
-                .UseSqlServer(connectionString!)
+                .UseSqlite(connectionString)
                 .EnableSensitiveDataLogging();
         });
 
-        services.Configure<ScraperConfig>(configuration.GetSection(ScraperConfig.SectionName));
-        services.AddScoped<IndeedListScraper>();
-        services.AddScoped<IndeedDetailsScraper>();
+        services.AddScrapers(configuration);
 
         return services;
     }
 
+    private static void AddScrapers(this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.Configure<ScraperConfig>(configuration.GetSection(ScraperConfig.SectionName));
+
+        services.AddScoped<IndeedListScraper>();
+        services.AddScoped<IndeedDetailsScraper>();
+
+        services.AddScoped<JjitListScraper>();
+    }
+
+    public static void PrepareDb(this IServiceProvider services)
+    {
+        using var scope = services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<JobsDbContext>();
+        dbContext.Database.EnsureCreated();
+    }
 }
