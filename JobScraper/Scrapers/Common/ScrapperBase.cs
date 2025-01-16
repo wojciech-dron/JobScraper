@@ -22,8 +22,8 @@ public class ScrapperBase
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
     ];
 
-    public static readonly AsyncRetryPolicy<Job> RetryPolicy =
-        Policy<Job>.Handle<Exception>()
+    public static readonly AsyncRetryPolicy<JobOffer> RetryPolicy =
+        Policy<JobOffer>.Handle<Exception>()
             .WaitAndRetryAsync(2, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
     public ScrapperBase(IBrowser browser,
@@ -43,24 +43,35 @@ public class ScrapperBase
         });
     }
 
-    protected static async Task SaveScrenshoot(IPage page, string path)
+    protected async Task SaveScrenshoot(IPage page, string path)
     {
-        var directory = Path.GetDirectoryName(path);
-        if (directory is not null)
-            Directory.CreateDirectory(directory);
+        path = PrepareDestination(path);
 
         var screenshot = await page.ScreenshotAsync();
         await File.WriteAllBytesAsync(path, screenshot);
     }
 
-    protected static async Task SavePage(IPage page, string path)
+
+    protected async Task SavePage(IPage page, string path)
     {
+        path = PrepareDestination(path);
+
+        var htmlContent = await page.ContentAsync();
+        await File.WriteAllTextAsync(path, htmlContent);
+    }
+
+    private string PrepareDestination(string path)
+    {
+        path = Path.Combine(Config.SaveDirectoryPath, path);
+
+        if (Config.SaveDirectoryPath.StartsWith("./"))
+            path = Path.Combine(Directory.GetCurrentDirectory(), path.TrimStart('.'));
+
         var directory = Path.GetDirectoryName(path);
         if (directory is not null)
             Directory.CreateDirectory(directory);
 
-        var htmlContent = await page.ContentAsync();
-        await File.WriteAllTextAsync(path, htmlContent);
+        return path;
     }
 
     protected async Task<IPage> LoadUntilAsync(string url,

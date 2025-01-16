@@ -27,6 +27,8 @@ public static class Setup
                 .EnableSensitiveDataLogging();
         });
 
+        services.AddMediatR(c => c.RegisterServicesFromAssemblyContaining(typeof(Setup)));
+
         services.AddScrapers(configuration);
 
         return services;

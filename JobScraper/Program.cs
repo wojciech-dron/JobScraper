@@ -2,7 +2,9 @@
 using EFCore.BulkExtensions;
 using JobScraper;
 using JobScraper.Data;
+using JobScraper.Logic;
 using JobScraper.Scrapers;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 var builder = CoconaApp.CreateBuilder(args);
@@ -23,36 +25,47 @@ public class Commands
 {
     private readonly JobsDbContext _dbContext;
     private readonly ILogger<Commands> _logger;
+    private readonly IMediator _mediator;
     public Commands(JobsDbContext dbContext,
-        ILogger<Commands> logger)
+        ILogger<Commands> logger,
+        IMediator mediator)
     {
         _dbContext = dbContext;
         _logger = logger;
+        _mediator = mediator;
 
     }
 
-    [Command("new")]
+    [Command("indeed-list")]
     public async Task GetNewJobs([FromService] IndeedListScraper scraper)
     {
-        _logger.LogInformation("Now scraping jobs...");
+        _logger.LogInformation("Scraping Indeed jobs list...");
 
-        var jobs = await scraper.ScrapeJobs();
-        await _dbContext.BulkInsertOrUpdateAsync(jobs);
+        await foreach (var jobs in scraper.ScrapeJobs())
+        {
+            _logger.LogInformation("Syncing Indeed jobs...");
+            await _mediator.Send(new SyncJobOffers.Command(jobs));
+        }
+
     }
 
-    [Command("new-jjit")]
+    [Command("jjit-list")]
     public async Task GetNewJobs([FromService] JjitListScraper scraper)
     {
-        _logger.LogInformation("Now scraping jobs...");
+        _logger.LogInformation("Scraping Just-join.it jobs list...");
 
-        var jobs = await scraper.ScrapeJobs();
-        await _dbContext.BulkInsertOrUpdateAsync(jobs);
+        await foreach (var jobs in scraper.ScrapeJobs())
+        {
+            _logger.LogInformation("Syncing Just-join.it jobs...");
+            await _mediator.Send(new SyncJobOffers.Command(jobs));
+        }
     }
 
-    [Command("details")]
+    [Command("indeed-details")]
     public async Task RetryEmptyDetails([FromService] IndeedDetailsScraper scraper)
     {
-        var jobs = await _dbContext.Jobs
+        var jobs = await _dbContext.JobOffers
+            .Include(j => j.Company)
             .Where(j => j.Description == null)
             .ToListAsync();
 

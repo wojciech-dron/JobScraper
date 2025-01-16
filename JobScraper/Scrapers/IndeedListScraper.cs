@@ -14,11 +14,13 @@ public class IndeedListScraper : ScrapperBase
         ILogger<IndeedListScraper> logger) : base(browser, config, logger)
     {
         _baseUrl = Config.IndeedBaseUrl;
-
     }
 
     private string BuildSearchUrl()
     {
+        if (!string.IsNullOrEmpty(Config.IndeedSearchUrl))
+            return Config.IndeedSearchUrl;
+
         var encodedJobSearchTerm = HttpUtility.UrlEncode(Config.SearchTerm);
 
         var urlBuilder = new StringBuilder(_baseUrl)
@@ -35,13 +37,15 @@ public class IndeedListScraper : ScrapperBase
         return urlBuilder.ToString();
     }
 
-    public async Task<List<Job>> ScrapeJobs()
+    public async IAsyncEnumerable<List<JobOffer>> ScrapeJobs()
     {
-        var jobs = new List<Job>();
         var searchUrl = BuildSearchUrl();
         Logger.LogInformation("Indeed scraping for url {SearchUrl}", searchUrl);
 
-        var indeedPage = await LoadUntilAsync(searchUrl, waitSeconds: Config.WaitForListSeconds);
+        var page = await LoadUntilAsync(searchUrl, waitSeconds: Config.WaitForListSeconds);
+
+        await SaveScrenshoot(page, $"indeed/list/{DateTime.Now:yyMMdd_HHmm}.png");
+        await SavePage(page, $"indeed/list/{DateTime.Now:yyMMdd_HHmm}.html");
 
         var pageCount = 0;
         while (true)
@@ -49,27 +53,24 @@ public class IndeedListScraper : ScrapperBase
             pageCount++;
             Logger.LogInformation("Indeed scraping page {PageCount}...", pageCount);
 
-            var scrappedJobs = await ScrapeJobsFromList(indeedPage);
-            jobs.AddRange(scrappedJobs);
+            var scrappedJobs = await ScrapeJobsFromList(page);
+            yield return scrappedJobs;
 
-            var nextButton = await indeedPage.QuerySelectorAsync("a[data-testid='pagination-page-next']");
+            var nextButton = await page.QuerySelectorAsync("a[data-testid='pagination-page-next']");
             if (nextButton is null)
-            {
-                Logger.LogInformation("Indeed scraping complete");
                 break;
-            }
-
 
             await nextButton.ClickAsync();
-            await indeedPage.WaitForTimeoutAsync(Config.WaitForListSeconds * 1000);
+            await page.WaitForTimeoutAsync(Config.WaitForListSeconds * 1000);
         }
 
-        return jobs;
+        Logger.LogInformation("Indeed scraping complete");
+
     }
 
-    private async Task<List<Job>> ScrapeJobsFromList(IPage indeedPage)
+    private async Task<List<JobOffer>> ScrapeJobsFromList(IPage indeedPage)
     {
-        var jobs = new List<Job>();
+        var jobs = new List<JobOffer>();
 
         var titleElements = await indeedPage.QuerySelectorAllAsync("h2.jobTitle");
         var titles = await Task.WhenAll(titleElements.Select(async t => await t.InnerTextAsync()));
@@ -91,10 +92,15 @@ public class IndeedListScraper : ScrapperBase
         // Iterating foreach title
         for (var i = 0; i < titles.Length; i++)
         {
-            var job = new Job
+            var company = new Company
+            {
+                Name = companyNames[i]
+            };
+
+            var job = new JobOffer
             {
                 Title = titles[i],
-                CompanyName = companyNames[i],
+                Company = company,
                 Origin = "Indeed",
                 Location = locations[i],
                 OfferUrl = _baseUrl + urls[i],

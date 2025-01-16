@@ -1,6 +1,4 @@
-﻿using System.Text;
-using System.Web;
-using JobScraper.Models;
+﻿using JobScraper.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 
@@ -13,39 +11,58 @@ public class IndeedDetailsScraper : ScrapperBase
         ILogger<IndeedDetailsScraper> logger) : base(browser, config, logger)
     { }
 
-    public async Task<Job> ScrapeJobDetails(Job job)
+    public async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
     {
-        var indeedPage = await LoadUntilAsync(job.OfferUrl);
+        var indeedPage = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: Config.WaitForDetailsSeconds);
+        await indeedPage.WaitForTimeoutAsync(1000); // Wait for the page to load
 
-        var indeedJobDescriptionElement = await indeedPage.QuerySelectorAsync("div.jobsearch-JobComponent-description");
+        jobOffer.ScreenShotPath = $"indeed/{jobOffer.Id}/{DateTime.Now:yyMMdd_HHmm}.png";
+        await SaveScrenshoot(indeedPage, jobOffer.ScreenShotPath);
+        jobOffer.HtmlPath = $"indeed/{jobOffer.Id}/{DateTime.Now:yyMMdd_HHmm}.html";
+        await SavePage(indeedPage, jobOffer.HtmlPath);
+
+        await Task.WhenAll(
+            ScrapApplyUrl(jobOffer, indeedPage),
+            ScrapDescription(jobOffer, indeedPage),
+            ScrapCompany(jobOffer.Company, indeedPage)
+        );
+
+        return jobOffer;
+    }
+
+    private async Task ScrapDescription(JobOffer jobOffer, IPage page)
+    {
+        var indeedJobDescriptionElement = await page.QuerySelectorAsync("div.jobsearch-JobComponent-description");
         if (indeedJobDescriptionElement != null)
         {
-            job.Description = await indeedJobDescriptionElement.InnerTextAsync();
-            job.MyKeywords = Config.Keywords
-                .Where(keyword => job.Description.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+            jobOffer.Description = await indeedJobDescriptionElement.InnerTextAsync();
+            jobOffer.MyKeywords = Config.Keywords
+                .Where(keyword => jobOffer.Description.Contains(keyword, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
-        else
-        {
-            await SaveScrenshoot(indeedPage, "jobs\\job-screenshot.png");
-            await SavePage(indeedPage, "jobs\\job.html");
-        }
+    }
 
-        var externalApplyElement = await indeedPage.QuerySelectorAsync("button[aria-haspopup='dialog']");
-        if (externalApplyElement is not null)
-        {
-            job.ApplyUrl = await externalApplyElement.GetAttributeAsync("href");
-            return job;
-        }
-
-        var indeedApplyElement = await indeedPage.QuerySelectorAsync(
+    private static async Task ScrapApplyUrl(JobOffer jobOffer, IPage page)
+    {
+        var indeedApplyElement = await page.QuerySelectorAsync(
             "span[data-indeed-apply-joburl], button[href*='https://www.indeed.com/applystart?jk=']");
         if (indeedApplyElement != null)
         {
-            job.ApplyUrl = await indeedApplyElement.GetAttributeAsync("data-indeed-apply-joburl");
+            jobOffer.ApplyUrl = await indeedApplyElement.GetAttributeAsync("data-indeed-apply-joburl");
         }
 
-        return job;
+        var externalApplyElement = await page.QuerySelectorAsync("button[aria-haspopup='dialog']");
+        if (externalApplyElement is not null)
+        {
+            jobOffer.ApplyUrl = await externalApplyElement.GetAttributeAsync("href");
+        }
     }
 
+    private async Task ScrapCompany(Company company, IPage page)
+    {
+        var url = await page.EvaluateAsync<string>(
+            "() => document.querySelector('a[data-testid=\"inlineHeader-companyName\"]').href");
+
+        company.IndeedUrl = url;
+    }
 }

@@ -18,6 +18,9 @@ public class JjitListScraper : ScrapperBase
 
     private string BuildSearchUrl()
     {
+        if (!string.IsNullOrEmpty(Config.JjitSearchUrl))
+            return Config.JjitSearchUrl;
+
         var urlBuilder = new StringBuilder(_baseUrl)
             .Append("/job-offers/all-locations/net");
 
@@ -27,24 +30,48 @@ public class JjitListScraper : ScrapperBase
         return urlBuilder.ToString();
     }
 
-    public async Task<List<Job>> ScrapeJobs()
+    public async IAsyncEnumerable<List<JobOffer>> ScrapeJobs()
     {
         var searchUrl = BuildSearchUrl();
         Logger.LogInformation("Justjoin.it scraping for url {SearchUrl}", searchUrl);
 
         var page = await LoadUntilAsync(searchUrl, waitSeconds: Config.WaitForListSeconds,
-            successCondition: async p => (await p.QuerySelectorAllAsync("li")).Count > 10);
+            successCondition: async p => (await p.QuerySelectorAllAsync("li")).Count > 6);
 
         await AcceptCookies(page);
-        await ScrollUntilAllJobsAreLoaded(page);
 
-        await SaveScrenshoot(page, $"jobs\\jjit-list{DateTime.Now:yyMMdd_HHmm}.png");
-        await SavePage(page, $"jobs\\jjit-list{DateTime.Now:yyMMdd_HHmm}.html");
+        await SaveScrenshoot(page, $"jjit/list/{DateTime.Now:yyMMdd_HHmm}.png");
+        await SavePage(page, $"jjit/list/{DateTime.Now:yyMMdd_HHmm}.html");
 
-        Logger.LogInformation("Justjoin.it - page ready, scraping jobs");
-        var scrappedJobs = await ScrapeJobsFromList(page);
+        var newJobs = await ScrapeJobsFromList(page);
+        yield return newJobs;
 
-        return scrappedJobs;
+        var pageNumber = 0;
+        while (newJobs.Count > 0)
+        {
+            pageNumber++;
+            var previousJobs = newJobs;
+
+            Logger.LogInformation("Justjoin.it - scraping page {PageNumber}", pageNumber);
+
+            // scroll down
+            var scrollHeight = pageNumber * 1200;
+            await page.EvaluateAsync($"window.scrollTo(0, {scrollHeight});");
+            await page.WaitForTimeoutAsync(Config.WaitForScrollSeconds * 1000);
+
+            await SaveScrenshoot(page, $"jjit/list/{pageNumber}-{DateTime.Now:yyMMdd_HHmm}.png");
+            await SavePage(page, $"jjit/list/{pageNumber}-{DateTime.Now:yyMMdd_HHmm}.html");
+
+            var jobsFromPage = await ScrapeJobsFromList(page);
+
+            newJobs = jobsFromPage.Where(j =>
+                    !previousJobs.Select(sc => sc.OfferUrl).Contains(j.OfferUrl))
+                .ToList();
+
+            yield return newJobs;
+        }
+
+        Logger.LogInformation("Justjoin.it - scrapping complete");
     }
 
     private async Task AcceptCookies(IPage page)
@@ -58,44 +85,22 @@ public class JjitListScraper : ScrapperBase
 
         await page.WaitForTimeoutAsync(1 * 1000);
     }
-
-    private async Task<IPage> ScrollUntilAllJobsAreLoaded(IPage page)
+    private async Task<List<JobOffer>> ScrapeJobsFromList(IPage page)
     {
-        var maxRetries = 10;
-        var retryCount = 0;
-        do
-        {
-            var element = await page.QuerySelectorAsync(
-                "text=Add an e-mail notification, and we will inform you about new job offers according to the given criteria.");
+        var jobs = new List<JobOffer>();
 
-            if (element is not null)
-                return page;
-
-            Logger.LogInformation("Justjoin.it - scrolling down the page");
-
-            // scroll down the page
-            await page.EvaluateAsync("window.scrollTo(0, document.body.scrollHeight);");
-            await page.WaitForTimeoutAsync(3 * 1000);
-            retryCount++;
-        } while (retryCount < maxRetries);
-
-        throw new ApplicationException($"Failed to load all jobs after {retryCount} retries");
-    }
-
-    private async Task<List<Job>> ScrapeJobsFromList(IPage page)
-    {
-        var jobs = new List<Job>();
-
-        var jobElements = await page.QuerySelectorAllAsync("li[data-index]");
+        var jobElements = await page.QuerySelectorAllAsync("div[data-index]");
         var jobsText = await Task.WhenAll(jobElements.Select(async j => await j.InnerTextAsync()));
 
-        var urlElements = await page.QuerySelectorAllAsync("a.offer_list_offer_link");
-        var urls = await Task.WhenAll(urlElements.Select(async t => await t.GetAttributeAsync("href")));
+        // Use EvaluateFunctionAsync to get the href attribute of the <a> element
+        var urls = await page.EvaluateAsync<string[]>(@"
+            Array.from(document.querySelectorAll('div[data-index] > div > div > a'))
+                .map(element => element.getAttribute('href'));
+        ");
 
-        // Iterating foreach title
         for (var i = 0; i < jobsText.Length; i++)
         {
-            var job = new Job();
+            var job = new JobOffer();
             // "Senior .NET Developer  20 000 - 24 000 PLN  New  Qodeca  Warszawa  , +9  Locations  Fully remote  C#  Microsoft Azure"
             var phrases = jobsText[i].Split(['\n'], StringSplitOptions.RemoveEmptyEntries).ToList();
             if (phrases.Count < 9)
@@ -106,7 +111,11 @@ public class JjitListScraper : ScrapperBase
             job.Origin = "Justjoin.it";
             job.Salary = phrases[1];
             job.AgeInfo = phrases[2];
-            job.CompanyName = phrases[3];
+
+            var company = new Company();
+            company.Name = phrases[3];
+            job.Company = company;
+
             job.Location = phrases[4];
             if (phrases[6].Contains("Locations"))
             {
