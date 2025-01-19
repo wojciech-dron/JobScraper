@@ -2,34 +2,34 @@
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 
-namespace JobScraper.Scrapers.Indeed;
+namespace JobScraper.Scrapers.JustJoinIt;
 
-public class IndeedDetailsScraper : ScrapperBase
+public class JjitDetailsScraper : ScrapperBase
 {
-    protected override DataOrigin DataOrigin => DataOrigin.Indeed;
+    protected override DataOrigin DataOrigin => DataOrigin.JustJoinIt;
 
-    public IndeedDetailsScraper(IBrowser browser,
+    public JjitDetailsScraper(IBrowser browser,
         IOptions<ScraperConfig> config,
-        ILogger<IndeedDetailsScraper> logger) : base(browser, config, logger)
+        ILogger<JjitDetailsScraper> logger) : base(browser, config, logger)
     { }
 
     public async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
     {
         Logger.LogInformation("Scrapeing job details for {OfferUrl}", jobOffer.OfferUrl);
 
-        var indeedPage = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: Config.WaitForDetailsSeconds);
-        await indeedPage.WaitForTimeoutAsync(Config.WaitForDetailsSeconds * 1000); // Wait for the page to load
+        var page = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: Config.WaitForDetailsSeconds);
+        await page.WaitForTimeoutAsync(Config.WaitForDetailsSeconds * 1000); // Wait for the page to load
 
         jobOffer.ScreenShotPath = $"indeed/{jobOffer.CompanyName}/{DateTime.Now:yyMMdd_HHmm}.png";
-        await SaveScrenshoot(indeedPage, jobOffer.ScreenShotPath);
+        await SaveScrenshoot(page, jobOffer.ScreenShotPath);
 
         jobOffer.HtmlPath = $"indeed/{jobOffer.CompanyName}/{DateTime.Now:yyMMdd_HHmm}.html";
-        await SavePage(indeedPage, jobOffer.HtmlPath);
+        await SavePage(page, jobOffer.HtmlPath);
 
         await Task.WhenAll(
-            ScrapApplyUrl(jobOffer, indeedPage),
-            ScrapDescription(jobOffer, indeedPage),
-            ScrapCompany(jobOffer.Company, indeedPage)
+            ScrapApplyUrl(jobOffer, page),
+            ScrapDescription(jobOffer, page),
+            ScrapCompany(jobOffer.Company, page)
         );
 
         return jobOffer;
@@ -41,10 +41,11 @@ public class IndeedDetailsScraper : ScrapperBase
         if (indeedJobDescriptionElement != null)
         {
             jobOffer.Description = await indeedJobDescriptionElement.InnerTextAsync();
-            FindMyKeywords(jobOffer);
+            jobOffer.MyKeywords = Config.Keywords
+                .Where(keyword => jobOffer.Description.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                .ToList();
         }
     }
-
 
     private static async Task ScrapApplyUrl(JobOffer jobOffer, IPage page)
     {

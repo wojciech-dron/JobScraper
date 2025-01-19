@@ -6,11 +6,13 @@ using Polly.Retry;
 
 namespace JobScraper.Scrapers;
 
-public class ScrapperBase
+public abstract class ScrapperBase
 {
     protected readonly IBrowser Browser;
     protected readonly ScraperConfig Config;
     protected readonly ILogger<ScrapperBase> Logger;
+
+    protected abstract DataOrigin DataOrigin { get; }
 
     private static readonly string[] UserAgentStrings =
     [
@@ -94,5 +96,12 @@ public class ScrapperBase
             throw new ApplicationException("Retry attempts exceeded.");
 
         return page;
+    }
+
+    protected void FindMyKeywords(JobOffer jobOffer)
+    {
+        jobOffer.MyKeywords = Config.Keywords
+            .Where(keyword => jobOffer.Description!.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+            .ToList();
     }
 }

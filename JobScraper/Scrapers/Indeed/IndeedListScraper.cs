@@ -9,6 +9,8 @@ namespace JobScraper.Scrapers.Indeed;
 public class IndeedListScraper : ScrapperBase
 {
     private readonly string _baseUrl;
+    protected override DataOrigin DataOrigin => DataOrigin.Indeed;
+
     public IndeedListScraper(IBrowser browser,
         IOptions<ScraperConfig> config,
         ILogger<IndeedListScraper> logger) : base(browser, config, logger)

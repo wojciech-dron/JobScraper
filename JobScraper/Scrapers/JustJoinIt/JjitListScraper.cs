@@ -8,6 +8,8 @@ namespace JobScraper.Scrapers.JustJoinIt;
 public class JjitListScraper : ScrapperBase
 {
     private readonly string _baseUrl;
+    protected override DataOrigin DataOrigin => DataOrigin.JustJoinIt;
+
     public JjitListScraper(IBrowser browser,
         IOptions<ScraperConfig> config,
         ILogger<JjitListScraper> logger) : base(browser, config, logger)
