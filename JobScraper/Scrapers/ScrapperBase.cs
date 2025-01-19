@@ -62,10 +62,7 @@ public class ScrapperBase
 
     private string PrepareDestination(string path)
     {
-        path = Path.Combine(Config.SaveDirectoryPath, path);
-
-        if (Config.SaveDirectoryPath.StartsWith("./"))
-            path = Path.Combine(Directory.GetCurrentDirectory(), path.TrimStart('.'));
+        path = Path.Combine(Config.PageSavingDirectory, path);
 
         var directory = Path.GetDirectoryName(path);
         if (directory is not null)

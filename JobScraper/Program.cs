@@ -1,9 +1,10 @@
 ﻿using Cocona;
-using EFCore.BulkExtensions;
 using JobScraper;
-using JobScraper.Data;
 using JobScraper.Logic;
+using JobScraper.Persistance;
+using JobScraper.Persistence;
 using JobScraper.Scrapers;
+using JobScraper.Scrapers.JustJoinIt;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,7 +12,9 @@ var builder = CoconaApp.CreateBuilder(args);
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 builder.Configuration.AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true);
 
-await builder.Services.AddScrapperServicesAsync(builder.Configuration);
+await builder.Services
+    .AddSqlitePersistance()
+    .AddScrapperServicesAsync(builder.Configuration);
 
 var app = builder.Build();
 app.Services.PrepareDb();

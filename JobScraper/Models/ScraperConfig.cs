@@ -22,5 +22,5 @@ public class ScraperConfig
     public string[] Keywords { get; set; } = [];
     public string[] AvoidJobKeywords { get; set; } = [];
 
-    public string SaveDirectoryPath { get; set; } = ".\\jobs";
+    public string PageSavingDirectory { get; set; } = ".\\Data\\jobs";
 }

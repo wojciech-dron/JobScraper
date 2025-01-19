@@ -1,6 +1,6 @@
 ﻿using EFCore.BulkExtensions;
-using JobScraper.Data;
 using JobScraper.Models;
+using JobScraper.Persistance;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 

@@ -262,7 +262,4 @@ __pycache__/
 
 
 # JobScrapper
-/JobScraper/jobs/
-/JobScraper/Jobs.db
-/JobScraper/Jobs.db-shm
-/JobScraper/Jobs.db-wal
+/JobScraper/Data/

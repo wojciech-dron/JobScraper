@@ -1,10 +1,9 @@
 ﻿using System.Text;
-using System.Web;
 using JobScraper.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 
-namespace JobScraper.Scrapers;
+namespace JobScraper.Scrapers.JustJoinIt;
 
 public class JjitListScraper : ScrapperBase
 {

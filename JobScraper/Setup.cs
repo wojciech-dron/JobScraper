@@ -1,6 +1,8 @@
-﻿using JobScraper.Data;
-using JobScraper.Models;
+﻿using JobScraper.Models;
+using JobScraper.Persistance;
 using JobScraper.Scrapers;
+using JobScraper.Scrapers.JustJoinIt;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Playwright;
 
@@ -13,19 +15,7 @@ public static class Setup
     {
         var playwright = await Playwright.CreateAsync();
         var browser = await playwright.Firefox.LaunchAsync();
-
         services.AddSingleton(browser);
-
-        services.AddDbContext<JobsDbContext>((services, options) =>
-        {
-            var connectionString = services
-                .GetRequiredService<IConfiguration>()
-                .GetConnectionString("DefaultConnection");
-
-            options
-                .UseSqlite(connectionString)
-                .EnableSensitiveDataLogging();
-        });
 
         services.AddMediatR(c => c.RegisterServicesFromAssemblyContaining(typeof(Setup)));
 
@@ -43,12 +33,5 @@ public static class Setup
         services.AddScoped<IndeedDetailsScraper>();
 
         services.AddScoped<JjitListScraper>();
-    }
-
-    public static void PrepareDb(this IServiceProvider services)
-    {
-        using var scope = services.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<JobsDbContext>();
-        dbContext.Database.EnsureCreated();
     }
 }
