@@ -1,9 +1,9 @@
 ﻿using JobScraper.Models;
-using JobScraper.Persistance;
+using JobScraper.Persistence;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace JobScraper.Logic;
+namespace JobScraper.Logic.Common;
 
 public class SyncJobsFromList
 {
@@ -14,10 +14,10 @@ public class SyncJobsFromList
         private readonly JobsDbContext _dbContext;
         private readonly ILogger<Handler> _logger;
 
-        public Handler(JobsDbContext dbContext,
+        public Handler(IDbContextFactory<JobsDbContext> dbContextFactory,
             ILogger<Handler> logger)
         {
-            _dbContext = dbContext;
+            _dbContext = dbContextFactory.CreateDbContext();
             _logger = logger;
         }
         public async Task Handle(Command request, CancellationToken cancellationToken)
@@ -38,20 +38,33 @@ public class SyncJobsFromList
 
         private async Task AddNewCompanies(string[] companyNames, CancellationToken cancellationToken)
         {
-            var existingKeys = await _dbContext.Companies
-                .Select(c => c.Name)
-                .Where(key => companyNames.Contains(key))
-                .ToArrayAsync(cancellationToken);
+            // to avoid race condition
+            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-            var companiesToAdd = companyNames
-                .Except(existingKeys)
-                .Select(name => new Company
-                {
-                    Name = name
-                });
+            try
+            {
+                var existingKeys = await _dbContext.Companies
+                    .Where(c => companyNames.Contains(c.Name))
+                    .Select(c => c.Name)
+                    .ToArrayAsync(cancellationToken);
 
-            await _dbContext.Companies.AddRangeAsync(companiesToAdd, cancellationToken);
-            await _dbContext.SaveChangesAsync(cancellationToken);
+                var companiesToAdd = companyNames
+                    .Except(existingKeys)
+                    .Select(name => new Company
+                    {
+                        Name = name
+                    });
+
+                await _dbContext.Companies.AddRangeAsync(companiesToAdd, cancellationToken);
+                await _dbContext.SaveChangesAsync(cancellationToken);
+
+                await transaction.CommitAsync(cancellationToken);
+            }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
         }
 
         private async Task SyncJobs(List<JobOffer> jobs, CancellationToken cancellationToken)
@@ -77,7 +90,6 @@ public class SyncJobsFromList
                     .Contains(jo.OfferUrl));
 
             await _dbContext.JobOffers.AddRangeAsync(jobsToAdd, cancellationToken);
-
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
     }

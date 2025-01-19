@@ -4,7 +4,7 @@ using JobScraper.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 
-namespace JobScraper.Scrapers;
+namespace JobScraper.Scrapers.Indeed;
 
 public class IndeedListScraper : ScrapperBase
 {
@@ -96,7 +96,7 @@ public class IndeedListScraper : ScrapperBase
             {
                 Title = titles[i],
                 CompanyName = companyNames[i],
-                Origin = "Indeed",
+                Origin = DataOrigin.Indeed,
                 Location = locations[i],
                 OfferUrl = _baseUrl + urls[i],
             };

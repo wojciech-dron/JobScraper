@@ -1,5 +1,4 @@
-﻿using JobScraper.Persistance;
-using Microsoft.Data.Sqlite;
+﻿using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 namespace JobScraper.Persistence;
@@ -8,7 +7,7 @@ public static class Sqlite
 {
     internal static IServiceCollection AddSqlitePersistance(this IServiceCollection services)
     {
-        services.AddDbContext<JobsDbContext>((serviceProvider, options) =>
+        services.AddPooledDbContextFactory<JobsDbContext>((serviceProvider, options) =>
         {
             var connectionString = serviceProvider
                 .GetRequiredService<IConfiguration>()
@@ -18,6 +17,8 @@ public static class Sqlite
                 .UseSqlite(connectionString)
                 .EnableSensitiveDataLogging();
         });
+
+        services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<JobsDbContext>>().CreateDbContext());
 
         return services;
     }

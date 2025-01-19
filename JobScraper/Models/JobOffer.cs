@@ -7,7 +7,7 @@ public class JobOffer
 {
     public string OfferUrl { get; set; }
     public string Title { get; set; }
-    public string Origin { get; set; }
+    public DataOrigin Origin { get; set; }
     public string? CompanyName { get; set; }
     public string Location { get; set; }
     public DateTimeOffset ScrapedAt { get; set; } = DateTimeOffset.Now;
@@ -24,6 +24,13 @@ public class JobOffer
     public Company Company { get; set; } = null!;
 }
 
+public enum DataOrigin
+{
+    Manual,
+    Indeed,
+    JustJoinIt,
+}
+
 public class JobOfferModelBuilder : IEntityTypeConfiguration<JobOffer>
 {
     public void Configure(EntityTypeBuilder<JobOffer> builder)
@@ -32,7 +39,7 @@ public class JobOfferModelBuilder : IEntityTypeConfiguration<JobOffer>
 
         builder.HasKey(j => j.OfferUrl);
         builder.Property(j => j.Title).HasMaxLength(255);
-        builder.Property(j => j.Origin).HasMaxLength(24);
+        builder.Property(j => j.Origin).HasConversion<string>().HasMaxLength(24);
         builder.Property(j => j.CompanyName).HasMaxLength(255);
         builder.Property(j => j.Location).HasMaxLength(255);
 

@@ -108,7 +108,7 @@ public class JjitListScraper : ScrapperBase
 
             job.OfferUrl = _baseUrl + urls.ElementAtOrDefault(i) ?? "";
             job.Title = phrases[0];
-            job.Origin = "Justjoin.it";
+            job.Origin = DataOrigin.JustJoinIt;
             job.Salary = phrases[1];
             job.AgeInfo = phrases[2];
             job.CompanyName = phrases[3];

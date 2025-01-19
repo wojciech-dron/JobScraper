@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 
-namespace JobScraper.Scrapers;
+namespace JobScraper.Scrapers.Indeed;
 
 public class IndeedDetailsScraper : ScrapperBase
 {

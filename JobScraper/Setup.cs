@@ -1,6 +1,8 @@
 ﻿using JobScraper.Logic;
+using JobScraper.Logic.Common;
 using JobScraper.Models;
 using JobScraper.Scrapers;
+using JobScraper.Scrapers.Indeed;
 using JobScraper.Scrapers.JustJoinIt;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection.Extensions;

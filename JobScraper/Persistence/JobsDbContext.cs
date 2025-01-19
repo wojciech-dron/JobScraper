@@ -1,7 +1,7 @@
 ﻿using JobScraper.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace JobScraper.Persistance;
+namespace JobScraper.Persistence;
 
 public class JobsDbContext : DbContext
 {
