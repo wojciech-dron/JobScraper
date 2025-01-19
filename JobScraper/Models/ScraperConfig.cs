@@ -15,9 +15,9 @@ public class ScraperConfig
     public int ListingAgeInDays { get; set; } = 15;
     public bool RemoteJobsOnly { get; set; }
 
-    public int WaitForListSeconds { get; set; } = 10;
-    public int WaitForScrollSeconds { get; set; } = 4;
-    public int WaitForDetailsSeconds { get; set; } = 5;
+    public float WaitForListSeconds { get; set; } = 10;
+    public float WaitForScrollSeconds { get; set; } = 4;
+    public float WaitForDetailsSeconds { get; set; } = 5;
 
     public string[] Keywords { get; set; } = [];
     public string[] AvoidJobKeywords { get; set; } = [];

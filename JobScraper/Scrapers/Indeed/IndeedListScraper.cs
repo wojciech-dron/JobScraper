@@ -44,14 +44,15 @@ public class IndeedListScraper : ScrapperBase
 
         var page = await LoadUntilAsync(searchUrl, waitSeconds: Config.WaitForListSeconds);
 
-        await SaveScrenshoot(page, $"indeed/list/{DateTime.Now:yyMMdd_HHmm}.png");
-        await SavePage(page, $"indeed/list/{DateTime.Now:yyMMdd_HHmm}.html");
+        var fetchDate = DateTime.Now.ToString("yyMMdd_HHmm");
+        var pageNumber = 0;
 
-        var pageCount = 0;
+        await SaveScrenshoot(page, $"indeed/list/{fetchDate}/{pageNumber}.png");
+        await SavePage(page, $"indeed/list/{fetchDate}/{pageNumber}.html");
         while (true)
         {
-            pageCount++;
-            Logger.LogInformation("Indeed scraping page {PageCount}...", pageCount);
+            pageNumber++;
+            Logger.LogInformation("Indeed scraping page {PageCount}...", pageNumber);
 
             var scrappedJobs = await ScrapeJobsFromList(page);
             yield return scrappedJobs;
@@ -62,6 +63,9 @@ public class IndeedListScraper : ScrapperBase
 
             await nextButton.ClickAsync();
             await page.WaitForTimeoutAsync(Config.WaitForListSeconds * 1000);
+
+            await SaveScrenshoot(page, $"jjit/list/{fetchDate}/{pageNumber}.png");
+            await SavePage(page, $"jjit/list/{fetchDate}/{pageNumber}.html");
         }
 
         Logger.LogInformation("Indeed scraping complete");

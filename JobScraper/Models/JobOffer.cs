@@ -13,6 +13,7 @@ public class JobOffer
     public DateTimeOffset ScrapedAt { get; set; } = DateTimeOffset.Now;
     public List<string> OfferKeywords { get; set; } = [];
 
+    // TODO: Add DetailsScrapeStatus: ToScrape, DetailsScraped, DetailsFailed ...
     public string? AgeInfo { get; set; } // Jjit only
     public string? Description { get; set; }
     public string? ApplyUrl { get; set; }

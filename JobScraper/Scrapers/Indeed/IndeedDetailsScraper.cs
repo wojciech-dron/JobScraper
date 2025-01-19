@@ -13,11 +13,14 @@ public class IndeedDetailsScraper : ScrapperBase
 
     public async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
     {
+        Logger.LogInformation("Scrapeing job details for {OfferUrl}", jobOffer.OfferUrl);
+
         var indeedPage = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: Config.WaitForDetailsSeconds);
-        await indeedPage.WaitForTimeoutAsync(1000); // Wait for the page to load
+        await indeedPage.WaitForTimeoutAsync(Config.WaitForDetailsSeconds * 1000); // Wait for the page to load
 
         jobOffer.ScreenShotPath = $"indeed/{jobOffer.CompanyName}/{DateTime.Now:yyMMdd_HHmm}.png";
         await SaveScrenshoot(indeedPage, jobOffer.ScreenShotPath);
+
         jobOffer.HtmlPath = $"indeed/{jobOffer.CompanyName}/{DateTime.Now:yyMMdd_HHmm}.html";
         await SavePage(indeedPage, jobOffer.HtmlPath);
 
@@ -61,7 +64,7 @@ public class IndeedDetailsScraper : ScrapperBase
     private async Task ScrapCompany(Company company, IPage page)
     {
         var url = await page.EvaluateAsync<string>(
-            "() => document.querySelector('a[data-testid=\"inlineHeader-companyName\"]').href");
+            "document.querySelector('div[data-company-name] > span > a').getAttribute('href')");
 
         company.IndeedUrl = url;
     }

@@ -73,7 +73,7 @@ public class ScrapperBase
 
     protected async Task<IPage> LoadUntilAsync(string url,
         Func<IPage, Task<bool>>? successCondition = null,
-        int waitSeconds = 5)
+        float waitSeconds = 5)
     {
         const int maxAttempts = 5;
         successCondition ??= async p => (await p.QuerySelectorAllAsync("main.error")).Count == 0;

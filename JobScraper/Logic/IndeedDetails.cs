@@ -36,12 +36,25 @@ public class IndeedDetails
 
             foreach (var job in jobs)
             {
-                _logger.LogInformation("Scraping job: {JobTitle}", job.Title);
-                await ScrapperBase.RetryPolicy.ExecuteAsync(async () =>
-                    await _scrapper.ScrapeJobDetails(job));
-            }
+                try
+                {
+                    _logger.LogInformation("Scraping job: {JobTitle}", job.Title);
+                    await ScrapperBase.RetryPolicy.ExecuteAsync(async () =>
+                        await _scrapper.ScrapeJobDetails(job));
 
-            await _dbContext.SaveChangesAsync(cancellationToken);
+                    await _dbContext.SaveChangesAsync(cancellationToken);
+                }
+                catch (Exception e)
+                {
+                    job.Description = null; // Mark the job as failed to scrape
+                    _logger.LogError(e, "Failed to scrape job: {JobUrl}", job.OfferUrl);
+
+                    await _dbContext.SaveChangesAsync(cancellationToken);
+
+                    throw;
+                }
+
+            }
         }
     }
 }
