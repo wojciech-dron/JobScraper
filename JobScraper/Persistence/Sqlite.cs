@@ -22,14 +22,14 @@ public static class Sqlite
         return services;
     }
 
-    internal static void PrepareDb(this IServiceProvider services)
+    internal static async Task PrepareDbAsync(this IServiceProvider services)
     {
         using var scope = services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<JobsDbContext>();
 
         EnsureDbDirectoryExists(dbContext);
 
-        dbContext.Database.EnsureCreated();
+        await dbContext.Database.MigrateAsync();
     }
 
     private static void EnsureDbDirectoryExists(JobsDbContext dbContext)

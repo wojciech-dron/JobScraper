@@ -17,7 +17,7 @@ await builder.Services
     .AddScrapperServicesAsync(builder.Configuration);
 
 var app = builder.Build();
-app.Services.PrepareDb();
+await app.Services.PrepareDbAsync();
 
 app.Run<Commands>();
 
