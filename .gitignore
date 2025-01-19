@@ -263,3 +263,4 @@ __pycache__/
 
 # JobScrapper
 /JobScraper/Data/
+/JobScraper/appsettings.Development.json

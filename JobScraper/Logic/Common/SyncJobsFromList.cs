@@ -53,7 +53,9 @@ public class SyncJobsFromList
                     .Select(name => new Company
                     {
                         Name = name
-                    });
+                    }).ToArray();
+
+                _logger.LogInformation("Saving {CompaniesCount} new companies", companiesToAdd.Length);
 
                 await _dbContext.Companies.AddRangeAsync(companiesToAdd, cancellationToken);
                 await _dbContext.SaveChangesAsync(cancellationToken);
@@ -87,7 +89,10 @@ public class SyncJobsFromList
             var jobsToAdd = jobs
                 .Where(jo => !existingJobs
                     .Select(j => j.OfferUrl)
-                    .Contains(jo.OfferUrl));
+                    .Contains(jo.OfferUrl))
+                .ToArray();
+
+            _logger.LogInformation("Saving {JobsCount} new jobs", jobsToAdd.Length);
 
             await _dbContext.JobOffers.AddRangeAsync(jobsToAdd, cancellationToken);
             await _dbContext.SaveChangesAsync(cancellationToken);

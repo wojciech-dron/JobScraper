@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Polly;
 
-namespace JobScraper.Extensions;
+namespace JobScraper.Utils.Extensions;
 
 public static class MediatrExtensions
 {
