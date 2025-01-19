@@ -47,7 +47,7 @@ public class Commands
         await foreach (var jobs in scraper.ScrapeJobs())
         {
             _logger.LogInformation("Syncing Indeed jobs...");
-            await _mediator.Send(new SyncJobOffers.Command(jobs));
+            await _mediator.Send(new SyncJobsFromList.Command(jobs));
         }
 
     }
@@ -60,7 +60,7 @@ public class Commands
         await foreach (var jobs in scraper.ScrapeJobs())
         {
             _logger.LogInformation("Syncing Just-join.it jobs...");
-            await _mediator.Send(new SyncJobOffers.Command(jobs));
+            await _mediator.Send(new SyncJobsFromList.Command(jobs));
         }
     }
 

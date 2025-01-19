@@ -92,15 +92,10 @@ public class IndeedListScraper : ScrapperBase
         // Iterating foreach title
         for (var i = 0; i < titles.Length; i++)
         {
-            var company = new Company
-            {
-                Name = companyNames[i]
-            };
-
             var job = new JobOffer
             {
                 Title = titles[i],
-                Company = company,
+                CompanyName = companyNames[i],
                 Origin = "Indeed",
                 Location = locations[i],
                 OfferUrl = _baseUrl + urls[i],

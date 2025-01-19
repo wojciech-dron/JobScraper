@@ -39,13 +39,15 @@ public class JjitListScraper : ScrapperBase
 
         await AcceptCookies(page);
 
-        await SaveScrenshoot(page, $"jjit/list/{DateTime.Now:yyMMdd_HHmm}.png");
-        await SavePage(page, $"jjit/list/{DateTime.Now:yyMMdd_HHmm}.html");
+        var fetchDate = DateTime.Now.ToString("yyMMdd_HHmm");
+        var pageNumber = 0;
+
+        await SaveScrenshoot(page, $"jjit/list/{fetchDate}/{pageNumber}.png");
+        await SavePage(page, $"jjit/list/{fetchDate}/{pageNumber}.html");
 
         var newJobs = await ScrapeJobsFromList(page);
         yield return newJobs;
 
-        var pageNumber = 0;
         while (newJobs.Count > 0)
         {
             pageNumber++;
@@ -58,14 +60,13 @@ public class JjitListScraper : ScrapperBase
             await page.EvaluateAsync($"window.scrollTo(0, {scrollHeight});");
             await page.WaitForTimeoutAsync(Config.WaitForScrollSeconds * 1000);
 
-            await SaveScrenshoot(page, $"jjit/list/{pageNumber}-{DateTime.Now:yyMMdd_HHmm}.png");
-            await SavePage(page, $"jjit/list/{pageNumber}-{DateTime.Now:yyMMdd_HHmm}.html");
+            await SaveScrenshoot(page, $"jjit/list/{fetchDate}/{pageNumber}.png");
+            await SavePage(page, $"jjit/list/{fetchDate}/{pageNumber}.html");
 
             var jobsFromPage = await ScrapeJobsFromList(page);
 
-            newJobs = jobsFromPage.Where(j =>
-                    !previousJobs.Select(sc => sc.OfferUrl).Contains(j.OfferUrl))
-                .ToList();
+            var previousOfferUrls = previousJobs.Select(sc => sc.OfferUrl).ToArray();
+            newJobs = jobsFromPage.Where(j => !previousOfferUrls.Contains(j.OfferUrl)).ToList();
 
             yield return newJobs;
         }
@@ -110,11 +111,7 @@ public class JjitListScraper : ScrapperBase
             job.Origin = "Justjoin.it";
             job.Salary = phrases[1];
             job.AgeInfo = phrases[2];
-
-            var company = new Company();
-            company.Name = phrases[3];
-            job.Company = company;
-
+            job.CompanyName = phrases[3];
             job.Location = phrases[4];
             if (phrases[6].Contains("Locations"))
             {

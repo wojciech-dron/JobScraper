@@ -1,9 +1,9 @@
-﻿using JobScraper.Models;
-using JobScraper.Persistance;
+﻿using JobScraper.Logic;
+using JobScraper.Models;
 using JobScraper.Scrapers;
 using JobScraper.Scrapers.JustJoinIt;
-using Microsoft.Data.Sqlite;
-using Microsoft.EntityFrameworkCore;
+using MediatR;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Playwright;
 
 namespace JobScraper;
@@ -18,6 +18,9 @@ public static class Setup
         services.AddSingleton(browser);
 
         services.AddMediatR(c => c.RegisterServicesFromAssemblyContaining(typeof(Setup)));
+
+        services.Replace(new ServiceDescriptor(typeof(IRequestHandler<SyncJobsFromList.Command>), typeof(SyncJobsFromList.Handler),
+            ServiceLifetime.Transient));
 
         services.AddScrapers(configuration);
 
