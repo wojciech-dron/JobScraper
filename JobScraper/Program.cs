@@ -19,10 +19,13 @@ await builder.Services
 var app = builder.Build();
 await app.Services.PrepareDbAsync();
 
-app.AddCommands<IndeedDetails.Handler>();
-app.AddCommands<IndeedList.Handler>();
+// app.AddCommands<IndeedList.Handler>();
+// app.AddCommands<IndeedDetails.Handler>();
 app.AddCommands<JjitList.Handler>();
+app.AddCommands<JjitDetails.Handler>();
 
-await app.RunAsync<ScrapePipeline.Handler>();
+app.AddCommands<ScrapePipeline.Handler>();
+
+await app.RunAsync();
 
 Console.WriteLine("Scrapper finished");

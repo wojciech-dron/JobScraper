@@ -38,5 +38,6 @@ public static class Setup
         services.AddScoped<IndeedDetailsScraper>();
 
         services.AddScoped<JjitListScraper>();
+        services.AddScoped<JjitDetailsScraper>();
     }
 }

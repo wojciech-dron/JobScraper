@@ -5,16 +5,14 @@ namespace JobScraper.Models;
 
 public class JobOffer
 {
-    public string OfferUrl { get; set; }
-    public string Title { get; set; }
+    public string OfferUrl { get; set; } = null!;
+    public string Title { get; set; } = null!;
     public DataOrigin Origin { get; set; }
     public string? CompanyName { get; set; }
-    public string Location { get; set; }
+    public string? Location { get; set; }
     public DateTimeOffset ScrapedAt { get; set; } = DateTimeOffset.Now;
     public List<string> OfferKeywords { get; set; } = [];
 
-    // TODO: Add DetailsScrapeStatus: ToScrape, DetailsScraped, DetailsFailed ...
-    public string? AgeInfo { get; set; } // Jjit only
     public string? Description { get; set; }
     public string? ApplyUrl { get; set; }
     public string? HtmlPath { get; set; }
@@ -22,7 +20,20 @@ public class JobOffer
     public List<string> MyKeywords { get; set; } = [];
     public string? Salary { get; set; }
 
+    // Jjit only
+    public string? AgeInfo { get; set; }
+    public DateTime? PublishedAt { get; set; }
+
+    public DetailsScrapeStatus DetailsScrapeStatus { get; set; } = DetailsScrapeStatus.ToScrape;
+
     public Company Company { get; set; } = null!;
+}
+
+public enum DetailsScrapeStatus
+{
+    ToScrape,
+    Scraped,
+    Failed,
 }
 
 public enum DataOrigin
@@ -39,10 +50,17 @@ public class JobOfferModelBuilder : IEntityTypeConfiguration<JobOffer>
         builder.ToTable("JobOffers");
 
         builder.HasKey(j => j.OfferUrl);
+        builder.Property(j => j.OfferUrl).HasMaxLength(500);
         builder.Property(j => j.Title).HasMaxLength(255);
         builder.Property(j => j.Origin).HasConversion<string>().HasMaxLength(24);
         builder.Property(j => j.CompanyName).HasMaxLength(255);
         builder.Property(j => j.Location).HasMaxLength(255);
+        builder.Property(j => j.AgeInfo).HasMaxLength(32);
+        builder.Property(j => j.Location).HasMaxLength(100);
+        builder.Property(j => j.DetailsScrapeStatus)
+            .HasConversion<string>()
+            .HasMaxLength(24)
+            .HasDefaultValue(DetailsScrapeStatus.ToScrape);
 
         builder.Property(j => j.Description).HasMaxLength(5000);
         builder.Property(j => j.ApplyUrl).HasMaxLength(2048);
@@ -58,5 +76,6 @@ public class JobOfferModelBuilder : IEntityTypeConfiguration<JobOffer>
         builder.HasIndex(j => j.CompanyName);
         builder.HasIndex(j => j.Salary);
         builder.HasIndex(j => j.AgeInfo);
+        builder.HasIndex(j => j.DetailsScrapeStatus);
     }
 }

@@ -15,19 +15,19 @@ public class JjitDetailsScraper : ScrapperBase
 
     public async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
     {
-        Logger.LogInformation("Scrapeing job details for {OfferUrl}", jobOffer.OfferUrl);
+        Logger.LogInformation("Scraping job details for {OfferUrl}", jobOffer.OfferUrl);
 
         var page = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: Config.WaitForDetailsSeconds);
         await page.WaitForTimeoutAsync(Config.WaitForDetailsSeconds * 1000); // Wait for the page to load
 
-        jobOffer.ScreenShotPath = $"indeed/{jobOffer.CompanyName}/{DateTime.Now:yyMMdd_HHmm}.png";
+        jobOffer.ScreenShotPath = $"jjit/{jobOffer.CompanyName}/{DateTime.Now:yyMMdd_HHmm}.png";
         await SaveScrenshoot(page, jobOffer.ScreenShotPath);
 
-        jobOffer.HtmlPath = $"indeed/{jobOffer.CompanyName}/{DateTime.Now:yyMMdd_HHmm}.html";
+        jobOffer.HtmlPath = $"jjit/{jobOffer.CompanyName}/{DateTime.Now:yyMMdd_HHmm}.html";
         await SavePage(page, jobOffer.HtmlPath);
 
         await Task.WhenAll(
-            ScrapApplyUrl(jobOffer, page),
+            ScrapeFromInjectScript(jobOffer, page),
             ScrapDescription(jobOffer, page),
             ScrapCompany(jobOffer.Company, page)
         );
@@ -37,37 +37,43 @@ public class JjitDetailsScraper : ScrapperBase
 
     private async Task ScrapDescription(JobOffer jobOffer, IPage page)
     {
-        var indeedJobDescriptionElement = await page.QuerySelectorAsync("div.jobsearch-JobComponent-description");
-        if (indeedJobDescriptionElement != null)
-        {
-            jobOffer.Description = await indeedJobDescriptionElement.InnerTextAsync();
-            jobOffer.MyKeywords = Config.Keywords
-                .Where(keyword => jobOffer.Description.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-        }
+        var description = await page.EvaluateAsync<string?>(@"() => {
+            let h3Elements = document.querySelectorAll('h3.MuiTypography-root.MuiTypography-h3')
+            return h3Elements[h3Elements.length - 1]?.parentElement?.parentElement?.textContent
+        }");
+
+        jobOffer.Description = description;
+
+        if (description is null)
+            return;
+
+        jobOffer.MyKeywords = Config.Keywords
+            .Where(keyword => jobOffer.Description!.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+            .ToList();
     }
 
-    private static async Task ScrapApplyUrl(JobOffer jobOffer, IPage page)
+    private static async Task ScrapeFromInjectScript(JobOffer job, IPage page)
     {
-        var indeedApplyElement = await page.QuerySelectorAsync(
-            "span[data-indeed-apply-joburl], button[href*='https://www.indeed.com/applystart?jk=']");
-        if (indeedApplyElement != null)
-        {
-            jobOffer.ApplyUrl = await indeedApplyElement.GetAttributeAsync("data-indeed-apply-joburl");
-        }
+        var dataInjectScript = await page.EvaluateAsync<string?>(@"
+            Array.from(document.querySelectorAll('script')).findLast(s => s.textContent.includes('createdAt'))?.textContent
+        ");
 
-        var externalApplyElement = await page.QuerySelectorAsync("button[aria-haspopup='dialog']");
-        if (externalApplyElement is not null)
-        {
-            jobOffer.ApplyUrl = await externalApplyElement.GetAttributeAsync("href");
-        }
+        var dataLines = dataInjectScript?.Split(',');
+
+        job.PublishedAt = Extract(dataLines, "publishedAt").TryParseDate();
+        job.ApplyUrl = Extract(dataLines, "applyUrl");
+    }
+
+    private static string? Extract(string[]? dataLines, string key)
+    {
+        return dataLines?.FirstOrDefault(l => l.Contains(key))?.Split("\"")[^2].Replace("\\", "");
     }
 
     private async Task ScrapCompany(Company company, IPage page)
     {
-        var url = await page.EvaluateAsync<string>(
-            "document.querySelector('div[data-company-name] > span > a').getAttribute('href')");
+        var url = await page.EvaluateAsync<string?>(
+            "document.querySelector('a[name=\\\"company_profile_button\\\"]')?.getAttribute('href')");
 
-        company.IndeedUrl = url;
+        company.JjitUrl = url;
     }
 }

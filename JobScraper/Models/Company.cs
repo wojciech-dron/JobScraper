@@ -5,12 +5,13 @@ namespace JobScraper.Models;
 
 public class Company
 {
-    public string Name { get; set; }
+    public required string Name { get; set; }
+    public string? Description { get; set; }
     public DateTimeOffset ScrapedAt { get; set; } = DateTimeOffset.Now;
     public string? IndeedUrl { get; set; }
     public string? JjitUrl { get; set; }
 
-    public List<JobOffer> JobOffers { get; set; }
+    public List<JobOffer> JobOffers { get; set; } = null!;
 }
 
 public class CompanyModelBuilder : IEntityTypeConfiguration<Company>
@@ -19,7 +20,12 @@ public class CompanyModelBuilder : IEntityTypeConfiguration<Company>
     {
         builder.ToTable("Companies");
 
-        builder.HasKey(b => b.Name);
+        builder.HasKey(c => c.Name);
+
+        builder.Property(c => c.Name).HasMaxLength(255);
+        builder.Property(c => c.Description).HasMaxLength(30000);
+        builder.Property(c => c.IndeedUrl).HasMaxLength(1023);
+        builder.Property(c => c.JjitUrl).HasMaxLength(1023);
 
         builder.HasMany(c => c.JobOffers)
             .WithOne(jo => jo.Company)

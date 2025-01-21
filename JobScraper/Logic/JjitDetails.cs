@@ -2,37 +2,39 @@
 using JobScraper.Models;
 using JobScraper.Persistence;
 using JobScraper.Scrapers;
-using JobScraper.Scrapers.Indeed;
+using JobScraper.Scrapers.JustJoinIt;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace JobScraper.Logic;
 
-public class IndeedDetails
+public class JjitDetails
 {
     public record Scrape : IRequest;
 
     public class Handler : IRequestHandler<Scrape>
     {
-        private readonly IndeedDetailsScraper _scrapper;
+        private readonly JjitDetailsScraper _scrapper;
         private readonly JobsDbContext _dbContext;
         private readonly ILogger<Handler> _logger;
 
-        public Handler(IndeedDetailsScraper scrapper, JobsDbContext dbContext, ILogger<Handler> logger)
+        public Handler(JjitDetailsScraper scrapper, JobsDbContext dbContext, ILogger<Handler> logger)
         {
             _scrapper = scrapper;
             _dbContext = dbContext;
             _logger = logger;
         }
 
-        [Command("indeed-details")]
+        [Command("jjit-details")]
         public async Task Handle(Scrape? scrape = null, CancellationToken cancellationToken = default)
         {
             var jobs = await _dbContext.JobOffers
                 .Include(j => j.Company)
-                .Where(j => j.Origin == DataOrigin.Indeed)
+                .Where(j => j.Origin == DataOrigin.JustJoinIt)
                 .Where(j => j.DetailsScrapeStatus != DetailsScrapeStatus.Scraped)
                 .ToListAsync(cancellationToken);
+
+            _logger.LogInformation("Found {Count} jobs to scrape details", jobs.Count);
 
             foreach (var job in jobs)
             {

@@ -34,6 +34,7 @@ public class ScrapePipeline
             _logger.LogInformation("Scraping all details...");
             await Task.WhenAll([
                 _mediator.SendWithRetry(new IndeedDetails.Scrape(), cancellationToken),
+                _mediator.SendWithRetry(new JjitDetails.Scrape(), cancellationToken),
             ]);
 
             _logger.LogInformation("Scraping completed successfully");
