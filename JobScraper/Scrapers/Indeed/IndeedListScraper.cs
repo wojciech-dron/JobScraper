@@ -11,9 +11,9 @@ public class IndeedListScraper : ScrapperBase
     private readonly string _baseUrl;
     protected override DataOrigin DataOrigin => DataOrigin.Indeed;
 
-    public IndeedListScraper(IBrowser browser,
+    public IndeedListScraper(
         IOptions<ScraperConfig> config,
-        ILogger<IndeedListScraper> logger) : base(browser, config, logger)
+        ILogger<IndeedListScraper> logger) : base(config, logger)
     {
         _baseUrl = Config.IndeedBaseUrl;
     }

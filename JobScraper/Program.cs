@@ -12,9 +12,9 @@ builder.Configuration.AddJsonFile("appsettings.Development.json", optional: true
 
 builder.Logging.AddOtelLogging(builder.Configuration);
 
-await builder.Services
+builder.Services
     .AddSqlitePersistance()
-    .AddScrapperServicesAsync(builder.Configuration);
+    .AddScrapperServices(builder.Configuration);
 
 var app = builder.Build();
 await app.Services.PrepareDbAsync();

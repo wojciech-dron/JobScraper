@@ -41,6 +41,8 @@ public class IndeedDetails
                     await ScrapperBase.RetryPolicy.ExecuteAsync(async () =>
                         await _scrapper.ScrapeJobDetails(job));
 
+                    await _scrapper.DisposeAsync();
+
                     job.DetailsScrapeStatus = DetailsScrapeStatus.Scraped;
 
                     await _dbContext.SaveChangesAsync(cancellationToken);

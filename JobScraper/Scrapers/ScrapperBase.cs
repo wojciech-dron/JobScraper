@@ -6,11 +6,12 @@ using Polly.Retry;
 
 namespace JobScraper.Scrapers;
 
-public abstract class ScrapperBase
+public abstract class ScrapperBase : IAsyncDisposable
 {
-    protected readonly IBrowser Browser;
     protected readonly ScraperConfig Config;
     protected readonly ILogger<ScrapperBase> Logger;
+    private IPlaywright? _playwright;
+    private IBrowser? _browser;
 
     protected abstract DataOrigin DataOrigin { get; }
 
@@ -28,18 +29,19 @@ public abstract class ScrapperBase
         Policy<JobOffer>.Handle<Exception>()
             .WaitAndRetryAsync(2, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
-    public ScrapperBase(IBrowser browser,
-        IOptions<ScraperConfig> config,
+    public ScrapperBase(IOptions<ScraperConfig> config,
         ILogger<ScrapperBase> logger)
     {
-        Browser = browser;
         Logger = logger;
         Config = config.Value;
     }
 
     public async Task<IBrowserContext> NewContextAsync()
     {
-        return await Browser.NewContextAsync(new BrowserNewContextOptions
+        _playwright ??= await Playwright.CreateAsync();
+        _browser ??= await _playwright.Firefox.LaunchAsync();
+
+        return await _browser.NewContextAsync(new BrowserNewContextOptions
         {
             UserAgent = UserAgentStrings[Random.Shared.Next() % UserAgentStrings.Length]
         });
@@ -103,5 +105,14 @@ public abstract class ScrapperBase
         jobOffer.MyKeywords = Config.Keywords
             .Where(keyword => jobOffer.Description!.Contains(keyword, StringComparison.OrdinalIgnoreCase))
             .ToList();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _playwright?.Dispose();
+        _playwright = null;
+        if (_browser is not null)
+            await _browser.DisposeAsync();
+        _browser = null;
     }
 }

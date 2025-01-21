@@ -36,12 +36,15 @@ public class JjitDetails
 
             _logger.LogInformation("Found {Count} jobs to scrape details", jobs.Count);
 
+            var addCount = 0;
             foreach (var job in jobs)
             {
                 try
                 {
                     await ScrapperBase.RetryPolicy.ExecuteAsync(async () =>
                         await _scrapper.ScrapeJobDetails(job));
+
+                    await _scrapper.DisposeAsync();
 
                     job.DetailsScrapeStatus = DetailsScrapeStatus.Scraped;
 
@@ -56,7 +59,6 @@ public class JjitDetails
 
                     throw;
                 }
-
             }
         }
     }

@@ -8,9 +8,9 @@ public class JjitDetailsScraper : ScrapperBase
 {
     protected override DataOrigin DataOrigin => DataOrigin.JustJoinIt;
 
-    public JjitDetailsScraper(IBrowser browser,
+    public JjitDetailsScraper(
         IOptions<ScraperConfig> config,
-        ILogger<JjitDetailsScraper> logger) : base(browser, config, logger)
+        ILogger<JjitDetailsScraper> logger) : base(config, logger)
     { }
 
     public async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)

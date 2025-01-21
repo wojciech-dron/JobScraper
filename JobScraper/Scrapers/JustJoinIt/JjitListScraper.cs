@@ -10,9 +10,9 @@ public class JjitListScraper : ScrapperBase
     private readonly string _baseUrl;
     protected override DataOrigin DataOrigin => DataOrigin.JustJoinIt;
 
-    public JjitListScraper(IBrowser browser,
+    public JjitListScraper(
         IOptions<ScraperConfig> config,
-        ILogger<JjitListScraper> logger) : base(browser, config, logger)
+        ILogger<JjitListScraper> logger) : base(config, logger)
     {
         _baseUrl = Config.JjitBaseUrl;
     }

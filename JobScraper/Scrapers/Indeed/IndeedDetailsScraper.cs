@@ -8,9 +8,9 @@ public class IndeedDetailsScraper : ScrapperBase
 {
     protected override DataOrigin DataOrigin => DataOrigin.Indeed;
 
-    public IndeedDetailsScraper(IBrowser browser,
+    public IndeedDetailsScraper(
         IOptions<ScraperConfig> config,
-        ILogger<IndeedDetailsScraper> logger) : base(browser, config, logger)
+        ILogger<IndeedDetailsScraper> logger) : base(config, logger)
     { }
 
     public async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
