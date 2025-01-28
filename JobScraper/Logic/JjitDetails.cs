@@ -36,7 +36,6 @@ public class JjitDetails
 
             _logger.LogInformation("Found {Count} jobs to scrape details", jobs.Count);
 
-            var addCount = 0;
             foreach (var job in jobs)
             {
                 try
