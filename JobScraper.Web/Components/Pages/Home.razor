@@ -1,7 +1,31 @@
 ﻿@page "/"
+@rendermode InteractiveServer
+@using JobScraper.Models
+@using JobScraper.Persistence
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.EntityFrameworkCore
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Job offers</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Job offers</h1>
 
-Welcome to your new app.
+<QuickGrid Items="jobOffers">
+    <PropertyColumn Property="@(p => p.Company.Name)" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.Origin)" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.PublishedAt)" Format="yyyy-MM-dd" Sortable="true"/>
+</QuickGrid>
+
+@inject IDbContextFactory<JobsDbContext> DbFactory
+
+@code {
+    JobsDbContext context = null!;
+    IQueryable<JobOffer> jobOffers => context.JobOffers
+        .Include(jo => jo.Company);
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

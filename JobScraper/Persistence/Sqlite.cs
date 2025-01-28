@@ -5,7 +5,7 @@ namespace JobScraper.Persistence;
 
 public static class Sqlite
 {
-    internal static IServiceCollection AddSqlitePersistance(this IServiceCollection services)
+    public static IServiceCollection AddSqlitePersistance(this IServiceCollection services)
     {
         services.AddPooledDbContextFactory<JobsDbContext>((serviceProvider, options) =>
         {

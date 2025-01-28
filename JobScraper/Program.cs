@@ -10,7 +10,7 @@ builder.Configuration.AddEnvironmentVariables();
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
 builder.Configuration.AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true);
 
-builder.Logging.AddOtelLogging(builder.Configuration);
+builder.Logging.AddOtelLogging(builder.Configuration, "JobScraper");
 
 builder.Services
     .AddSqlitePersistance()

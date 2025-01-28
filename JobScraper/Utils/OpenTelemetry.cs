@@ -6,13 +6,11 @@ namespace JobScraper.Utils;
 public static class OpenTelemetry
 {
     public static ILoggingBuilder AddOtelLogging(this ILoggingBuilder builder,
-        IConfiguration configuration)
+        IConfiguration configuration, string serviceName)
     {
         var otlpEndpoint = configuration["OtelEndpoint"];
         if (string.IsNullOrWhiteSpace(otlpEndpoint))
             return builder;
-
-        const string serviceName = "JobScraper";
 
         builder.AddOpenTelemetry(logging =>
         {
