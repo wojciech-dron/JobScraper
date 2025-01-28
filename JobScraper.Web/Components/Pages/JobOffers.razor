@@ -1,0 +1,44 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using JobScraper.Models
+@using JobScraper.Persistence
+@using JobScraper.Utils.Extensions
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Job offers</PageTitle>
+
+<h1>Job offers</h1>
+
+<QuickGrid Items="jobOffers" Pagination="@pagination">
+    <PropertyColumn Property="@(p => p.Company.Name)" Sortable="true">
+        <ColumnOptions>
+            <div class="search-box">
+                <input type="search" autofocus @bind="companyFilter" @bind:event="oninput" placeholder="Company name..."/>
+            </div>
+        </ColumnOptions>
+    </PropertyColumn>
+    <PropertyColumn Property="@(p => p.Origin)" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.Salary)" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.PublishedAt)" Format="yyyy-MM-dd" Sortable="true"/>
+</QuickGrid>
+<Paginator State="@pagination"/>
+
+@inject IDbContextFactory<JobsDbContext> DbFactory
+
+@code {
+    JobsDbContext context = null!;
+    PaginationState pagination = new() { ItemsPerPage = 25 };
+    private string companyFilter;
+
+    IQueryable<JobOffer> jobOffers => context.JobOffers
+        .Include(jo => jo.Company)
+        .WhereIf(!string.IsNullOrEmpty(companyFilter), jo => jo.Company.Name.Contains(companyFilter));
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}
