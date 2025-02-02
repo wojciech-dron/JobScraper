@@ -81,9 +81,8 @@ public class SyncJobsFromList
             {
                 var newScrap = jobs.First(e => e.OfferUrl == job.OfferUrl);
 
-                job.ScrapedAt = DateTimeOffset.Now;
+                job.ScrapedAt = DateTime.UtcNow;
                 job.AgeInfo = newScrap.AgeInfo;
-
             }
 
             var jobsToAdd = jobs

@@ -10,7 +10,7 @@ public class JobOffer
     public DataOrigin Origin { get; set; }
     public string? CompanyName { get; set; }
     public string? Location { get; set; }
-    public DateTimeOffset ScrapedAt { get; set; } = DateTimeOffset.Now;
+    public DateTime ScrapedAt { get; set; } = DateTime.UtcNow;
     public List<string> OfferKeywords { get; set; } = [];
 
     public string? Description { get; set; }
@@ -19,6 +19,7 @@ public class JobOffer
     public string? ScreenShotPath { get; set; }
     public List<string> MyKeywords { get; set; } = [];
     public string? Salary { get; set; }
+    public string Comments { get; set; } = "";
 
     // Jjit only
     public string? AgeInfo { get; set; }
@@ -27,6 +28,7 @@ public class JobOffer
     public DetailsScrapeStatus DetailsScrapeStatus { get; set; } = DetailsScrapeStatus.ToScrape;
 
     public Company Company { get; set; } = null!;
+    public Application? Application { get; set; }
 }
 
 public enum DetailsScrapeStatus
@@ -57,6 +59,7 @@ public class JobOfferModelBuilder : IEntityTypeConfiguration<JobOffer>
         builder.Property(j => j.Location).HasMaxLength(255);
         builder.Property(j => j.AgeInfo).HasMaxLength(32);
         builder.Property(j => j.Location).HasMaxLength(100);
+        builder.Property(j => j.Comments).HasMaxLength(500);
         builder.Property(j => j.DetailsScrapeStatus)
             .HasConversion<string>()
             .HasMaxLength(24)
