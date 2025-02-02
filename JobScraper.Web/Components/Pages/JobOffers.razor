@@ -10,30 +10,51 @@
 
 <h1>Job offers</h1>
 
-<QuickGrid Items="jobOffers" Pagination="@pagination">
-    <PropertyColumn Property="@(p => p.Company.Name)" Sortable="true">
+<QuickGrid Items="jobOffers" Pagination="@pagination" class="table">
+    <PropertyColumn class="col-3" Property="@(p => p.Title)" Sortable="true"/>
+    <PropertyColumn class="col-2" Property="@(p => p.Company.Name)" Sortable="true">
         <ColumnOptions>
             <div class="search-box">
-                <input type="search" autofocus @bind="companyFilter" @bind:event="oninput" placeholder="Company name..."/>
+                <input type="search" autofocus @bind="companyFilter" @bind:event="oninput" placeholder="Filter..."/>
             </div>
         </ColumnOptions>
     </PropertyColumn>
-    <PropertyColumn Property="@(p => p.Origin)" Sortable="true"/>
-    <PropertyColumn Property="@(p => p.Salary)" Sortable="true"/>
-    <PropertyColumn Property="@(p => p.PublishedAt)" Format="yyyy-MM-dd" Sortable="true"/>
+    <PropertyColumn class="col-1" Property="@(p => p.Origin)" Sortable="true">
+        <ColumnOptions>
+            <div class="search-box">
+                <input type="search" autofocus @bind="originFilter" @bind:event="oninput" placeholder="Filter..."/>
+            </div>
+        </ColumnOptions>
+    </PropertyColumn>
+    <PropertyColumn class="col-2" Property="@(p => p.Salary)" Sortable="true"/>
+    <PropertyColumn class="col-1" Property="@(p => p.PublishedAt)" Format="yyyy-MM-dd" Sortable="true"/>
+    <PropertyColumn class="col-1" Property="@(p => p.ScrapedAt)" Format="yyyy-MM-dd" Sortable="true"/>
+    <PropertyColumn class="col" Property="@(p => p.AgeInfo)" Sortable="true"/>
+    <PropertyColumn class="col-2" Property="@(p => p.Location)" Sortable="true"/>
+    <PropertyColumn class="col-1" Property="@(p => p.DetailsScrapeStatus)" Sortable="true"/>
+    <PropertyColumn class="col-2" Title="My keywords" Property="@(p => string.Join(", ", p.MyKeywords))"/>
 </QuickGrid>
-<Paginator State="@pagination"/>
+
+<select @bind="pagination.ItemsPerPage">
+    <option value="20">20</option>
+    <option value="50">50</option>
+    <option value="100">100</option>
+</select>
+<Paginator State="@pagination" />
 
 @inject IDbContextFactory<JobsDbContext> DbFactory
 
 @code {
     JobsDbContext context = null!;
-    PaginationState pagination = new() { ItemsPerPage = 25 };
-    private string companyFilter;
+    PaginationState pagination = new() { ItemsPerPage = 50 };
+    private string companyFilter = "";
+    private string originFilter = "";
 
     IQueryable<JobOffer> jobOffers => context.JobOffers
         .Include(jo => jo.Company)
-        .WhereIf(!string.IsNullOrEmpty(companyFilter), jo => jo.Company.Name.Contains(companyFilter));
+        .WhereIf(!string.IsNullOrEmpty(companyFilter), jo => jo.Company.Name.ToLower().Contains(companyFilter.ToLower()))
+        .WhereIf(!string.IsNullOrEmpty(originFilter), jo => jo.Origin.ToString().ToLower().Contains(originFilter.ToLower()))
+        .OrderBy(jo => jo.PublishedAt);
 
     protected override void OnInitialized()
     {
