@@ -15,4 +15,8 @@
       <ProjectReference Include="..\JobScraper\JobScraper.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Content Remove="Pages\_ValidationScriptsPartial.cshtml" />
+    </ItemGroup>
+
 </Project>

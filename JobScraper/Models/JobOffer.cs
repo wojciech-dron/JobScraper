@@ -43,6 +43,7 @@ public enum DataOrigin
     Manual,
     Indeed,
     JustJoinIt,
+    NoFluffJobs
 }
 
 public class JobOfferModelBuilder : IEntityTypeConfiguration<JobOffer>
