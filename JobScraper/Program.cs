@@ -19,8 +19,8 @@ builder.Services
 var app = builder.Build();
 await app.Services.PrepareDbAsync();
 
-// app.AddCommands<IndeedList.Handler>();
-// app.AddCommands<IndeedDetails.Handler>();
+app.AddCommands<IndeedList.Handler>();
+app.AddCommands<IndeedDetails.Handler>();
 app.AddCommands<JjitList.Handler>();
 app.AddCommands<JjitDetails.Handler>();
 

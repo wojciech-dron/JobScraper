@@ -1,0 +1,84 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using JobScraper.Models
+@using JobScraper.Persistence
+@using JobScraper.Utils.Extensions
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Job offers</PageTitle>
+
+<h1>Job offers</h1>
+
+<QuickGrid Items="jobOffers" Pagination="@pagination" class="table">
+    <TemplateColumn>
+        <div class="d-flex">
+            <a class="me-2" href="/job-offer/@Uri.EscapeDataString(context.OfferUrl)">L</a>
+            <a class="me-2" href="@context.OfferUrl">O</a>
+            @if (!string.IsNullOrEmpty(context.ApplyUrl))
+            {
+                <a class="me-2" href="@context.ApplyUrl">A</a>
+            }
+            @if (context.Application is not null)
+            {
+                <span>S</span>
+            }
+        </div>
+    </TemplateColumn>
+    <PropertyColumn class="col-3" Property="@(p => p.Title)" Sortable="true"/>
+    <PropertyColumn class="col-2" Property="@(p => p.Company.Name)" Sortable="true">
+        <ColumnOptions>
+            <div class="search-box">
+                <input type="search" autofocus @bind="companyFilter" @bind:event="oninput" placeholder="Filter..."/>
+            </div>
+        </ColumnOptions>
+    </PropertyColumn>
+    <PropertyColumn class="col-1" Property="@(p => p.Origin)" Sortable="true">
+        <ColumnOptions>
+            <div class="search-box">
+                <input type="search" autofocus @bind="originFilter" @bind:event="oninput" placeholder="Filter..."/>
+            </div>
+        </ColumnOptions>
+    </PropertyColumn>
+    <PropertyColumn class="col-1" Property="@(p => p.SalaryMinMonth)" Sortable="true"/>
+    <PropertyColumn class="col-1" Property="@(p => p.SalaryMaxMonth)" Sortable="true"/>
+    <PropertyColumn class="col-1" Property="@(p => p.SalaryCurrency)" Sortable="true"/>
+    <PropertyColumn class="col-1" Property="@(p => p.PublishedAt)" Format="yyyy-MM-dd" Sortable="true"/>
+    <PropertyColumn class="col-1" Property="@(p => p.ScrapedAt)" Format="yyyy-MM-dd" Sortable="true"/>
+    <PropertyColumn class="col" Property="@(p => p.AgeInfo)" Sortable="true"/>
+    <PropertyColumn class="col-2" Property="@(p => p.Location)" Sortable="true"/>
+    <PropertyColumn class="col-2" Title="My keywords" Property="@(p => string.Join(", ", p.MyKeywords))"/>
+
+</QuickGrid>
+
+<select @bind="pagination.ItemsPerPage">
+    <option value="20">20</option>
+    <option value="50">50</option>
+    <option value="100">100</option>
+</select>
+<Paginator State="@pagination" />
+
+@inject IDbContextFactory<JobsDbContext> DbFactory
+
+@code {
+    JobsDbContext context = null!;
+    PaginationState pagination = new() { ItemsPerPage = 50 };
+    private string companyFilter = "";
+    private string originFilter = "";
+
+
+    IQueryable<JobOffer> jobOffers => context.JobOffers
+        .Include(jo => jo.Company)
+        .Include(jo => jo.Application)
+        .Where(jo => jo.DetailsScrapeStatus == DetailsScrapeStatus.Scraped)
+        .WhereIf(!string.IsNullOrEmpty(companyFilter), jo => jo.Company.Name.ToLower().Contains(companyFilter.ToLower()))
+        .WhereIf(!string.IsNullOrEmpty(originFilter), jo => jo.Origin.ToString().ToLower().Contains(originFilter.ToLower()))
+        .OrderBy(jo => jo.PublishedAt);
+
+    protected override void OnInitialized()
+    {
+        context = DbFactory.CreateDbContext();
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

@@ -98,13 +98,14 @@ public class IndeedListScraper : ScrapperBase
         // Iterating foreach title
         for (var i = 0; i < titles.Length; i++)
         {
+            var offerUrl = _baseUrl + urls[i]!.Split('&')[0].Replace("/rc/clk", "/viewjob");
             var job = new JobOffer
             {
                 Title = titles[i],
                 CompanyName = companyNames[i],
                 Origin = DataOrigin.Indeed,
                 Location = locations[i],
-                OfferUrl = _baseUrl + urls[i],
+                OfferUrl = offerUrl,
             };
 
             jobs.Add(job);

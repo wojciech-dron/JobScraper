@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
 using JobScraper.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
@@ -111,7 +112,7 @@ public class JjitListScraper : ScrapperBase
             job.OfferUrl = _baseUrl + urls.ElementAtOrDefault(i) ?? "";
             job.Title = phrases[0];
             job.Origin = DataOrigin.JustJoinIt;
-            job.Salary = phrases[1];
+            ScrapSalary(job, phrases[1]);
             job.AgeInfo = phrases[2];
             job.CompanyName = phrases[3];
             job.Location = phrases[4];
@@ -130,5 +131,22 @@ public class JjitListScraper : ScrapperBase
         Logger.LogInformation("Justjoin.it scraping completed. Total jobs: {JobsCount}", jobs.Count);
 
         return jobs;
+    }
+
+    private static void ScrapSalary(JobOffer job, string rawSalary)
+    {
+        if (string.IsNullOrEmpty(rawSalary))
+            return;
+
+        rawSalary = rawSalary.Replace(" ", "");
+
+        var minMaxMatch = Regex.Match(rawSalary, @"(\d+)-(\d+)");
+        var currencyMatch = Regex.Match(rawSalary, @"[A-Z]{3}");
+        if (!minMaxMatch.Success || !currencyMatch.Success)
+            return;
+
+        job.SalaryMinMonth = int.Parse(minMaxMatch.Groups[1].Value);
+        job.SalaryMaxMonth = int.Parse(minMaxMatch.Groups[2].Value);
+        job.SalaryCurrency = currencyMatch.Value;
     }
 }

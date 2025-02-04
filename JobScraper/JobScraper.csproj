@@ -31,5 +31,13 @@
         <DependentUpon>appsettings.json</DependentUpon>
       </Content>
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Logic\Indeed\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Remove="Logic\Indeed\IndeedDetails.cs" />
+    </ItemGroup>
     
 </Project>

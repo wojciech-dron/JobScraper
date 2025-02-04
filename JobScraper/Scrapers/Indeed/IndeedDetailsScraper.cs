@@ -1,4 +1,5 @@
-﻿using JobScraper.Models;
+﻿using System.Text.RegularExpressions;
+using JobScraper.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 
@@ -26,23 +27,59 @@ public class IndeedDetailsScraper : ScrapperBase
         jobOffer.HtmlPath = $"indeed/{jobOffer.CompanyName}/{DateTime.Now:yyMMdd_HHmm}.html";
         await SavePage(indeedPage, jobOffer.HtmlPath);
 
+        jobOffer.PublishedAt = DateTime.UtcNow;
+
         await Task.WhenAll(
             ScrapApplyUrl(jobOffer, indeedPage),
             ScrapDescription(jobOffer, indeedPage),
-            ScrapCompany(jobOffer.Company, indeedPage)
+            ScrapCompany(jobOffer.Company, indeedPage),
+            ScrapSalary(jobOffer, indeedPage)
         );
 
         return jobOffer;
     }
 
+    private static async Task ScrapSalary(JobOffer job, IPage page)
+    {
+        var rawSalary = await page.EvaluateAsync<string?>(@"
+            Array.from(document.querySelectorAll('span[class*=""js-match-insights-provider""]'))
+            .filter(span => span.textContent.includes('$'))[0]?.textContent;
+        ");
+
+        if (string.IsNullOrEmpty(rawSalary))
+            return;
+
+        rawSalary = rawSalary.Replace(",", "");
+
+        var minMaxMatch = Regex.Match(rawSalary, @"\$(\d+) - \$(\d+)");
+        if (!minMaxMatch.Success)
+            return;
+
+        var period = SalaryPeriod.Month;
+        if (rawSalary.Contains("hour")) period = SalaryPeriod.Hour;
+        if (rawSalary.Contains("day")) period = SalaryPeriod.Day;
+        if (rawSalary.Contains("week")) period = SalaryPeriod.Week;
+        if (rawSalary.Contains("year")) period = SalaryPeriod.Year;
+
+        var minMonth = int.Parse(minMaxMatch.Groups[1].Value);
+        job.SalaryMinMonth = minMonth * (int)period / 12;
+
+        var maxMonth = int.Parse(minMaxMatch.Groups[2].Value);
+        job.SalaryMaxMonth = maxMonth * (int)period / 12;
+
+        job.SalaryCurrency = "USD";
+    }
+
     private async Task ScrapDescription(JobOffer jobOffer, IPage page)
     {
-        var indeedJobDescriptionElement = await page.QuerySelectorAsync("div.jobsearch-JobComponent-description");
-        if (indeedJobDescriptionElement != null)
-        {
-            jobOffer.Description = await indeedJobDescriptionElement.InnerTextAsync();
-            FindMyKeywords(jobOffer);
-        }
+        var jobDescription = await page.EvaluateAsync<string>(
+            "document.querySelector('#jobDescriptionText')?.innerText ?? ''");
+
+        if (string.IsNullOrWhiteSpace(jobDescription))
+            return;
+
+        jobOffer.Description = jobDescription;
+        FindMyKeywords(jobOffer);
     }
 
 
@@ -64,9 +101,18 @@ public class IndeedDetailsScraper : ScrapperBase
 
     private async Task ScrapCompany(Company company, IPage page)
     {
-        var url = await page.EvaluateAsync<string>(
-            "document.querySelector('div[data-company-name] > span > a').getAttribute('href')");
+        var url = await page.EvaluateAsync<string?>(
+            "document.querySelector('div[data-company-name] > span > a')?.getAttribute('href')");
 
         company.IndeedUrl = url;
     }
+}
+
+public enum SalaryPeriod
+{
+    Hour = 12 * 30 * 24,
+    Day = 12 * 30,
+    Week = 12 * 4,
+    Month = 12,
+    Year = 1,
 }

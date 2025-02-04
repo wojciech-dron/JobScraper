@@ -1,0 +1,56 @@
+@page "/job-offer/{offerUrl}"
+@using JobScraper.Models
+@using JobScraper.Persistence
+@using Microsoft.EntityFrameworkCore
+
+<h3>Job Offer Details</h3>
+
+@if (jobOffer != null)
+{
+    <div>
+        <a href="@jobOffer.OfferUrl" target="_blank">View Job Page</a><br/>
+        <a href="@jobOffer.ApplyUrl" target="_blank">Apply page</a><br/>
+        <strong>Title:</strong> @jobOffer.Title<br/>
+        <strong>Company Name:</strong> @(jobOffer.CompanyName ?? "Not specified")<br/>
+        <strong>Location:</strong> @(jobOffer.Location ?? "Not specified")<br/>
+        <strong>Salary:</strong> @($"{jobOffer.SalaryMinMonth} - {jobOffer.SalaryMaxMonth} ")<br/>
+        <strong>Description:</strong><br/>
+        <p>@(jobOffer.Description ?? "No description available.")</p>
+        <strong>Keywords:</strong><br/>
+        <ul>
+            @foreach (var keyword in jobOffer.OfferKeywords)
+            {
+                <li>@keyword</li>
+            }
+        </ul>
+        <strong>My Keywords:</strong><br/>
+        <ul>
+            @foreach (var keyword in jobOffer.MyKeywords)
+            {
+                <li>@keyword</li>
+            }
+        </ul>
+        <strong>Scraped At:</strong> @jobOffer.ScrapedAt.ToString("yyyy-MM-dd HH:mm:ss")<br/>
+        <strong>Published At:</strong> @(jobOffer.PublishedAt?.ToString("yyyy-MM-dd HH:mm:ss") ?? "Not specified")<br/>
+        <strong>Status:</strong> @jobOffer.DetailsScrapeStatus<br/>
+    </div>
+}
+else
+{
+    <p>No job offer selected.</p>
+}
+
+@inject IDbContextFactory<JobsDbContext> DbFactory
+
+@code {
+    private JobsDbContext context = null!;
+    private JobOffer? jobOffer { get; set; }
+
+    [Parameter] public string OfferUrl { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        context = await DbFactory.CreateDbContextAsync();
+        jobOffer = await context.JobOffers.FindAsync(OfferUrl);
+    }
+}

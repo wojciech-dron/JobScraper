@@ -7,7 +7,7 @@ public class JobOffer
 {
     public string OfferUrl { get; set; } = null!;
     public string Title { get; set; } = null!;
-    public DataOrigin Origin { get; set; }
+    public DataOrigin? Origin { get; set; }
     public string? CompanyName { get; set; }
     public string? Location { get; set; }
     public DateTime ScrapedAt { get; set; } = DateTime.UtcNow;
@@ -18,7 +18,9 @@ public class JobOffer
     public string? HtmlPath { get; set; }
     public string? ScreenShotPath { get; set; }
     public List<string> MyKeywords { get; set; } = [];
-    public string? Salary { get; set; }
+    public int? SalaryMinMonth { get; set; }
+    public int? SalaryMaxMonth { get; set; }
+    public string? SalaryCurrency { get; set; }
     public string Comments { get; set; } = "";
 
     // Jjit only
@@ -72,13 +74,15 @@ public class JobOfferModelBuilder : IEntityTypeConfiguration<JobOffer>
         builder.Property(j => j.ScreenShotPath).HasMaxLength(1024);
         builder.PrimitiveCollection(j => j.MyKeywords);
 
-        builder.Property(j => j.Salary).HasMaxLength(128);
+        builder.Property(j => j.SalaryCurrency).HasMaxLength(10);
         builder.PrimitiveCollection(j => j.OfferKeywords);
 
         builder.HasIndex(j => j.ScrapedAt);
         builder.HasIndex(j => j.Location);
         builder.HasIndex(j => j.CompanyName);
-        builder.HasIndex(j => j.Salary);
+        builder.HasIndex(j => j.SalaryMinMonth);
+        builder.HasIndex(j => j.SalaryMaxMonth);
+        builder.HasIndex(j => j.SalaryCurrency);
         builder.HasIndex(j => j.AgeInfo);
         builder.HasIndex(j => j.DetailsScrapeStatus);
     }
