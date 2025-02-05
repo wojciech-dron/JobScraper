@@ -66,7 +66,12 @@ public class JjitDetailsScraper : ScrapperBase
 
     private static string? Extract(string[]? dataLines, string key)
     {
-        return dataLines?.FirstOrDefault(l => l.Contains(key))?.Split("\"")[^2].Replace("\\", "");
+        var applyUrl = dataLines?.FirstOrDefault(l => l.Contains(key))?.Split("\"")[^2].Replace("\\", "");
+
+        if (applyUrl?.StartsWith("https") == true)
+            return applyUrl;
+
+        return null;
     }
 
     private async Task ScrapCompany(Company company, IPage page)

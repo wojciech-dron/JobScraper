@@ -25,18 +25,17 @@
             }
         </div>
     </TemplateColumn>
-    <PropertyColumn class="col-3" Property="@(p => p.Title)" Sortable="true"/>
+    <PropertyColumn class="col-3" Property="@(p => p.Title)" Sortable="true">
+        <ColumnOptions>
+            <div class="search-box">
+                <input type="search" autofocus @bind="titleFilter" @bind:event="oninput" placeholder="Filter..."/>
+            </div>
+        </ColumnOptions>
+    </PropertyColumn>
     <PropertyColumn class="col-2" Property="@(p => p.Company.Name)" Sortable="true">
         <ColumnOptions>
             <div class="search-box">
                 <input type="search" autofocus @bind="companyFilter" @bind:event="oninput" placeholder="Filter..."/>
-            </div>
-        </ColumnOptions>
-    </PropertyColumn>
-    <PropertyColumn class="col-1" Property="@(p => p.Origin)" Sortable="true">
-        <ColumnOptions>
-            <div class="search-box">
-                <input type="search" autofocus @bind="originFilter" @bind:event="oninput" placeholder="Filter..."/>
             </div>
         </ColumnOptions>
     </PropertyColumn>
@@ -45,10 +44,15 @@
     <PropertyColumn class="col-1" Property="@(p => p.SalaryCurrency)" Sortable="true"/>
     <PropertyColumn class="col-1" Property="@(p => p.PublishedAt)" Format="yyyy-MM-dd" Sortable="true"/>
     <PropertyColumn class="col-1" Property="@(p => p.ScrapedAt)" Format="yyyy-MM-dd" Sortable="true"/>
-    <PropertyColumn class="col" Property="@(p => p.AgeInfo)" Sortable="true"/>
+    <PropertyColumn class="col-2" Property="@(p => string.Join(", ", p.MyKeywords))" Title="My keywords" />
     <PropertyColumn class="col-2" Property="@(p => p.Location)" Sortable="true"/>
-    <PropertyColumn class="col-2" Title="My keywords" Property="@(p => string.Join(", ", p.MyKeywords))"/>
-
+    <PropertyColumn class="col-1" Property="@(p => p.Origin)" Sortable="true">
+        <ColumnOptions>
+            <div class="search-box">
+                <input type="search" autofocus @bind="originFilter" @bind:event="oninput" placeholder="Filter..."/>
+            </div>
+        </ColumnOptions>
+    </PropertyColumn>
 </QuickGrid>
 
 <select @bind="pagination.ItemsPerPage">
@@ -63,6 +67,7 @@
 @code {
     JobsDbContext context = null!;
     PaginationState pagination = new() { ItemsPerPage = 50 };
+    private string titleFilter = "";
     private string companyFilter = "";
     private string originFilter = "";
 
@@ -71,8 +76,9 @@
         .Include(jo => jo.Company)
         .Include(jo => jo.Application)
         .Where(jo => jo.DetailsScrapeStatus == DetailsScrapeStatus.Scraped)
+        .WhereIf(!string.IsNullOrEmpty(titleFilter), jo => jo.Title.ToLower().Contains(titleFilter.ToLower()))
         .WhereIf(!string.IsNullOrEmpty(companyFilter), jo => jo.Company.Name.ToLower().Contains(companyFilter.ToLower()))
-        .WhereIf(!string.IsNullOrEmpty(originFilter), jo => jo.Origin.ToString().ToLower().Contains(originFilter.ToLower()))
+        .WhereIf(!string.IsNullOrEmpty(originFilter), jo => jo.Origin.ToString()!.ToLower().Contains(originFilter.ToLower()))
         .OrderBy(jo => jo.PublishedAt);
 
     protected override void OnInitialized()

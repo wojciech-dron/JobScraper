@@ -91,9 +91,9 @@ public class IndeedListScraper : ScrapperBase
         var companyNames =
             await Task.WhenAll(companyElements.Select(async c => await c.InnerTextAsync()));
 
-        var ocationElements = await indeedPage.QuerySelectorAllAsync("[data-testid='text-location']");
+        var locationElements = await indeedPage.QuerySelectorAllAsync("[data-testid='text-location']");
         var locations =
-            await Task.WhenAll(ocationElements.Select(async l => (await l.InnerTextAsync()).Trim()));
+            await Task.WhenAll(locationElements.Select(async l => (await l.InnerTextAsync()).Trim()));
 
         // Iterating foreach title
         for (var i = 0; i < titles.Length; i++)

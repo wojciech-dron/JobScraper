@@ -46,7 +46,7 @@ else
     private JobsDbContext context = null!;
     private JobOffer? jobOffer { get; set; }
 
-    [Parameter] public string OfferUrl { get; set; }
+    [Parameter] public required string OfferUrl { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
