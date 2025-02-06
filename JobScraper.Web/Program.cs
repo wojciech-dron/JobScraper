@@ -10,6 +10,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddQuickGridEntityFrameworkAdapter();
+builder.Services.AddBlazorBootstrap();
 
 
 builder.Logging.AddOtelLogging(builder.Configuration, "JobScraper.Web");

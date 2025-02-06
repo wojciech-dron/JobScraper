@@ -12,19 +12,9 @@
 
 <QuickGrid Items="jobOffers" Pagination="@pagination" class="table">
     <TemplateColumn>
-        <div class="d-flex">
-            <a class="me-2" href="/job-offer/@Uri.EscapeDataString(context.OfferUrl)">L</a>
-            <a class="me-2" href="@context.OfferUrl">O</a>
-            @if (!string.IsNullOrEmpty(context.ApplyUrl))
-            {
-                <a class="me-2" href="@context.ApplyUrl">A</a>
-            }
-            @if (context.Application is not null)
-            {
-                <span>S</span>
-            }
-        </div>
+        <button class="btn btn-primary" @onclick="_ => _applyModal.ShowAsync(context)">Apply</button>
     </TemplateColumn>
+    <PropertyColumn class="col-3" Property="@(p => p.Application == null ? "Not applied" : "Applied")" Sortable="true" />
     <PropertyColumn class="col-3" Property="@(p => p.Title)" Sortable="true">
         <ColumnOptions>
             <div class="search-box">
@@ -54,6 +44,7 @@
         </ColumnOptions>
     </PropertyColumn>
 </QuickGrid>
+<ApplyModal @ref="_applyModal" />
 
 <select @bind="pagination.ItemsPerPage">
     <option value="20">20</option>
@@ -63,16 +54,18 @@
 <Paginator State="@pagination" />
 
 @inject IDbContextFactory<JobsDbContext> DbFactory
-
 @code {
     JobsDbContext context = null!;
     PaginationState pagination = new() { ItemsPerPage = 50 };
+    ApplyModal _applyModal = null!;
+
     private string titleFilter = "";
     private string companyFilter = "";
     private string originFilter = "";
 
 
     IQueryable<JobOffer> jobOffers => context.JobOffers
+        .AsNoTracking()
         .Include(jo => jo.Company)
         .Include(jo => jo.Application)
         .Where(jo => jo.DetailsScrapeStatus == DetailsScrapeStatus.Scraped)

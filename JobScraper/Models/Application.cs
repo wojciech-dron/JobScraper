@@ -6,10 +6,10 @@ namespace JobScraper.Models;
 public class Application
 {
     public string OfferUrl { get; set; } = null!;
-    public DateTime AppliedAt { get; set; }
-    public string SentCv { get; set; } = "";
+    public DateTime AppliedAt { get; set; } = DateTime.UtcNow;
+    public string SentCv { get; set; } = "OP EN.pdf";
     public DateTime? RespondedAt { get; set; }
-    public string Comments { get; set; } = "";
+    public string? Comments { get; set; }
     public int? ExpectedMonthSalary { get; set; }
 
     public JobOffer JobOffer { get; set; } = null!;
