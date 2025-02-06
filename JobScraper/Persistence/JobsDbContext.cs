@@ -1,4 +1,5 @@
 ﻿using JobScraper.Models;
+using JobScraper.Persistence.Interceptors;
 using Microsoft.EntityFrameworkCore;
 
 namespace JobScraper.Persistence;

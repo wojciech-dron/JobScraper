@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using JobScraper.Persistence.Interceptors;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
 namespace JobScraper.Persistence;
@@ -15,6 +16,7 @@ public static class Sqlite
 
             options
                 .UseSqlite(connectionString)
+                .AddInterceptors(new JobOfferModifiedInterceptor())
                 .EnableSensitiveDataLogging();
         });
 
@@ -23,7 +25,7 @@ public static class Sqlite
         return services;
     }
 
-    internal static async Task PrepareDbAsync(this IServiceProvider services)
+    public static async Task PrepareDbAsync(this IServiceProvider services)
     {
         using var scope = services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<JobsDbContext>();

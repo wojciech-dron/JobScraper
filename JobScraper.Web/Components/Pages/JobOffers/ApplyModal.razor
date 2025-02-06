@@ -3,7 +3,7 @@
 @using JobScraper.Persistence
 @using Microsoft.EntityFrameworkCore
 
-<Modal @ref="_modal" Title="Application" Size="ModalSize.ExtraLarge">
+<Modal @ref="_modal" Title="@(_isEdit ? "Edit Application" : "Create Application")" Size="ModalSize.ExtraLarge">
     <BodyTemplate>
         <a href="@_jobOffer.OfferUrl" target="_blank">Offer page</a><br/>
         @if (!string.IsNullOrEmpty(_jobOffer.ApplyUrl))
@@ -21,7 +21,7 @@
 
             <div class="form-group">
                 <label for="appliedAt">Applied At:</label>
-                <InputDate id="appliedAt" @bind-Value="@_application.AppliedAt" class="form-control"/>
+                <InputDate id="appliedAt" @bind-Value="@_application!.AppliedAt" class="form-control"/>
             </div>
 
             <div class="form-group">
@@ -57,7 +57,7 @@
     private bool _isEdit = false;
     private Modal _modal = default!;
     private JobsDbContext _context = null!;
-    private JobOffer _jobOffer = null;
+    private JobOffer _jobOffer = null!;
     private Application? _application;
 
     protected override async Task OnInitializedAsync()

@@ -81,7 +81,6 @@ public class SyncJobsFromList
             {
                 var newScrap = jobs.First(e => e.OfferUrl == job.OfferUrl);
 
-                job.ScrapedAt = DateTime.UtcNow;
                 job.AgeInfo = newScrap.AgeInfo;
             }
 

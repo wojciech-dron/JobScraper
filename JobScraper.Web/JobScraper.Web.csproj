@@ -16,16 +16,4 @@
       <ProjectReference Include="..\JobScraper\JobScraper.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Content Remove="Pages\_ValidationScriptsPartial.cshtml" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="Components\Pages\OfferDetails\" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <AdditionalFiles Include="Components\Pages\OfferDetails\OfferDetails.razor" />
-    </ItemGroup>
-
 </Project>
