@@ -3,52 +3,63 @@
 @using JobScraper.Persistence
 @using Microsoft.EntityFrameworkCore
 
-<Modal @ref="_modal" Title="@(_isEdit ? "Edit Application" : "Create Application")" Size="ModalSize.ExtraLarge">
+<Modal @ref="_modal" Title="@(_isEdit ? "Edit Application" : "Create Application")" Fullscreen="ModalFullscreen.Always">
     <BodyTemplate>
-        <a href="@_jobOffer.OfferUrl" target="_blank">Offer page</a><br/>
-        @if (!string.IsNullOrEmpty(_jobOffer.ApplyUrl))
-        {
-            <a href="@_jobOffer.ApplyUrl" target="_blank">Apply page</a><br/>
-        }
-        <strong>Title:</strong> @_jobOffer.Title<br/>
-        <strong>Company Name:</strong> @(_jobOffer.CompanyName ?? "Not specified")<br/>
-        <strong>Location:</strong> @(_jobOffer.Location ?? "Not specified")<br/>
-        <strong>Salary:</strong> @($"{_jobOffer.SalaryMinMonth} - {_jobOffer.SalaryMaxMonth} {_jobOffer.SalaryCurrency}")<br/>
+        <div class="row">
+            <div class="col-md-3">
+                <a href="@_jobOffer.OfferUrl" target="_blank">Offer page</a><br/>
+                @if (!string.IsNullOrEmpty(_jobOffer.ApplyUrl))
+                {
+                    <a href="@_jobOffer.ApplyUrl" target="_blank">Apply page</a>
+                    <br/>
+                }
+                <strong>Title:</strong> @_jobOffer.Title<br/>
+                <strong>Company Name:</strong> @(_jobOffer.CompanyName ?? "Not specified")<br/>
+                <strong>Location:</strong> @(_jobOffer.Location ?? "Not specified")<br/>
+                <strong>Salary:</strong> @($"{_jobOffer.SalaryMinMonth} - {_jobOffer.SalaryMaxMonth} {_jobOffer.SalaryCurrency}")<br/>
 
-        <EditForm Model="@_application">
-            <DataAnnotationsValidator/>
-            <ValidationSummary/>
+                <EditForm Model="@_application">
+                    <DataAnnotationsValidator/>
+                    <ValidationSummary/>
 
-            <div class="form-group">
-                <label for="appliedAt">Applied At:</label>
-                <InputDate id="appliedAt" @bind-Value="@_application!.AppliedAt" class="form-control"/>
+                    <div class="form-group">
+                        <label for="appliedAt">Applied At:</label>
+                        <InputDate id="appliedAt" @bind-Value="@_application!.AppliedAt" class="form-control"/>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sentCv">Sent CV:</label>
+                        <InputText id="sentCv" @bind-Value="@_application.SentCv" class="form-control"/>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="respondedAt">Responded At:</label>
+                        <InputDate id="respondedAt" @bind-Value="@_application.RespondedAt" class="form-control"/>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="comments">Comments:</label>
+                        <InputTextArea id="comments" @bind-Value="@_application.Comments" class="form-control"/>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="expectedMonthSalary">Expected Month Salary:</label>
+                        <InputNumber id="expectedMonthSalary" @bind-Value="@_application.ExpectedMonthSalary"
+                                     class="form-control"/>
+                    </div>
+                    <br/>
+
+                    <button type="submit" class="btn btn-primary" @onclick="SaveAsync">@(_isEdit ? "Update" : "Create")</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CancelAsync">Cancel</button>
+                </EditForm>
             </div>
-
-            <div class="form-group">
-                <label for="sentCv">Sent CV:</label>
-                <InputText id="sentCv" @bind-Value="@_application.SentCv" class="form-control"/>
+            <div class="col-md-9">
+                <strong>Description:</strong> <br />
+                <span style="white-space: pre-line">
+                    @_jobOffer.Description
+                </span>
             </div>
-
-            <div class="form-group">
-                <label for="respondedAt">Responded At:</label>
-                <InputDate id="respondedAt" @bind-Value="@_application.RespondedAt" class="form-control"/>
-            </div>
-
-            <div class="form-group">
-                <label for="comments">Comments:</label>
-                <InputTextArea id="comments" @bind-Value="@_application.Comments" class="form-control"/>
-            </div>
-
-            <div class="form-group">
-                <label for="expectedMonthSalary">Expected Month Salary:</label>
-                <InputNumber id="expectedMonthSalary" @bind-Value="@_application.ExpectedMonthSalary"
-                             class="form-control"/>
-            </div>
-            <br />
-
-            <button type="submit" class="btn btn-primary" @onclick="SaveAsync">@(_isEdit ? "Update" : "Create")</button>
-            <button type="button" class="btn btn-secondary" @onclick="CancelAsync">Cancel</button>
-        </EditForm>
+        </div>
     </BodyTemplate>
 </Modal>
 
