@@ -13,8 +13,8 @@ main {
 }
 
 .top-row {
-    background-color: #f7f7f7;
-    border-bottom: 1px solid #d6d5d5;
+    background-color: #171616;
+    border-bottom: 1px solid #1c1b1b;
     justify-content: flex-end;
     height: 3.5rem;
     display: flex;
@@ -77,8 +77,8 @@ main {
 }
 
 #blazor-error-ui {
-    color-scheme: light only;
-    background: lightyellow;
+    color-scheme: dark;
+    background: darkslategray;
     bottom: 0;
     box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
     box-sizing: border-box;
@@ -96,3 +96,7 @@ main {
         right: 0.75rem;
         top: 0.5rem;
     }
+
+.col-options {
+    background: #0d1117;
+}
