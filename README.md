@@ -1,8 +1,23 @@
 # Job Scraper with C# and Playwright
 
-This project uses C# and Microsoft Playwright to scrape job data from Indeed and LinkedIn.
+https://github.com/wojciech-dron/JobScraper
 
-## Setup
+This project uses C# and Microsoft Playwright to scrape job data from Indeed and JustJoin.It (for now).
+
+## Launch app
+
+Run 
+
+```bash
+run-JobScraper.bat
+```
+
+You can modify search parameters modifying filters in searching sites
+and re-paste SearchUrl in scraperSettings.json 
+
+
+
+## Development setup
 
 This project requires .NET and the Microsoft Playwright CLI. If you don't have these installed, follow the instructions below.
 
@@ -31,34 +46,6 @@ This project requires .NET and the Microsoft Playwright CLI. If you don't have t
    ```
 
 3. (Optional) Open the project in your favorite IDE.
-
-4. Edit the following variables in `Program.cs` to customize your job search:
-   - `jobSearchTerm`
-   - `location`
-   - `radius`
-   - `secondsToWait`
-   - `keywords`
-   - `avoidJobKeywords`
-
-3. You can now build and run the project using the following commands:
-
-Build:
-```bash
-dotnet build
-```
-   
-Search new offers:
-```bash
-dotnet run new
-```
-
-Scrap details:
-
-```bash
-dotnet run details
-```
-,
-The scraper will crawl Indeed and LinkedIn with your search parameters, scrape the job data, and store the listings in your database setup.
 
 
 <span style="color: green">**Recommended:**</span> Be nice to people's servers by not lowering the `secondsToWait` variable too low. <font size="1">(keep yourself from being banned from the site)</font>

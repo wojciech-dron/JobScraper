@@ -55,7 +55,6 @@ public abstract class ScrapperBase : IAsyncDisposable
         await File.WriteAllBytesAsync(path, screenshot);
     }
 
-
     protected async Task SavePage(IPage page, string path)
     {
         path = PrepareDestination(path);

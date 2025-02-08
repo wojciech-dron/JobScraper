@@ -10,6 +10,12 @@ public static class Setup
     public static IConfigurationManager AddScrapperSettings(this IConfigurationManager configuration,
         IHostEnvironment environment)
     {
+        if (environment.IsProduction())
+        {
+            configuration.AddJsonFile(Path.Combine(environment.ContentRootPath, "..", "scraperSettings.json"), optional: true, reloadOnChange: true);
+            return configuration;
+        }
+
         var appPath = Path.Combine(environment.ContentRootPath);
 
         if (Directory.Exists(Path.Combine(appPath, "bin")))
@@ -17,6 +23,7 @@ public static class Setup
 
         configuration.AddJsonFile(Path.Combine(appPath, "scraperSettings.json"), optional: false, reloadOnChange: true);
         configuration.AddJsonFile(Path.Combine(appPath, $"scraperSettings.{environment.EnvironmentName}.json"), optional: true, reloadOnChange: true);
+
 
         return configuration;
     }
