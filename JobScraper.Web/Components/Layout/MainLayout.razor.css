@@ -100,3 +100,11 @@ main {
 .col-options {
     background: #0d1117;
 }
+
+::deep tr:has(> td:not(:empty)) > td {
+    display: table-cell;
+}
+
+::deep td:empty {
+    display: none;
+}

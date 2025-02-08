@@ -1,0 +1,87 @@
+﻿@page "/applications"
+@rendermode InteractiveServer
+@using System.Web
+@using JobScraper.Common.Extensions
+@using JobScraper.Models
+@using JobScraper.Persistence
+@using JobScraper.Web.Components.Pages.JobOffers
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Job offers</PageTitle>
+
+<h1>Job offers</h1>
+
+<QuickGrid Items="applications" Pagination="@pagination" class="table">
+    <TemplateColumn Title="Details">
+        <button class="btn btn-primary" @onclick="_ => applyModal.ShowAsync(context.JobOffer)">Modify</button>
+    </TemplateColumn>
+    <PropertyColumn Property="@(p => p.JobOffer.Company.Name)" Title="Company" Sortable="true">
+        <ColumnOptions>
+            <div class="search-box">
+                <input type="search" autofocus @bind="CompanyFilter" @bind:event="oninput" @onchange="SetQueryParams"/>
+            </div>
+        </ColumnOptions>
+    </PropertyColumn>
+    <PropertyColumn Property="@(p => p.JobOffer.Title)" Sortable="true">
+        <ColumnOptions>
+            <div class="search-box">
+                <input type="search" autofocus @bind="TitleFilter" @bind:event="oninput" placeholder="Filter..."/>
+            </div>
+        </ColumnOptions>
+    </PropertyColumn>
+    <PropertyColumn Property="@(p => p.JobOffer.Origin)" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.AppliedAt)" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.RespondedAt)" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.SentCv)" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.ExpectedMonthSalary)" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.Comments)" Sortable="true"/>
+
+</QuickGrid>
+<ApplyModal @ref="applyModal" />
+
+<select @bind="pagination.ItemsPerPage">
+    <option value="20">20</option>
+    <option value="50">50</option>
+    <option value="100">100</option>
+</select>
+<Paginator State="@pagination" />
+
+@inject IDbContextFactory<JobsDbContext> DbFactory
+@inject NavigationManager NavigationManager
+
+@code {
+    JobsDbContext context = null!;
+    PaginationState pagination = new() { ItemsPerPage = 50 };
+    ApplyModal applyModal = null!;
+
+    [SupplyParameterFromQuery] [Parameter] public string? TitleFilter { get; set; } = "";
+    [SupplyParameterFromQuery] [Parameter] public string? CompanyFilter { get; set; } = "";
+
+    IQueryable<Application> applications => context.Applications
+        .Include(jo => jo.JobOffer.Company)
+        .WhereIf(!string.IsNullOrEmpty(TitleFilter), a => a.JobOffer.Title.ToLower().Contains(TitleFilter!.ToLower()))
+        .WhereIf(!string.IsNullOrEmpty(CompanyFilter), a => a.JobOffer.Company.Name.ToLower().Contains(CompanyFilter!.ToLower()))
+        .OrderByDescending(jo => jo.RespondedAt)
+        .ThenByDescending(jo => jo.AppliedAt);
+
+    protected override async Task OnInitializedAsync()
+    {
+        context = await DbFactory.CreateDbContextAsync();
+    }
+
+    private void SetQueryParams()
+    {
+        var uriBuilder = new UriBuilder(NavigationManager.Uri);
+        var query = HttpUtility.ParseQueryString("");
+
+        if (TitleFilter?.Length     > 0) query["TitleFilter"] = TitleFilter;
+        if (CompanyFilter?.Length   > 0) query["CompanyFilter"] = CompanyFilter;
+
+        uriBuilder.Query = query.ToString();
+
+        NavigationManager.NavigateTo(uriBuilder.ToString(), forceLoad: false);
+    }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+}

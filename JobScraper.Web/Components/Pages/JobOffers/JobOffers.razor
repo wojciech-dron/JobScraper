@@ -153,7 +153,11 @@
     {
         context = await DbFactory.CreateDbContextAsync();
         myKeywordsOptions = ScraperConfig.Value.Keywords;
-        currencyOptions = await context.JobOffers.Select(jo => jo.SalaryCurrency!).Distinct().ToArrayAsync();
+        currencyOptions = await context.JobOffers
+            .Select(jo => jo.SalaryCurrency!)
+            .Where(c => !string.IsNullOrEmpty(c))
+            .Distinct()
+            .ToArrayAsync();
 
         // set default filters if query params are not set
         IsAppliedFilter ??= "false";
