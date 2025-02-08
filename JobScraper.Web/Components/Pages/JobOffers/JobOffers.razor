@@ -4,6 +4,7 @@
 @using JobScraper.Common.Extensions
 @using JobScraper.Models
 @using JobScraper.Persistence
+@using JobScraper.Web.Components.Modals
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.Extensions.Options
@@ -23,9 +24,9 @@
         </ColumnOptions>
         <ChildContent>
             @if (context.Application is null) {
-                <button class="btn btn-primary" @onclick="_ => applyModal.ShowAsync(context)">Apply</button>
+                <button class="btn btn-primary" @onclick="_ => _applicationOfferModal.ShowAsync(context)">Apply</button>
             } else {
-                <button class="btn btn-secondary" @onclick="_ => applyModal.ShowAsync(context)">Modify</button>
+                <button class="btn btn-secondary" @onclick="_ => _applicationOfferModal.ShowAsync(context)">Modify</button>
             }
         </ChildContent>
     </TemplateColumn>
@@ -103,7 +104,7 @@
         </ColumnOptions>
     </PropertyColumn>
 </QuickGrid>
-<ApplyModal @ref="applyModal" />
+<ApplicationOfferModal @ref="_applicationOfferModal" ShowHideButton OnUpdate="@(() => grid.RefreshDataAsync())" />
 
 <select @bind="pagination.ItemsPerPage">
     <option value="20">20</option>
@@ -120,7 +121,7 @@
     QuickGrid<JobOffer> grid = null!;
     JobsDbContext context = null!;
     PaginationState pagination = new() { ItemsPerPage = 50 };
-    ApplyModal applyModal = null!;
+    ApplicationOfferModal _applicationOfferModal = null!;
     string[] myKeywordsOptions = [];
     string[] currencyOptions = [];
 

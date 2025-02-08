@@ -49,7 +49,13 @@
                     </div>
                     <br/>
 
-                    <button type="submit" class="btn btn-primary" @onclick="SaveAsync">@(_isEdit ? "Update" : "Create")</button>
+                    <button type="submit" class="btn btn-success" @onclick="SaveAsync">@(_isEdit ? "Update" : "Create")</button>
+                    @if (ShowHideButton && _jobOffer.Hidden) {
+                        <button class="btn btn-primary" @onclick="ShowOffer">Show offer</button>
+                    }
+                    @if (ShowHideButton && !_jobOffer.Hidden){
+                        <button class="btn btn-primary" @onclick="HideOffer">Hide offer</button>
+                    }
                     <button type="button" class="btn btn-secondary" @onclick="CancelAsync">Cancel</button>
                 </EditForm>
             </div>
@@ -70,6 +76,9 @@
     private JobsDbContext _context = null!;
     private JobOffer _jobOffer = null!;
     private Application? _application;
+
+    [Parameter] public bool ShowHideButton { get; set; }
+    [Parameter] public Action? OnUpdate { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -102,6 +111,7 @@
         await _context.SaveChangesAsync();
 
         await _modal.HideAsync();
+        OnUpdate?.Invoke();
     }
 
     private async Task CancelAsync()
@@ -112,6 +122,23 @@
         }
 
         await _modal.HideAsync();
+    }
+
+    private async Task HideOffer()
+    {
+        _jobOffer.Hidden = true;
+        _context.Update(_jobOffer);
+        await _context.SaveChangesAsync();
+        await _modal.HideAsync();
+        OnUpdate?.Invoke();
+    }
+
+    private async Task ShowOffer()
+    {
+        _jobOffer.Hidden = false;
+        _context.Update(_jobOffer);
+        await _context.SaveChangesAsync();
+        OnUpdate?.Invoke();
     }
 
     public async ValueTask DisposeAsync() => await _context.DisposeAsync();

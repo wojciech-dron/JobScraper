@@ -4,17 +4,17 @@
 @using JobScraper.Common.Extensions
 @using JobScraper.Models
 @using JobScraper.Persistence
-@using JobScraper.Web.Components.Pages.JobOffers
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.EntityFrameworkCore
+@using JobScraper.Web.Components.Modals
 
 <PageTitle>Job offers</PageTitle>
 
 <h1>Job offers</h1>
 
-<QuickGrid Items="applications" Pagination="@pagination" class="table">
+<QuickGrid @ref="@grid" Items="applications" Pagination="@pagination" class="table">
     <TemplateColumn Title="Details">
-        <button class="btn btn-primary" @onclick="_ => applyModal.ShowAsync(context.JobOffer)">Modify</button>
+        <button class="btn btn-primary" @onclick="_ => _applicationOfferModal.ShowAsync(context.JobOffer)">Modify</button>
     </TemplateColumn>
     <PropertyColumn Property="@(p => p.JobOffer.Company.Name)" Title="Company" Sortable="true">
         <ColumnOptions>
@@ -38,7 +38,7 @@
     <PropertyColumn Property="@(p => p.Comments)" Sortable="true"/>
 
 </QuickGrid>
-<ApplyModal @ref="applyModal" />
+<ApplicationOfferModal @ref="_applicationOfferModal" OnUpdate="@(() => grid.RefreshDataAsync())" />
 
 <select @bind="pagination.ItemsPerPage">
     <option value="20">20</option>
@@ -51,9 +51,10 @@
 @inject NavigationManager NavigationManager
 
 @code {
+    QuickGrid<Application> grid = null!;
     JobsDbContext context = null!;
     PaginationState pagination = new() { ItemsPerPage = 50 };
-    ApplyModal applyModal = null!;
+    ApplicationOfferModal _applicationOfferModal = null!;
 
     [SupplyParameterFromQuery] [Parameter] public string? TitleFilter { get; set; } = "";
     [SupplyParameterFromQuery] [Parameter] public string? CompanyFilter { get; set; } = "";
