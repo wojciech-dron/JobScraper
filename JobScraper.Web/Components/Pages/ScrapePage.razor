@@ -1,0 +1,51 @@
+﻿@page "/scrape"
+@rendermode InteractiveServer
+@using JobScraper.Logic
+@using MediatR
+@inject IMediator Mediator
+@inject ILogger<ScrapePage> Logger
+
+<h3>Job Scraper</h3>
+
+<span>
+    Scrape pipeline is designed to skip already scraped jobs.
+    You can retry with no worry :)
+</span>
+<br />
+
+<button @onclick="StartScraping" disabled="@isScraping">
+    @(isScraping ? "Scraping..." : "Start Scraping")
+</button>
+<br />
+<p>@statusMessage</p>
+
+@code {
+    private bool isScraping = false;
+    private string statusMessage = "";
+
+    private async Task StartScraping()
+    {
+        if (isScraping)
+            return;
+
+        isScraping = true;
+        statusMessage = "Scraping in progress... You can observe progress in the console logs.";
+
+        try
+        {
+            var request = new ScrapePipeline.Request();
+            await Mediator.Send(request, CancellationToken.None);
+
+            statusMessage = "Scrape finished succesfuly";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "An error occurred during the scraping process");
+            statusMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isScraping = false;
+        }
+    }
+}

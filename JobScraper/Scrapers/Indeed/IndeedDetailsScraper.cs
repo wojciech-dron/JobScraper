@@ -16,7 +16,7 @@ public class IndeedDetailsScraper : ScrapperBase
 
     public async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
     {
-        Logger.LogInformation("Scrapeing job details for {OfferUrl}", jobOffer.OfferUrl);
+        Logger.LogInformation("Scraping job details for {OfferUrl}", jobOffer.OfferUrl);
 
         var indeedPage = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: Config.WaitForDetailsSeconds);
         await indeedPage.WaitForTimeoutAsync(Config.WaitForDetailsSeconds * 1000); // Wait for the page to load
