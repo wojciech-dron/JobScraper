@@ -1,9 +1,8 @@
 ﻿using Cocona;
 using JobScraper.Logic.Common;
-using JobScraper.Scrapers.Indeed;
 using MediatR;
 
-namespace JobScraper.Logic;
+namespace JobScraper.Logic.Indeed;
 
 public class IndeedList
 {

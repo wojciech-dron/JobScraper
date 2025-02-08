@@ -1,10 +1,11 @@
 ﻿using System.Text;
 using System.Web;
+using JobScraper.Logic.Common;
 using JobScraper.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 
-namespace JobScraper.Scrapers.Indeed;
+namespace JobScraper.Logic.Indeed;
 
 public class IndeedListScraper : ScrapperBase
 {

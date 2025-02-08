@@ -1,12 +1,11 @@
 ﻿using Cocona;
+using JobScraper.Logic.Common;
 using JobScraper.Models;
 using JobScraper.Persistence;
-using JobScraper.Scrapers;
-using JobScraper.Scrapers.JustJoinIt;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace JobScraper.Logic;
+namespace JobScraper.Logic.Jjit;
 
 public class JjitDetails
 {

@@ -1,12 +1,11 @@
 ﻿using Cocona;
+using JobScraper.Logic.Common;
 using JobScraper.Models;
 using JobScraper.Persistence;
-using JobScraper.Scrapers;
-using JobScraper.Scrapers.Indeed;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace JobScraper.Logic;
+namespace JobScraper.Logic.Indeed;
 
 public class IndeedDetails
 {

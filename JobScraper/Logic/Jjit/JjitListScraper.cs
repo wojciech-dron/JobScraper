@@ -1,10 +1,11 @@
 ﻿using System.Text;
 using System.Text.RegularExpressions;
+using JobScraper.Logic.Common;
 using JobScraper.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 
-namespace JobScraper.Scrapers.JustJoinIt;
+namespace JobScraper.Logic.Jjit;
 
 public class JjitListScraper : ScrapperBase
 {

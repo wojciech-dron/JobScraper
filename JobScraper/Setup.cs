@@ -1,7 +1,7 @@
 ﻿using JobScraper.Logic.Common;
+using JobScraper.Logic.Indeed;
+using JobScraper.Logic.Jjit;
 using JobScraper.Models;
-using JobScraper.Scrapers.Indeed;
-using JobScraper.Scrapers.JustJoinIt;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 

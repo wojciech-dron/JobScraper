@@ -1,5 +1,7 @@
 ﻿using Cocona;
 using JobScraper.Common.Extensions;
+using JobScraper.Logic.Indeed;
+using JobScraper.Logic.Jjit;
 using MediatR;
 
 namespace JobScraper.Logic;
@@ -23,12 +25,16 @@ public class ScrapePipeline
         [PrimaryCommand]
         public async Task Handle(Request? request = null, CancellationToken cancellationToken = default)
         {
+            var startScrape = DateTime.UtcNow;
+
             // step 1
             _logger.LogInformation("Scraping all lists...");
             await Task.WhenAll([
                 _mediator.SendWithRetry(new IndeedList.Scrape(), cancellationToken),
                 _mediator.SendWithRetry(new JjitList.Scrape(), cancellationToken),
             ]);
+
+
 
             // step 2
             _logger.LogInformation("Scraping all details...");

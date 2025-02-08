@@ -2,6 +2,8 @@
 using JobScraper;
 using JobScraper.Common;
 using JobScraper.Logic;
+using JobScraper.Logic.Indeed;
+using JobScraper.Logic.Jjit;
 using JobScraper.Persistence;
 
 var builder = CoconaApp.CreateBuilder(args);

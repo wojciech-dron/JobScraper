@@ -22,14 +22,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Logic\Indeed\" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Compile Remove="Logic\Indeed\IndeedDetails.cs" />
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\JobScraper.Common\JobScraper.Common.csproj" />
     </ItemGroup>
     

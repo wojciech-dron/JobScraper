@@ -4,7 +4,7 @@ using Microsoft.Playwright;
 using Polly;
 using Polly.Retry;
 
-namespace JobScraper.Scrapers;
+namespace JobScraper.Logic.Common;
 
 public abstract class ScrapperBase : IAsyncDisposable
 {

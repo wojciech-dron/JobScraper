@@ -1,9 +1,8 @@
 ﻿using Cocona;
 using JobScraper.Logic.Common;
-using JobScraper.Scrapers.JustJoinIt;
 using MediatR;
 
-namespace JobScraper.Logic;
+namespace JobScraper.Logic.Jjit;
 
 public class JjitList
 {
@@ -20,7 +19,6 @@ public class JjitList
             _scraper = scraper;
             _logger = logger;
             _mediator = mediator;
-
         }
 
         [Command("jjit-list")]

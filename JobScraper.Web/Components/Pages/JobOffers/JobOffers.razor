@@ -16,7 +16,7 @@
         <ColumnOptions>
             <select @bind="@isAppliedFilter">
                 <option value="">All</option>
-                <option selected value="true">Applied</option>
+                <option value="true">Applied</option>
                 <option value="false">Non applied</option>
             </select>
         </ColumnOptions>
@@ -33,7 +33,7 @@
             <select @bind="@isHiddenFilter">
                 <option value="">All</option>
                 <option value="true">Hidden</option>
-                <option selected value="false">Visible</option>
+                <option value="false">Visible</option>
             </select>
         </ColumnOptions>
         <ChildContent>
@@ -116,7 +116,7 @@
     private string companyFilter = "";
     private string[] originFilter = [];
     private string[] myKeywordsFilter = [];
-    private string isAppliedFilter = "true";
+    private string isAppliedFilter = "false";
     private string isHiddenFilter = "false";
     private int? salaryMinFilter;
     private int? salaryMaxFilter;

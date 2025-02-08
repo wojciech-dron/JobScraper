@@ -1,4 +1,4 @@
-﻿namespace JobScraper.Scrapers;
+﻿namespace JobScraper.Logic.Common;
 
 public static class ScrapeExtensions
 {
