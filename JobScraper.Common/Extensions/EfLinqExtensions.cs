@@ -1,6 +1,6 @@
 ﻿using System.Linq.Expressions;
 
-namespace JobScraper.Utils.Extensions;
+namespace JobScraper.Common.Extensions;
 
 public static class EfLinqExtensions
 {

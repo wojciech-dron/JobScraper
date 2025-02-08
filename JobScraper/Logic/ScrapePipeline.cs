@@ -1,5 +1,5 @@
 ﻿using Cocona;
-using JobScraper.Utils.Extensions;
+using JobScraper.Common.Extensions;
 using MediatR;
 
 namespace JobScraper.Logic;

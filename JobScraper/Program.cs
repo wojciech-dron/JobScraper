@@ -1,10 +1,12 @@
 ﻿using Cocona;
 using JobScraper;
+using JobScraper.Common;
 using JobScraper.Logic;
 using JobScraper.Persistence;
-using JobScraper.Utils;
 
 var builder = CoconaApp.CreateBuilder(args);
+
+builder.Configuration.AddScrapperSettings(builder.Environment);
 
 builder.Configuration.AddEnvironmentVariables();
 builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);

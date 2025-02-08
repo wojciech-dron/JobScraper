@@ -1,9 +1,11 @@
 using JobScraper;
+using JobScraper.Common;
 using JobScraper.Persistence;
-using JobScraper.Utils;
 using JobScraper.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Configuration.AddScrapperSettings(builder.Environment);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

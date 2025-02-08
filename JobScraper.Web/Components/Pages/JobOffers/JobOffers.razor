@@ -1,8 +1,8 @@
 ﻿@page "/"
 @rendermode InteractiveServer
+@using JobScraper.Common.Extensions
 @using JobScraper.Models
 @using JobScraper.Persistence
-@using JobScraper.Utils.Extensions
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.EntityFrameworkCore
 @using Microsoft.Extensions.Options
@@ -16,7 +16,7 @@
         <ColumnOptions>
             <select @bind="@isAppliedFilter">
                 <option value="">All</option>
-                <option value="true">Applied</option>
+                <option selected value="true">Applied</option>
                 <option value="false">Non applied</option>
             </select>
         </ColumnOptions>
@@ -106,17 +106,17 @@
 @inject IDbContextFactory<JobsDbContext> DbFactory
 @inject IOptions<ScraperConfig> ScraperConfig;
 @code {
-    QuickGrid<JobOffer> grid;
+    QuickGrid<JobOffer> grid = null!;
     JobsDbContext context = null!;
     PaginationState pagination = new() { ItemsPerPage = 50 };
     ApplyModal applyModal = null!;
-    private string[] myKeywordsOptions = [];
+    string[] myKeywordsOptions = [];
 
     private string titleFilter = "";
     private string companyFilter = "";
     private string[] originFilter = [];
     private string[] myKeywordsFilter = [];
-    private string isAppliedFilter = "";
+    private string isAppliedFilter = "true";
     private string isHiddenFilter = "false";
     private int? salaryMinFilter;
     private int? salaryMaxFilter;
@@ -133,7 +133,7 @@
         .WhereIf(isHiddenFilter.Length   > 0, jo => isHiddenFilter  == "true" ? jo.Hidden : !jo.Hidden)
         .WhereIf(salaryMinFilter.HasValue, jo => jo.SalaryMinMonth >= salaryMinFilter)
         .WhereIf(salaryMaxFilter.HasValue, jo => jo.SalaryMaxMonth >= salaryMaxFilter)
-        .OrderBy(jo => jo.PublishedAt);
+        .OrderBy(jo => jo.Company.Name);
 
     protected override async Task OnInitializedAsync()
     {

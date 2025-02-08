@@ -1,7 +1,9 @@
-﻿using OpenTelemetry.Logs;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 
-namespace JobScraper.Utils;
+namespace JobScraper.Common;
 
 public static class OpenTelemetry
 {

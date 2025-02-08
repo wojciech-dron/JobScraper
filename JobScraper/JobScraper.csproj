@@ -10,14 +10,9 @@
 
     <ItemGroup>
       <PackageReference Include="Cocona" Version="2.2.0" />
-      <PackageReference Include="MediatR" Version="12.4.1" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.1" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.1" />
-      <PackageReference Include="Microsoft.Playwright" Version="1.49.0" />
-      <PackageReference Include="OpenTelemetry" Version="1.11.0" />
-      <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.11.0" />
-      <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.10.1" />
-      <PackageReference Include="Polly" Version="8.5.1" />
+      <PackageReference Include="Microsoft.Playwright" Version="1.50.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -27,21 +22,15 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Update="appsettings.Development.json">
-        <DependentUpon>appsettings.json</DependentUpon>
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      </Content>
-      <Content Update="appsettings.json">
-        <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-      </Content>
-    </ItemGroup>
-
-    <ItemGroup>
       <Folder Include="Logic\Indeed\" />
     </ItemGroup>
 
     <ItemGroup>
       <Compile Remove="Logic\Indeed\IndeedDetails.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\JobScraper.Common\JobScraper.Common.csproj" />
     </ItemGroup>
     
 </Project>
