@@ -1,5 +1,6 @@
 ﻿@page "/"
 @rendermode InteractiveServer
+@using System.Web
 @using JobScraper.Common.Extensions
 @using JobScraper.Models
 @using JobScraper.Persistence
@@ -14,7 +15,7 @@
 <QuickGrid @ref="@grid" Items="jobOffers" Pagination="@pagination" class="table">
     <TemplateColumn SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Application == null))" Title="Apply">
         <ColumnOptions>
-            <select @bind="@isAppliedFilter">
+            <select @bind="@IsAppliedFilter" @onfocusout="SetQueryParams">
                 <option value="">All</option>
                 <option value="true">Applied</option>
                 <option value="false">Non applied</option>
@@ -30,7 +31,7 @@
     </TemplateColumn>
     <TemplateColumn SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Hidden))" Title="Hide">
         <ColumnOptions>
-            <select @bind="@isHiddenFilter">
+            <select @bind="@IsHiddenFilter" @onfocusout="SetQueryParams">
                 <option value="">All</option>
                 <option value="true">Hidden</option>
                 <option value="false">Visible</option>
@@ -44,37 +45,45 @@
             }
         </ChildContent>
     </TemplateColumn>
-    <PropertyColumn class="col-3" Property="@(p => p.Title)" Sortable="true">
-        <ColumnOptions>
-            <div class="search-box">
-                <input type="search" autofocus @bind="titleFilter" @bind:event="oninput" placeholder="Filter..."/>
-            </div>
-        </ColumnOptions>
-    </PropertyColumn>
     <PropertyColumn class="col-2" Property="@(p => p.Company.Name)" Sortable="true" Title="Company">
         <ColumnOptions>
             <div class="search-box">
-                <input type="search" autofocus @bind="companyFilter" @bind:event="oninput" placeholder="Filter..."/>
+                <input type="search" autofocus @bind="CompanyFilter" @bind:event="oninput" @onchange="SetQueryParams"/>
+            </div>
+        </ColumnOptions>
+    </PropertyColumn>
+    <PropertyColumn class="col-3" Property="@(p => p.Title)" Sortable="true">
+        <ColumnOptions>
+            <div class="search-box">
+                <input type="search" autofocus @bind="TitleFilter" @bind:event="oninput" @onchange="SetQueryParams"/>
             </div>
         </ColumnOptions>
     </PropertyColumn>
     <PropertyColumn class="col-1" Property="@(p => p.SalaryMinMonth)" Title="Min" Sortable="true">
         <ColumnOptions>
-            <input type="number" @bind="salaryMinFilter" @bind:event="oninput" placeholder="Filter..."/>
+            <input type="number" @bind="SalaryMinFilter" @bind:event="oninput" @onchange="SetQueryParams"/>
         </ColumnOptions>
     </PropertyColumn>
     <PropertyColumn class="col-1" Property="@(p => p.SalaryMaxMonth)" Title="Max" Sortable="true">
         <ColumnOptions>
-            <input type="number" @bind="salaryMaxFilter" @bind:event="oninput" placeholder="Filter..."/>
+            <input type="number" @bind="SalaryMaxFilter" @bind:event="oninput" @onchange="SetQueryParams"/>
         </ColumnOptions>
     </PropertyColumn>
-    <PropertyColumn class="col-1" Property="@(p => p.SalaryCurrency)" Title="Currency" Sortable="true"/>
+    <PropertyColumn class="col-1" Property="@(p => p.SalaryCurrency)" Title="Currency" Sortable="true">
+        <ColumnOptions>
+            <select multiple @bind="@CurrencyFilter" @onfocusout="SetQueryParams">
+                @foreach (var item in currencyOptions)
+                {
+                    <option value="@item">@item</option>
+                }
+            </select>
+        </ColumnOptions>
+    </PropertyColumn>
     <PropertyColumn class="col-1" Property="@(p => p.PublishedAt)" Format="yyyy-MM-dd" Sortable="true"/>
     <PropertyColumn class="col-1" Property="@(p => p.ScrapedAt)" Format="yyyy-MM-dd" Sortable="true"/>
     <PropertyColumn class="col-2" Property="@(p => string.Join(", ", p.MyKeywords))" Title="My keywords">
         <ColumnOptions>
-            <select multiple @bind="@myKeywordsFilter">
-                <option value="">All</option>
+            <select multiple @bind="@MyKeywordsFilter" @onfocusout="SetQueryParams">
                 @foreach (var item in @myKeywordsOptions)
                 {
                     <option value="@item">@item</option>
@@ -85,7 +94,7 @@
     <PropertyColumn class="col-2" Property="@(p => p.Location)" Sortable="true"/>
     <PropertyColumn class="col-1" Property="@(p => p.Origin)" Sortable="true">
         <ColumnOptions>
-            <select multiple @bind="@originFilter">
+            <select multiple @bind="@OriginFilter" @onfocusout="SetQueryParams">
                 @foreach (var item in Enum.GetValues(typeof(DataOrigin)))
                 {
                     <option value="@item">@item</option>
@@ -105,43 +114,78 @@
 
 @inject IDbContextFactory<JobsDbContext> DbFactory
 @inject IOptions<ScraperConfig> ScraperConfig;
+@inject NavigationManager NavigationManager
+
 @code {
     QuickGrid<JobOffer> grid = null!;
     JobsDbContext context = null!;
     PaginationState pagination = new() { ItemsPerPage = 50 };
     ApplyModal applyModal = null!;
     string[] myKeywordsOptions = [];
+    string[] currencyOptions = [];
 
-    private string titleFilter = "";
-    private string companyFilter = "";
-    private string[] originFilter = [];
-    private string[] myKeywordsFilter = [];
-    private string isAppliedFilter = "false";
-    private string isHiddenFilter = "false";
-    private int? salaryMinFilter;
-    private int? salaryMaxFilter;
+    [SupplyParameterFromQuery] [Parameter] public string? TitleFilter { get; set; } = "";
+    [SupplyParameterFromQuery] [Parameter] public string? CompanyFilter { get; set; } = "";
+    [SupplyParameterFromQuery] [Parameter] public string? IsAppliedFilter { get; set; } = "false";
+    [SupplyParameterFromQuery] [Parameter] public string? IsHiddenFilter { get; set; } = "false";
+    [SupplyParameterFromQuery] [Parameter] public int? SalaryMinFilter { get; set; }
+    [SupplyParameterFromQuery] [Parameter] public int? SalaryMaxFilter { get; set; }
+    [SupplyParameterFromQuery] [Parameter] public string[]? CurrencyFilter { get; set; } = [];
+    [SupplyParameterFromQuery] [Parameter] public string[]? OriginFilter { get; set; } = [];
+    [SupplyParameterFromQuery] [Parameter] public string[]? MyKeywordsFilter { get; set; } = [];
 
     IQueryable<JobOffer> jobOffers => context.JobOffers
         .Include(jo => jo.Company)
         .Include(jo => jo.Application)
         .Where(jo => jo.DetailsScrapeStatus == DetailsScrapeStatus.Scraped)
-        .WhereIf(!string.IsNullOrEmpty(titleFilter), jo => jo.Title.ToLower().Contains(titleFilter.ToLower()))
-        .WhereIf(!string.IsNullOrEmpty(companyFilter), jo => jo.Company.Name.ToLower().Contains(companyFilter.ToLower()))
-        .WhereIf(originFilter.Length     > 0, jo => originFilter.Contains(jo.Origin.ToString()))
-        .WhereIf(myKeywordsFilter.Length > 0, jo => jo.MyKeywords.Any(mk => myKeywordsFilter.Contains(mk)))
-        .WhereIf(isAppliedFilter.Length  > 0, jo => isAppliedFilter == "true" ? jo.Application != null : jo.Application == null)
-        .WhereIf(isHiddenFilter.Length   > 0, jo => isHiddenFilter  == "true" ? jo.Hidden : !jo.Hidden)
-        .WhereIf(salaryMinFilter.HasValue, jo => jo.SalaryMinMonth >= salaryMinFilter)
-        .WhereIf(salaryMaxFilter.HasValue, jo => jo.SalaryMaxMonth >= salaryMaxFilter)
+        .WhereIf(!string.IsNullOrEmpty(TitleFilter), jo => jo.Title.ToLower().Contains(TitleFilter!.ToLower()))
+        .WhereIf(!string.IsNullOrEmpty(CompanyFilter), jo => jo.Company.Name.ToLower().Contains(CompanyFilter!.ToLower()))
+        .WhereIf(OriginFilter?.Length     > 0, jo => OriginFilter!.Contains(jo.Origin.ToString()))
+        .WhereIf(MyKeywordsFilter?.Length > 0, jo => jo.MyKeywords.Any(mk => MyKeywordsFilter!.Contains(mk)))
+        .WhereIf(CurrencyFilter?.Length   > 0, jo => CurrencyFilter!.Contains(jo.SalaryCurrency))
+        .WhereIf(IsAppliedFilter?.Length  > 0, jo => IsAppliedFilter == "true" ? jo.Application != null : jo.Application == null)
+        .WhereIf(IsHiddenFilter?.Length   > 0, jo => IsHiddenFilter  == "true" ? jo.Hidden : !jo.Hidden)
+        .WhereIf(SalaryMinFilter.HasValue, jo => jo.SalaryMinMonth >= SalaryMinFilter)
+        .WhereIf(SalaryMaxFilter.HasValue, jo => jo.SalaryMaxMonth >= SalaryMaxFilter)
         .OrderBy(jo => jo.Company.Name);
 
     protected override async Task OnInitializedAsync()
     {
         context = await DbFactory.CreateDbContextAsync();
         myKeywordsOptions = ScraperConfig.Value.Keywords;
+        currencyOptions = await context.JobOffers.Select(jo => jo.SalaryCurrency!).Distinct().ToArrayAsync();
+
+        // set default filters if query params are not set
+        IsAppliedFilter ??= "false";
+        IsHiddenFilter ??= "false";
     }
 
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+    private void SetQueryParams()
+    {
+        var uriBuilder = new UriBuilder(NavigationManager.Uri);
+        var query = HttpUtility.ParseQueryString("");
+
+        if (TitleFilter?.Length > 0) query["TitleFilter"] = TitleFilter;
+        if (CompanyFilter?.Length > 0) query["CompanyFilter"] = CompanyFilter;
+        if (IsAppliedFilter?.Length > 0) query["IsAppliedFilter"] = IsAppliedFilter;
+        if (IsHiddenFilter?.Length > 0) query["IsHiddenFilter"] = IsHiddenFilter;
+        if (SalaryMinFilter.HasValue) query["SalaryMinFilter"] = SalaryMinFilter.ToString();
+        if (SalaryMaxFilter.HasValue) query["SalaryMaxFilter"] = SalaryMaxFilter.ToString();
+
+        for (var i = 0; i < CurrencyFilter?.Length; i++)
+            query.Add("CurrencyFilter", CurrencyFilter![i]);
+
+        for (var i = 0; i < OriginFilter?.Length; i++)
+            query.Add("OriginFilter", OriginFilter![i]);
+
+        for (var i = 0; i < MyKeywordsFilter?.Length; i++)
+            query.Add("MyKeywordsFilter", MyKeywordsFilter![i]);
+
+        uriBuilder.Query = query.ToString();
+
+        NavigationManager.NavigateTo(uriBuilder.ToString(), forceLoad: false);
+    }
+
     private async Task HideOffer(JobOffer jobOffer)
     {
         jobOffer.Hidden = true;
@@ -155,4 +199,6 @@
         await context.SaveChangesAsync();
         await grid.RefreshDataAsync();
     }
+
+    public async ValueTask DisposeAsync() => await context.DisposeAsync();
 }
