@@ -4,24 +4,12 @@ https://github.com/wojciech-dron/JobScraper
 
 This project uses C# and Microsoft Playwright to scrape job data from Indeed and JustJoin.It (for now).
 
-## Launch app
-
-Run 
-
-```bash
-run-JobScraper.bat
-```
-
-You can modify search parameters modifying filters in searching sites
-and re-paste SearchUrl in scraperSettings.json 
-
-
 
 ## Development setup
 
 This project requires .NET and the Microsoft Playwright CLI. If you don't have these installed, follow the instructions below.
 
-1. Install .NET from the [.NET download page](https://dotnet.microsoft.com/download).
+1. Install .NET 9 from the [.NET download page](https://dotnet.microsoft.com/download).
 
 2. Install the Microsoft Playwright CLI by running the following command in your terminal:
 
