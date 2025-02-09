@@ -16,9 +16,30 @@
                 <strong>Title:</strong> @_jobOffer.Title<br/>
                 <strong>Company Name:</strong> @(_jobOffer.CompanyName ?? "Not specified")<br/>
                 <strong>Location:</strong> @(_jobOffer.Location ?? "Not specified")<br/>
+                <strong>Origin:</strong> @_jobOffer.Origin<br/>
+                <strong>Published at:</strong> @(_jobOffer.PublishedAt?.ToString("dd-MM-yyyy"))<br/>
+                <strong>Offer Keywords:</strong> @(string.Join(", ", _jobOffer.OfferKeywords))<br/>
+                <strong>My Keywords:</strong> @(string.Join(", ", _jobOffer.MyKeywords))<br/>
                 <strong>Salary:</strong> @($"{_jobOffer.SalaryMinMonth} - {_jobOffer.SalaryMaxMonth} {_jobOffer.SalaryCurrency}")<br/>
 
-                <EditForm Model="@_application">
+                @if (ShowHideButton)
+                {
+                    <div class="form-group pt-3">
+                        <label for="comments">Offer comments: (updates on show/hide offer)</label>
+                        <InputTextArea id="offer-comments" @bind-Value="@_jobOffer.Comments" class="form-control"/>
+                    </div>
+                    <br/>
+
+                    if (_jobOffer.Hidden) {
+                        <button class="btn btn-primary" @onclick="ShowOffer">Show offer</button>
+                    } else {
+                        <button class="btn btn-primary" @onclick="HideOffer">Hide offer</button>
+                    }
+
+                    <button class="btn btn-secondary" @onclick="CancelAsync">Cancel</button>
+                }
+
+                <EditForm class="pt-5" Model="@_application">
                     <DataAnnotationsValidator/>
                     <ValidationSummary/>
 
@@ -50,17 +71,12 @@
                     <br/>
 
                     <button type="submit" class="btn btn-success" @onclick="SaveAsync">@(_isEdit ? "Update" : "Create")</button>
-                    @if (ShowHideButton && _jobOffer.Hidden) {
-                        <button class="btn btn-primary" @onclick="ShowOffer">Show offer</button>
-                    }
-                    @if (ShowHideButton && !_jobOffer.Hidden){
-                        <button class="btn btn-primary" @onclick="HideOffer">Hide offer</button>
-                    }
                     <button type="button" class="btn btn-secondary" @onclick="CancelAsync">Cancel</button>
                 </EditForm>
+
             </div>
             <div class="col-md-9">
-                <strong>Description:</strong> <br />
+                <strong>Description:</strong> <br/>
                 <span style="white-space: pre-line">
                     @_jobOffer.Description
                 </span>
