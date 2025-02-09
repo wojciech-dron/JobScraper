@@ -1,6 +1,7 @@
 ﻿using JobScraper.Logic.Common;
 using JobScraper.Logic.Indeed;
 using JobScraper.Logic.Jjit;
+using JobScraper.Logic.NoFluffJobs;
 using JobScraper.Models;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -32,5 +33,7 @@ public static class Setup
 
         services.AddTransient<JjitListScraper>();
         services.AddTransient<JjitDetailsScraper>();
+
+        services.AddTransient<NoFluffJobsListScraper>();
     }
 }

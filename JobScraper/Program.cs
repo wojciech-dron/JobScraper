@@ -4,15 +4,13 @@ using JobScraper.Common;
 using JobScraper.Logic;
 using JobScraper.Logic.Indeed;
 using JobScraper.Logic.Jjit;
+using JobScraper.Logic.NoFluffJobs;
 using JobScraper.Persistence;
 
 var builder = CoconaApp.CreateBuilder(args);
 
-builder.Configuration.AddScrapperSettings(builder.Environment);
-
 builder.Configuration.AddEnvironmentVariables();
-builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-builder.Configuration.AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true);
+builder.Configuration.AddScrapperSettings(builder.Environment);
 
 builder.Logging.AddOtelLogging(builder.Configuration, "JobScraper");
 
@@ -27,6 +25,7 @@ app.AddCommands<IndeedList.Handler>();
 app.AddCommands<IndeedDetails.Handler>();
 app.AddCommands<JjitList.Handler>();
 app.AddCommands<JjitDetails.Handler>();
+app.AddCommands<NoFluffJobsList.Handler>();
 
 app.AddCommands<ScrapePipeline.Handler>();
 

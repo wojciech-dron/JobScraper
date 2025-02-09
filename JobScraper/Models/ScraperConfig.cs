@@ -10,6 +10,9 @@ public class ScraperConfig
     public string IndeedBaseUrl { get; set; } = "https://www.indeed.com";
     public string? IndeedSearchUrl { get; set; }
 
+    public string NoFluffJobsBaseUrl { get; set; } = "https://nofluffjobs.com";
+    public string? NoFluffJobsSearchUrl { get; set; }
+
     public string SearchTerm { get; set; } = "C#";
     public string Location { get; set; } = "";
     public int ListingAgeInDays { get; set; } = 15;
