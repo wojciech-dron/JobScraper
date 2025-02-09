@@ -149,7 +149,8 @@
         .WhereIf(IsHiddenFilter?.Length   > 0, jo => IsHiddenFilter  == "true" ? jo.Hidden : !jo.Hidden)
         .WhereIf(SalaryMinFilter.HasValue, jo => jo.SalaryMinMonth >= SalaryMinFilter)
         .WhereIf(SalaryMaxFilter.HasValue, jo => jo.SalaryMaxMonth >= SalaryMaxFilter)
-        .OrderBy(jo => jo.Company.Name);
+        .OrderBy(jo => jo.CompanyName)
+        .ThenByDescending(jo => jo.SalaryMaxMonth);
 
     protected override async Task OnInitializedAsync()
     {

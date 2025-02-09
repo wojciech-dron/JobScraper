@@ -14,7 +14,14 @@
                     <br/>
                 }
                 <strong>Title:</strong> @_jobOffer.Title<br/>
-                <strong>Company Name:</strong> @(_jobOffer.CompanyName ?? "Not specified")<br/>
+                <strong>Company Name:</strong>
+                <span>@(_jobOffer.CompanyName ?? "Not specified")</span>
+                @if (_alreadyAppliedToCompany)
+                {
+                    <br /><span class="text text-danger">Already applied to this company.</span>
+                }
+                <br/>
+                <strong>Company offers count:</strong> @_companyOffersCount<br/>
                 <strong>Location:</strong> @(_jobOffer.Location ?? "Not specified")<br/>
                 <strong>Origin:</strong> @_jobOffer.Origin<br/>
                 <strong>Published at:</strong> @(_jobOffer.PublishedAt?.ToString("dd-MM-yyyy"))<br/>
@@ -93,6 +100,9 @@
     private JobOffer _jobOffer = null!;
     private Application? _application;
 
+    private bool _alreadyAppliedToCompany;
+    private int _companyOffersCount;
+
     [Parameter] public bool ShowHideButton { get; set; }
     [Parameter] public Action? OnUpdate { get; set; }
 
@@ -110,6 +120,15 @@
         {
             OfferUrl = _jobOffer.OfferUrl,
         };
+
+        _alreadyAppliedToCompany = await _context.Companies
+            .Where(c => c.Name == _jobOffer.CompanyName)
+            .AnyAsync(c => c.JobOffers.Any(jo => jo.Application != null));
+
+        _companyOffersCount = await _context.JobOffers
+            .Where(jo => jo.CompanyName == _jobOffer.CompanyName)
+            .CountAsync();
+
 
         await _modal.ShowAsync();
     }
