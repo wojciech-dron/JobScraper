@@ -108,7 +108,7 @@
         _isEdit = jobOffer.Application is not null;
         _application ??= new Application
         {
-            OfferUrl = _jobOffer.OfferUrl
+            OfferUrl = _jobOffer.OfferUrl,
         };
 
         await _modal.ShowAsync();

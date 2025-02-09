@@ -63,8 +63,7 @@
         .Include(jo => jo.JobOffer.Company)
         .WhereIf(!string.IsNullOrEmpty(TitleFilter), a => a.JobOffer.Title.ToLower().Contains(TitleFilter!.ToLower()))
         .WhereIf(!string.IsNullOrEmpty(CompanyFilter), a => a.JobOffer.Company.Name.ToLower().Contains(CompanyFilter!.ToLower()))
-        .OrderByDescending(jo => jo.RespondedAt)
-        .ThenByDescending(jo => jo.AppliedAt);
+        .OrderByDescending(jo => jo.AppliedAt);
 
     protected override async Task OnInitializedAsync()
     {

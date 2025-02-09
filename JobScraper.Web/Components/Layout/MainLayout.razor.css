@@ -108,3 +108,11 @@ main {
 ::deep td:empty {
     display: none;
 }
+
+::deep .btn {
+    font-size: 0.85rem;
+}
+
+::deep table {
+    font-size: 0.85rem;
+}
