@@ -35,5 +35,6 @@ public static class Setup
         services.AddTransient<JjitDetailsScraper>();
 
         services.AddTransient<NoFluffJobsListScraper>();
+        services.AddTransient<NoFluffJobsDetailsScraper>();
     }
 }

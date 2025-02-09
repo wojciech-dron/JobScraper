@@ -21,10 +21,10 @@ public class JjitDetailsScraper : ScrapperBase
         var page = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: Config.WaitForDetailsSeconds);
         await page.WaitForTimeoutAsync(Config.WaitForDetailsSeconds * 1000); // Wait for the page to load
 
-        jobOffer.ScreenShotPath = $"jjit/{jobOffer.CompanyName}/{DateTime.Now:yyMMdd_HHmm}.png";
+        jobOffer.ScreenShotPath = $"jjit/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.png";
         await SaveScrenshoot(page, jobOffer.ScreenShotPath);
 
-        jobOffer.HtmlPath = $"jjit/{jobOffer.CompanyName}/{DateTime.Now:yyMMdd_HHmm}.html";
+        jobOffer.HtmlPath = $"jjit/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.html";
         await SavePage(page, jobOffer.HtmlPath);
 
         await Task.WhenAll(

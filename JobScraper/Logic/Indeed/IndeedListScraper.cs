@@ -47,7 +47,7 @@ public class IndeedListScraper : ScrapperBase
 
         var page = await LoadUntilAsync(searchUrl, waitSeconds: Config.WaitForListSeconds);
 
-        var fetchDate = DateTime.Now.ToString("yyMMdd_HHmm");
+        var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
         var pageNumber = 0;
 
         await SaveScrenshoot(page, $"indeed/list/{fetchDate}/{pageNumber}.png");

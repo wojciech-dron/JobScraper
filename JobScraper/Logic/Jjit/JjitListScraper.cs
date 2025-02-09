@@ -43,7 +43,7 @@ public class JjitListScraper : ScrapperBase
 
         await AcceptCookies(page);
 
-        var fetchDate = DateTime.Now.ToString("yyMMdd_HHmm");
+        var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
         var pageNumber = 0;
 
         await SaveScrenshoot(page, $"jjit/list/{fetchDate}/{pageNumber}.png");

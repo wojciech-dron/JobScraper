@@ -26,9 +26,11 @@ app.AddCommands<IndeedDetails.Handler>();
 app.AddCommands<JjitList.Handler>();
 app.AddCommands<JjitDetails.Handler>();
 app.AddCommands<NoFluffJobsList.Handler>();
+app.AddCommands<NoFluffJobsDetails.Handler>();
 
 app.AddCommands<ScrapePipeline.Handler>();
 
+// if command does not execute, check if handler dependencies are registered.
 await app.RunAsync();
 
 Console.WriteLine("Scrapper finished");

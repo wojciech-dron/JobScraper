@@ -22,10 +22,10 @@ public class IndeedDetailsScraper : ScrapperBase
         var indeedPage = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: Config.WaitForDetailsSeconds);
         await indeedPage.WaitForTimeoutAsync(Config.WaitForDetailsSeconds * 1000); // Wait for the page to load
 
-        jobOffer.ScreenShotPath = $"indeed/{jobOffer.CompanyName}/{DateTime.Now:yyMMdd_HHmm}.png";
+        jobOffer.ScreenShotPath = $"indeed/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.png";
         await SaveScrenshoot(indeedPage, jobOffer.ScreenShotPath);
 
-        jobOffer.HtmlPath = $"indeed/{jobOffer.CompanyName}/{DateTime.Now:yyMMdd_HHmm}.html";
+        jobOffer.HtmlPath = $"indeed/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.html";
         await SavePage(indeedPage, jobOffer.HtmlPath);
 
         jobOffer.PublishedAt = DateTime.UtcNow;

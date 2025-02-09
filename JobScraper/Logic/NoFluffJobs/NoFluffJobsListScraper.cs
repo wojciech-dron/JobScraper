@@ -26,7 +26,7 @@ public class NoFluffJobsListScraper : ScrapperBase
 
         var page = await LoadUntilAsync(searchUrl, waitSeconds: Config.WaitForListSeconds);
 
-        var fetchDate = DateTime.Now.ToString("yyMMdd_HHmm");
+        var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
         var pageNumber = 0;
 
         await SaveScrenshoot(page, $"NoFluffJobs/list/{fetchDate}/{pageNumber}.png");
@@ -101,7 +101,8 @@ public class NoFluffJobsListScraper : ScrapperBase
                 OfferUrl = url,
                 OfferKeywords = offerJobKeys,
                 CompanyName = companyName,
-                Location = location
+                Location = location,
+                Origin = DataOrigin.NoFluffJobs
             };
 
             SetSalary(jobOffer, salary);
