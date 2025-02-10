@@ -7,18 +7,20 @@
     <BodyTemplate>
         <div class="row">
             <div class="col-md-3">
-                <a href="@_jobOffer.OfferUrl" target="_blank">Offer page</a><br/>
+                <h4>Offer details</h4>
+                <a href="@_jobOffer.OfferUrl" target="_blank">Offer page</a> <br/>
                 @if (!string.IsNullOrEmpty(_jobOffer.ApplyUrl))
                 {
-                    <a href="@_jobOffer.ApplyUrl" target="_blank">Apply page</a>
-                    <br/>
+                    <a href="@_jobOffer.ApplyUrl" target="_blank">Apply page</a> <br/>
                 }
+                <br/>
                 <strong>Title:</strong> @_jobOffer.Title<br/>
                 <strong>Company Name:</strong>
                 <span>@(_jobOffer.CompanyName ?? "Not specified")</span>
                 @if (_alreadyAppliedToCompany)
                 {
-                    <br /><span class="text text-danger">Already applied to this company.</span>
+                    <br/>
+                    <span class="text text-danger">Already applied to this company.</span>
                 }
                 <br/>
                 <strong>Company offers count:</strong> @_companyOffersCount<br/>
@@ -37,16 +39,20 @@
                     </div>
                     <br/>
 
-                    if (_jobOffer.Hidden) {
+                    if (_jobOffer.Hidden)
+                    {
                         <button class="btn btn-primary" @onclick="ShowOffer">Show offer</button>
-                    } else {
+                    }
+                    else
+                    {
                         <button class="btn btn-primary" @onclick="HideOffer">Hide offer</button>
                     }
 
                     <button class="btn btn-secondary" @onclick="CancelAsync">Cancel</button>
                 }
 
-                <EditForm class="pt-5" Model="@_application">
+                <h4 class="pt-5">Apply record</h4>
+                <EditForm Model="@_application">
                     <DataAnnotationsValidator/>
                     <ValidationSummary/>
 
