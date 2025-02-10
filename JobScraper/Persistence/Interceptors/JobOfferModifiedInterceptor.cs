@@ -6,6 +6,13 @@ namespace JobScraper.Persistence.Interceptors;
 
 public class JobOfferModifiedInterceptor : SaveChangesInterceptor
 {
+    public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData,
+        InterceptionResult<int> result,
+        CancellationToken cancellationToken = default)
+    {
+        return ValueTask.FromResult(SavingChanges(eventData, result));
+    }
+
     public override InterceptionResult<int> SavingChanges(
         DbContextEventData eventData,
         InterceptionResult<int> result)

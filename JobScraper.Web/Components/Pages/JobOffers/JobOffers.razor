@@ -13,7 +13,7 @@
 
 <h1>Job offers</h1>
 
-<QuickGrid @ref="@grid" Items="jobOffers" Pagination="@pagination" class="table">
+<QuickGrid @ref="@grid" Items="jobOffers" Pagination="@pagination" class="table small-padding-table">
     <TemplateColumn SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Application == null))" Title="Apply">
         <ColumnOptions>
             <select @bind="@IsAppliedFilter" @onfocusout="SetQueryParams">
@@ -60,17 +60,17 @@
             </div>
         </ColumnOptions>
     </PropertyColumn>
-    <PropertyColumn class="col-1" Property="@(p => p.SalaryMinMonth)" Title="Min" Sortable="true">
+    <PropertyColumn class="" Property="@(p => p.SalaryMinMonth)" Title="Min" Sortable="true">
         <ColumnOptions>
             <input type="number" @bind="SalaryMinFilter" @bind:event="oninput" @onchange="SetQueryParams"/>
         </ColumnOptions>
     </PropertyColumn>
-    <PropertyColumn class="col-1" Property="@(p => p.SalaryMaxMonth)" Title="Max" Sortable="true">
+    <PropertyColumn class="" Property="@(p => p.SalaryMaxMonth)" Title="Max" Sortable="true">
         <ColumnOptions>
             <input type="number" @bind="SalaryMaxFilter" @bind:event="oninput" @onchange="SetQueryParams"/>
         </ColumnOptions>
     </PropertyColumn>
-    <PropertyColumn class="col-1" Property="@(p => p.SalaryCurrency)" Title="Currency" Sortable="true">
+    <PropertyColumn class="" Property="@(p => p.SalaryCurrency)" Title="Cur." Sortable="true">
         <ColumnOptions>
             <select multiple @bind="@CurrencyFilter" @onfocusout="SetQueryParams">
                 @foreach (var item in currencyOptions)
@@ -80,9 +80,9 @@
             </select>
         </ColumnOptions>
     </PropertyColumn>
-    <PropertyColumn class="col-1" Property="@(p => p.PublishedAt)" Format="yyyy-MM-dd" Sortable="true"/>
-    <PropertyColumn class="col-1" Property="@(p => p.ScrapedAt)" Format="yyyy-MM-dd" Sortable="true"/>
-    <PropertyColumn class="col-2" Property="@(p => string.Join(", ", p.MyKeywords))" Title="My keywords">
+    <PropertyColumn class="col" Property="@(p => p.ScrapedAt)" Format="yyyy-MM-dd" Sortable="true"/>
+    <PropertyColumn class="col text-nowrap" Property="@(p => p.UpdatedAt)" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
+    <PropertyColumn class="col-1" Property="@(p => string.Join(", ", p.MyKeywords))" Title="My keywords">
         <ColumnOptions>
             <select multiple @bind="@MyKeywordsFilter" @onfocusout="SetQueryParams">
                 @foreach (var item in @myKeywordsOptions)
@@ -124,7 +124,7 @@
                 <option value="50">50</option>
                 <option value="100">100</option>
             </select>
-            <span class="ps-5">All visible offers: <strong>@pagination.TotalItemCount</strong></span>
+            <span class="ps-5">Total: <strong>@pagination.TotalItemCount</strong></span>
         </div>
     </SummaryTemplate>
 </Paginator>
