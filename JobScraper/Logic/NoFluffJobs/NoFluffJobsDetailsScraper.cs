@@ -37,23 +37,20 @@ public class NoFluffJobsDetailsScraper : ScrapperBase
     private async Task ScrapDescription(JobOffer jobOffer, IPage page)
     {
         var description = await page.EvaluateAsync<string?>(@"
-            document.querySelector('common-posting-content-wrapper').textContent;
+            document.querySelector('common-posting-content-wrapper')?.textContent;
         ");
-
-        jobOffer.Description = description;
 
         if (description is null)
             return;
 
-        jobOffer.MyKeywords = Config.Keywords
-            .Where(keyword => jobOffer.Description!.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-            .ToList();
+        jobOffer.Description = description;
+        jobOffer.MyKeywords = FindMyKeywords(jobOffer);
     }
 
     private async Task ScrapCompany(Company company, IPage page)
     {
         var url = await page.EvaluateAsync<string?>(
-            "document.querySelector('common-posting-company-about > article > header > h2 > a').getAttribute('href')");
+            "document.querySelector('common-posting-company-about > article > header > h2 > a')?.getAttribute('href')");
 
         company.NoFluffJobsUrl = url;
     }

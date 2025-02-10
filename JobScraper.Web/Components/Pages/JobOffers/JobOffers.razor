@@ -105,14 +105,29 @@
         </ColumnOptions>
     </PropertyColumn>
 </QuickGrid>
+
+@if (pagination.TotalItemCount is 0)
+{
+    <div class="d-flex justify-content-center align-items-center">
+        <p>No visible offers found. Let's scrape some new :)</p>
+    </div>
+}
+
 <ApplicationOfferModal @ref="_applicationOfferModal" ShowHideButton OnUpdate="@(() => grid.RefreshDataAsync())" />
 
-<select @bind="pagination.ItemsPerPage">
-    <option value="20">20</option>
-    <option value="50">50</option>
-    <option value="100">100</option>
-</select>
-<Paginator State="@pagination" />
+<Paginator State="@pagination">
+    <SummaryTemplate>
+        <div class="d-flex justify-content-between align-items-center w-auto">
+            <span class="pe-1">Page size:</span>
+            <select @bind="pagination.ItemsPerPage">
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
+            <span class="ps-5">All visible offers: <strong>@pagination.TotalItemCount</strong></span>
+        </div>
+    </SummaryTemplate>
+</Paginator>
 
 @inject IDbContextFactory<JobsDbContext> DbFactory
 @inject IOptions<ScraperConfig> ScraperConfig;

@@ -80,7 +80,7 @@ public class IndeedDetailsScraper : ScrapperBase
             return;
 
         jobOffer.Description = jobDescription;
-        FindMyKeywords(jobOffer);
+        jobOffer.MyKeywords = FindMyKeywords(jobOffer);
     }
 
 

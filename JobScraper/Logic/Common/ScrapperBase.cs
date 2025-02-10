@@ -99,9 +99,9 @@ public abstract class ScrapperBase : IAsyncDisposable
         return page;
     }
 
-    protected void FindMyKeywords(JobOffer jobOffer)
+    protected List<string> FindMyKeywords(JobOffer jobOffer)
     {
-        jobOffer.MyKeywords = Config.Keywords
+        return Config.Keywords
             .Where(keyword => jobOffer.Description!.Contains(keyword, StringComparison.OrdinalIgnoreCase))
             .ToList();
     }
