@@ -1,10 +1,14 @@
-﻿using JobScraper.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace JobScraper.Persistence.Interceptors;
 
-public class JobOfferModifiedInterceptor : SaveChangesInterceptor
+public interface IUpdatable
+{
+    DateTime? UpdatedAt { get; set; }
+}
+
+public class UpdatableInterceptor : SaveChangesInterceptor
 {
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData,
         InterceptionResult<int> result,
@@ -23,7 +27,7 @@ public class JobOfferModifiedInterceptor : SaveChangesInterceptor
             return result;
 
         foreach (var entry in context.ChangeTracker
-            .Entries<JobOffer>()
+            .Entries<IUpdatable>()
             .Where(jo => jo.State == EntityState.Modified))
         {
             entry.Entity.UpdatedAt = DateTime.UtcNow;

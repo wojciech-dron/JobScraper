@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using JobScraper.Persistence.Interceptors;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace JobScraper.Models;
 
-public class JobOffer
+public class JobOffer : IUpdatable
 {
     public string OfferUrl { get; set; } = null!;
     public string Title { get; set; } = null!;

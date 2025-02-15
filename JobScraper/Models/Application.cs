@@ -1,9 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using JobScraper.Persistence.Interceptors;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace JobScraper.Models;
 
-public class Application
+public class Application : IUpdatable
 {
     public string OfferUrl { get; set; } = null!;
     public DateTime AppliedAt { get; set; } = DateTime.UtcNow;
@@ -11,8 +12,21 @@ public class Application
     public DateTime? RespondedAt { get; set; }
     public string? Comments { get; set; }
     public int? ExpectedMonthSalary { get; set; }
+    public ApplyStatus Status { get; set; } = ApplyStatus.Applied;
+    public DateTime? UpdatedAt { get; set; }
 
     public JobOffer JobOffer { get; set; } = null!;
+}
+
+public enum ApplyStatus
+{
+    Applied = 0,
+    Responded = 1,
+    AfterInterview = 2,
+    OfferReceived = 3,
+    OnHold = 4,
+    FutureOffers = 5,
+    Rejected = 100,
 }
 
 public class ApplicationModelBuilder : IEntityTypeConfiguration<Application>
@@ -26,6 +40,8 @@ public class ApplicationModelBuilder : IEntityTypeConfiguration<Application>
         builder.Property(e => e.AppliedAt).IsRequired();
         builder.Property(e => e.SentCv).HasMaxLength(100).IsRequired();
         builder.Property(e => e.Comments).HasMaxLength(500);
+        builder.Property(j => j.Status).HasConversion<string>().HasMaxLength(24);
+
 
         builder.HasOne(e => e.JobOffer)
             .WithOne(e => e.Application)

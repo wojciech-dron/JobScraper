@@ -14,9 +14,12 @@ public static class Sqlite
                 .GetRequiredService<IConfiguration>()
                 .GetConnectionString("DefaultConnection")!;
 
+            if (string.IsNullOrEmpty(connectionString))
+                throw new ArgumentNullException(nameof(connectionString));
+
             options
                 .UseSqlite(connectionString)
-                .AddInterceptors(new JobOfferModifiedInterceptor())
+                .AddInterceptors(new UpdatableInterceptor())
                 .EnableSensitiveDataLogging();
         });
 

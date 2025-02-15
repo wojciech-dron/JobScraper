@@ -22,6 +22,10 @@ public class NoFluffJobsListScraper : ScrapperBase
     public async IAsyncEnumerable<List<JobOffer>> ScrapeJobs()
     {
         var searchUrl = Config.NoFluffJobsSearchUrl;
+
+        if (string.IsNullOrEmpty(searchUrl))
+            throw new ArgumentException("SearchUrl is null or empty", nameof(searchUrl));
+
         Logger.LogInformation("NoFluffJobs scraping for url {SearchUrl}", searchUrl);
 
         var page = await LoadUntilAsync(searchUrl, waitSeconds: Config.WaitForListSeconds);
@@ -95,7 +99,7 @@ public class NoFluffJobsListScraper : ScrapperBase
             var companyName = companyNames[i].Trim();
             var location = locations[i].Replace("  ", " ").Replace("  ", " ").Trim();
 
-            var jobOffer = new JobOffer()
+            var jobOffer = new JobOffer
             {
                 Title = title,
                 OfferUrl = url,

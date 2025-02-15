@@ -68,6 +68,15 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="respondedAt">Status:</label>
+                        <InputSelect id="status" @bind-Value="@_application.Status" class="form-control">
+                            @foreach (var value in Enum.GetValues<ApplyStatus>()) {
+                                <option value="@value">@value</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="form-group">
                         <label for="comments">Comments:</label>
                         <InputTextArea id="comments" @bind-Value="@_application.Comments" class="form-control"/>
                     </div>

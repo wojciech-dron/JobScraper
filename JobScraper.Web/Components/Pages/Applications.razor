@@ -8,13 +8,26 @@
 @using Microsoft.EntityFrameworkCore
 @using JobScraper.Web.Components.Modals
 
-<PageTitle>Job offers</PageTitle>
+<PageTitle>Applications</PageTitle>
 
-<h1>Job offers</h1>
+<h1>Applications</h1>
 
 <QuickGrid @ref="@grid" Items="applications" Pagination="@pagination" class="table">
     <TemplateColumn Title="Details">
         <button class="btn btn-primary" @onclick="_ => _applicationOfferModal.ShowAsync(context.JobOffer)">Modify</button>
+    </TemplateColumn>
+    <TemplateColumn SortBy="@(GridSort<Application>.ByAscending(p => p.Status))" Title="Rejected">
+        <ColumnOptions>
+            <select @bind="@IsRejectedFilter" @onfocusout="SetQueryParams">
+                <option value="">All</option>
+                <option value="true">Rejected</option>
+                <option value="false">Non rejected</option>
+            </select>
+        </ColumnOptions>
+        <ChildContent>
+            <button class="btn btn-secondary" @onclick="async _ => await RejectApply(context)">Reject</button>
+
+        </ChildContent>
     </TemplateColumn>
     <PropertyColumn Property="@(p => p.JobOffer.Company.Name)" Title="Company" Sortable="true">
         <ColumnOptions>
@@ -30,11 +43,22 @@
             </div>
         </ColumnOptions>
     </PropertyColumn>
-    <PropertyColumn Property="@(p => p.JobOffer.Origin)" Sortable="true"/>
-    <PropertyColumn Property="@(p => p.AppliedAt)" Sortable="true"/>
-    <PropertyColumn Property="@(p => p.RespondedAt)" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.Status)" Sortable="true">
+        <ColumnOptions>
+            <select multiple @bind="@StatusFilter" @onfocusout="SetQueryParams">
+                @foreach (var item in Enum.GetValues(typeof(ApplyStatus)))
+                {
+                    <option value="@item">@item</option>
+                }
+            </select>
+        </ColumnOptions>
+    </PropertyColumn>
     <PropertyColumn Property="@(p => p.SentCv)" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.JobOffer.Origin)" Sortable="true"/>
     <PropertyColumn Property="@(p => p.ExpectedMonthSalary)" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.AppliedAt)" Format="yyyy-MM-dd" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.RespondedAt)" Format="yyyy-MM-dd" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.UpdatedAt)" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
     <PropertyColumn Property="@(p => p.Comments)" Sortable="true"/>
 
 </QuickGrid>
@@ -63,18 +87,25 @@
     PaginationState pagination = new() { ItemsPerPage = 50 };
     ApplicationOfferModal _applicationOfferModal = null!;
 
+    [SupplyParameterFromQuery] [Parameter] public string? IsRejectedFilter { get; set; } = "false";
     [SupplyParameterFromQuery] [Parameter] public string? TitleFilter { get; set; } = "";
     [SupplyParameterFromQuery] [Parameter] public string? CompanyFilter { get; set; } = "";
+    [SupplyParameterFromQuery] [Parameter] public string[]? StatusFilter { get; set; } = [];
 
     IQueryable<Application> applications => context.Applications
         .Include(jo => jo.JobOffer.Company)
+        .WhereIf(IsRejectedFilter?.Length > 0, a => IsRejectedFilter == "true" ? a.Status == ApplyStatus.Rejected : a.Status != ApplyStatus.Rejected)
         .WhereIf(!string.IsNullOrEmpty(TitleFilter), a => a.JobOffer.Title.ToLower().Contains(TitleFilter!.ToLower()))
         .WhereIf(!string.IsNullOrEmpty(CompanyFilter), a => a.JobOffer.Company.Name.ToLower().Contains(CompanyFilter!.ToLower()))
-        .OrderByDescending(jo => jo.AppliedAt);
+        .WhereIf(StatusFilter?.Length > 0, jo => StatusFilter!.Contains(jo.Status.ToString()))
+        .OrderByDescending(jo => jo.RespondedAt)
+        .ThenByDescending(jo => jo.AppliedAt);
 
     protected override async Task OnInitializedAsync()
     {
         context = await DbFactory.CreateDbContextAsync();
+
+        IsRejectedFilter ??= "false";
     }
 
     private void SetQueryParams()
@@ -82,12 +113,23 @@
         var uriBuilder = new UriBuilder(NavigationManager.Uri);
         var query = HttpUtility.ParseQueryString("");
 
-        if (TitleFilter?.Length     > 0) query["TitleFilter"] = TitleFilter;
-        if (CompanyFilter?.Length   > 0) query["CompanyFilter"] = CompanyFilter;
+        if (IsRejectedFilter?.Length > 0) query["IsRejectedFilter"] = IsRejectedFilter;
+        if (TitleFilter?.Length      > 0) query["TitleFilter"] = TitleFilter;
+        if (CompanyFilter?.Length    > 0) query["CompanyFilter"] = CompanyFilter;
+
+        for (var i = 0; i < StatusFilter?.Length; i++)
+            query.Add("StatusFilter", StatusFilter![i]);
 
         uriBuilder.Query = query.ToString();
 
         NavigationManager.NavigateTo(uriBuilder.ToString(), forceLoad: false);
+    }
+
+    private async Task RejectApply(Application application)
+    {
+        application.Status = ApplyStatus.Rejected;
+        await context.SaveChangesAsync();
+        await grid.RefreshDataAsync();
     }
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();
