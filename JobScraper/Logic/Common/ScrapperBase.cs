@@ -39,7 +39,20 @@ public abstract class ScrapperBase : IAsyncDisposable
     public async Task<IBrowserContext> NewContextAsync()
     {
         _playwright ??= await Playwright.CreateAsync();
-        _browser ??= await _playwright.Firefox.LaunchAsync();
+        var launchOptions = new BrowserTypeLaunchOptions
+        {
+            Headless = !Config.ShowBrowserWhenScraping
+        };
+
+        _browser ??= Config.BrowserType switch
+        {
+            BrowserType.Chromium => await _playwright.Chromium.LaunchAsync(launchOptions),
+            BrowserType.Firefox  => await _playwright.Firefox.LaunchAsync(launchOptions),
+            BrowserType.Webkit   => await _playwright.Webkit.LaunchAsync(launchOptions),
+            _                    => throw new ArgumentOutOfRangeException()
+        };
+
+        _browser ??= await _playwright.Chromium.LaunchAsync(launchOptions);
 
         return await _browser.NewContextAsync(new BrowserNewContextOptions
         {
@@ -51,7 +64,7 @@ public abstract class ScrapperBase : IAsyncDisposable
     {
         path = PrepareDestination(path);
 
-        var screenshot = await page.ScreenshotAsync();
+        var screenshot = await page.ScreenshotAsync(new() { FullPage = true });
         await File.WriteAllBytesAsync(path, screenshot);
     }
 
@@ -89,6 +102,15 @@ public abstract class ScrapperBase : IAsyncDisposable
             page = await context.NewPageAsync();
             await page.GotoAsync(url);
             await page.WaitForTimeoutAsync(waitSeconds * 1000);
+
+            if (retryAttempts > 0)
+            {
+                await page.Mouse.MoveAsync(200, 200, options: new MouseMoveOptions()
+                {
+                    Steps = 5,
+                });
+                await SavePage(page, Path.Combine($"{DataOrigin}", "error", $"{DateTime.Now:hh_mm}.html"));
+            }
 
             retryAttempts++;
         } while (retryAttempts < maxAttempts && !await successCondition(page));

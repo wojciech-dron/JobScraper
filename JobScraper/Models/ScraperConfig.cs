@@ -13,6 +13,8 @@ public class ScraperConfig
     public string NoFluffJobsBaseUrl { get; set; } = "https://nofluffjobs.com";
     public string? NoFluffJobsSearchUrl { get; set; }
 
+    public bool ShowBrowserWhenScraping { get; set; }
+    public string BrowserType { get; set; } = Microsoft.Playwright.BrowserType.Chromium;
     public string SearchTerm { get; set; } = "C#";
     public string Location { get; set; } = "";
     public int ListingAgeInDays { get; set; } = 15;
@@ -27,3 +29,4 @@ public class ScraperConfig
 
     public string PageSavingDirectory { get; set; } = ".\\Data\\jobs";
 }
+
