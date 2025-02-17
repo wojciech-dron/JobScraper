@@ -8,8 +8,8 @@
 
     <ItemGroup>
       <PackageReference Include="Blazor.Bootstrap" Version="3.3.1" />
-      <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid" Version="9.0.1" />
-      <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="9.0.1" />
+      <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid" Version="9.0.2" />
+      <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="9.0.2" />
     </ItemGroup>
 
     <ItemGroup>
