@@ -1,4 +1,6 @@
-﻿namespace JobScraper.Models;
+﻿using PlaywrightExtraSharp.Models;
+
+namespace JobScraper.Models;
 
 public class ScraperConfig
 {
@@ -14,7 +16,7 @@ public class ScraperConfig
     public string? NoFluffJobsSearchUrl { get; set; }
 
     public bool ShowBrowserWhenScraping { get; set; }
-    public string BrowserType { get; set; } = Microsoft.Playwright.BrowserType.Chromium;
+    public BrowserTypeEnum BrowserType { get; set; } = BrowserTypeEnum.Chromium;
     public string SearchTerm { get; set; } = "C#";
     public string Location { get; set; } = "";
     public int ListingAgeInDays { get; set; } = 15;

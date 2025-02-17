@@ -1,6 +1,12 @@
 ﻿using JobScraper.Models;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
+using PlaywrightExtraSharp;
+using PlaywrightExtraSharp.Models;
+using PlaywrightExtraSharp.Plugins.AnonymizeUa;
+using PlaywrightExtraSharp.Plugins.ExtraStealth;
+using PlaywrightExtraSharp.Plugins.ExtraStealth.Evasions;
+using PlaywrightExtraSharp.Plugins.Recaptcha;
 using Polly;
 using Polly.Retry;
 
@@ -10,8 +16,7 @@ public abstract class ScrapperBase : IAsyncDisposable
 {
     protected readonly ScraperConfig Config;
     protected readonly ILogger<ScrapperBase> Logger;
-    private IPlaywright? _playwright;
-    private IBrowser? _browser;
+    private PlaywrightExtra? _playwright;
 
     protected abstract DataOrigin DataOrigin { get; }
 
@@ -36,27 +41,20 @@ public abstract class ScrapperBase : IAsyncDisposable
         Config = config.Value;
     }
 
-    public async Task<IBrowserContext> NewContextAsync()
+    public async Task<IPage> NewPageAsync()
     {
-        _playwright ??= await Playwright.CreateAsync();
-        var launchOptions = new BrowserTypeLaunchOptions
-        {
-            Headless = !Config.ShowBrowserWhenScraping
-        };
+        _playwright ??= await new PlaywrightExtra(Config.BrowserType)
+            .Install()
+            .Use(new StealthExtraPlugin(new StealthHardwareConcurrencyOptions(4)))
+            .Use(new AnonymizeUaExtraPlugin())
+            .LaunchAsync(new()
+            {
+                Headless = !Config.ShowBrowserWhenScraping
+            });
 
-        _browser ??= Config.BrowserType switch
+        return await _playwright.NewPageAsync(new()
         {
-            BrowserType.Chromium => await _playwright.Chromium.LaunchAsync(launchOptions),
-            BrowserType.Firefox  => await _playwright.Firefox.LaunchAsync(launchOptions),
-            BrowserType.Webkit   => await _playwright.Webkit.LaunchAsync(launchOptions),
-            _                    => throw new ArgumentOutOfRangeException()
-        };
-
-        _browser ??= await _playwright.Chromium.LaunchAsync(launchOptions);
-
-        return await _browser.NewContextAsync(new BrowserNewContextOptions
-        {
-            UserAgent = UserAgentStrings[Random.Shared.Next() % UserAgentStrings.Length]
+            // UserAgent = UserAgentStrings[Random.Shared.Next() % UserAgentStrings.Length]
         });
     }
 
@@ -91,15 +89,14 @@ public abstract class ScrapperBase : IAsyncDisposable
         Func<IPage, Task<bool>>? successCondition = null,
         float waitSeconds = 5)
     {
-        const int maxAttempts = 5;
+        const int maxAttempts = 3;
         successCondition ??= async p => (await p.QuerySelectorAllAsync("main.error")).Count == 0;
 
         IPage page;
         var retryAttempts = 0;
         do
         {
-            var context = await NewContextAsync();
-            page = await context.NewPageAsync();
+            page = await NewPageAsync();
             await page.GotoAsync(url);
             await page.WaitForTimeoutAsync(waitSeconds * 1000);
 
@@ -116,7 +113,7 @@ public abstract class ScrapperBase : IAsyncDisposable
         } while (retryAttempts < maxAttempts && !await successCondition(page));
 
         if (retryAttempts == maxAttempts)
-            throw new ApplicationException("Retry attempts exceeded.");
+            throw new ApplicationException("Retry attempts exceeded");
 
         return page;
     }
@@ -130,10 +127,9 @@ public abstract class ScrapperBase : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
-        _playwright?.Dispose();
+        if (_playwright != null)
+            await _playwright.DisposeAsync();
+
         _playwright = null;
-        if (_browser is not null)
-            await _browser.DisposeAsync();
-        _browser = null;
     }
 }
