@@ -48,7 +48,8 @@ public enum DataOrigin
     Manual,
     Indeed,
     JustJoinIt,
-    NoFluffJobs
+    NoFluffJobs,
+    LinkedIn
 }
 
 public class JobOfferModelBuilder : IEntityTypeConfiguration<JobOffer>
