@@ -6,6 +6,7 @@ using JobScraper.Logic.Indeed;
 using JobScraper.Logic.Jjit;
 using JobScraper.Logic.NoFluffJobs;
 using JobScraper.Persistence;
+using MediatR;
 
 var builder = CoconaApp.CreateBuilder(args);
 
@@ -21,16 +22,25 @@ builder.Services
 var app = builder.Build();
 await app.Services.PrepareDbAsync();
 
-app.AddCommands<IndeedList.Handler>();
-app.AddCommands<IndeedDetails.Handler>();
-app.AddCommands<JjitList.Handler>();
-app.AddCommands<JjitDetails.Handler>();
-app.AddCommands<NoFluffJobsList.Handler>();
-app.AddCommands<NoFluffJobsDetails.Handler>();
-
-app.AddCommands<ScrapePipeline.Handler>();
+app.AddCommands<Commands>();
 
 // if command does not execute, check if handler dependencies are registered.
 await app.RunAsync();
 
 Console.WriteLine("Scrapper finished");
+
+
+public class Commands(IMediator mediator)
+{
+    [PrimaryCommand]
+    public async Task ScrapeAll() => await mediator.Send(new ScrapePipeline.Request());
+
+    public async Task IndeedList() => await mediator.Send(new IndeedListScraper.Command());
+    public async Task IndeedDetails() => await mediator.Send(new IndeedDetailsScraper.Command());
+
+    public async Task JjitList() => await mediator.Send(new JjitListScraper.Command());
+    public async Task JjitDetails() => await mediator.Send(new JjitDetailsScraper.Command());
+
+    public async Task NoFluffJobsList() => await mediator.Send(new NoFluffJobsListScraper.Command());
+    public async Task NoFluffJobsDetails() => await mediator.Send(new NoFluffJobsDetailsScraper.Command());
+}

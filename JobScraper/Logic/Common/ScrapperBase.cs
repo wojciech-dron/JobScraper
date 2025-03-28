@@ -9,17 +9,23 @@ using PlaywrightExtraSharp.Plugins.ExtraStealth.Evasions;
 using PlaywrightExtraSharp.Plugins.Recaptcha;
 using Polly;
 using Polly.Retry;
+// ReSharper disable VirtualMemberCallInConstructor
 
 namespace JobScraper.Logic.Common;
 
 public abstract class ScrapperBase : IAsyncDisposable
 {
-    protected readonly ScraperConfig Config;
+    protected readonly ScraperConfig ScrapeConfig;
+    protected readonly OriginConfig OriginConfig;
     protected readonly ILogger<ScrapperBase> Logger;
     private PlaywrightExtra? _playwright;
 
     protected abstract DataOrigin DataOrigin { get; }
 
+    public bool IsEnabled { get; }
+    public string BaseUrl { get; }
+
+    public string SearchUrl => OriginConfig.SearchUrl;
     private static readonly string[] UserAgentStrings =
     [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.2227.0 Safari/537.36",
@@ -38,18 +44,23 @@ public abstract class ScrapperBase : IAsyncDisposable
         ILogger<ScrapperBase> logger)
     {
         Logger = logger;
-        Config = config.Value;
+        ScrapeConfig = config.Value;
+        OriginConfig = ScrapeConfig.Providers.GetValueOrDefault(DataOrigin, new OriginConfig());
+        IsEnabled = ScrapeConfig.IsEnabled(DataOrigin);
+
+        var uri = new Uri(OriginConfig.SearchUrl);
+        BaseUrl = $"{uri.Scheme}://{uri.Host}";
     }
 
     public async Task<IPage> NewPageAsync()
     {
-        _playwright ??= await new PlaywrightExtra(Config.BrowserType)
+        _playwright ??= await new PlaywrightExtra(ScrapeConfig.BrowserType)
             .Install()
             .Use(new StealthExtraPlugin(new StealthHardwareConcurrencyOptions(4)))
             .Use(new AnonymizeUaExtraPlugin())
             .LaunchAsync(new()
             {
-                Headless = !Config.ShowBrowserWhenScraping
+                Headless = !ScrapeConfig.ShowBrowserWhenScraping
             });
 
         return await _playwright.NewPageAsync(new()
@@ -76,7 +87,7 @@ public abstract class ScrapperBase : IAsyncDisposable
 
     private string PrepareDestination(string path)
     {
-        path = Path.Combine(Config.PageSavingDirectory, path);
+        path = Path.Combine(ScrapeConfig.PageSavingDirectory, path);
 
         var directory = Path.GetDirectoryName(path);
         if (directory is not null)
@@ -120,7 +131,7 @@ public abstract class ScrapperBase : IAsyncDisposable
 
     protected List<string> FindMyKeywords(JobOffer jobOffer)
     {
-        return Config.Keywords
+        return ScrapeConfig.Keywords
             .Where(keyword => jobOffer.Description!.Contains(keyword, StringComparison.OrdinalIgnoreCase))
             .ToList();
     }

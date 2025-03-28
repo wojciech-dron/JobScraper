@@ -1,85 +1,92 @@
 ﻿using JobScraper.Logic.Common;
 using JobScraper.Models;
+using JobScraper.Persistence;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 
 namespace JobScraper.Logic.Jjit;
 
-public class JjitDetailsScraper : ScrapperBase
+public class JjitDetailsScraper
 {
-    protected override DataOrigin DataOrigin => DataOrigin.JustJoinIt;
+    public record Command : ScrapeCommand;
 
-    public JjitDetailsScraper(
-        IOptions<ScraperConfig> config,
-        ILogger<JjitDetailsScraper> logger) : base(config, logger)
-    { }
-
-    public async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
+    public class Handler : DetailsScrapperBase<Command>
     {
-        Logger.LogInformation("Scraping job details for {OfferUrl}", jobOffer.OfferUrl);
+        public Handler(IOptions<ScraperConfig> config,
+            ILogger<Handler> logger,
+            JobsDbContext dbContext)
+            : base(config, logger, dbContext)
+        { }
 
-        var page = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: Config.WaitForDetailsSeconds);
-        await page.WaitForTimeoutAsync(Config.WaitForDetailsSeconds * 1000); // Wait for the page to load
+        protected override DataOrigin DataOrigin => DataOrigin.NoFluffJobs;
 
-        jobOffer.ScreenShotPath = $"jjit/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.png";
-        await SaveScrenshoot(page, jobOffer.ScreenShotPath);
+        public override async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
+        {
+            Logger.LogInformation("Scraping job details for {OfferUrl}", jobOffer.OfferUrl);
 
-        jobOffer.HtmlPath = $"jjit/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.html";
-        await SavePage(page, jobOffer.HtmlPath);
+            var page = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: ScrapeConfig.WaitForDetailsSeconds);
+            await page.WaitForTimeoutAsync(ScrapeConfig.WaitForDetailsSeconds * 1000); // Wait for the page to load
 
-        await Task.WhenAll(
-            ScrapeFromInjectScript(jobOffer, page),
-            ScrapDescription(jobOffer, page),
-            ScrapCompany(jobOffer.Company, page)
-        );
+            jobOffer.ScreenShotPath = $"jjit/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.png";
+            await SaveScrenshoot(page, jobOffer.ScreenShotPath);
 
-        return jobOffer;
-    }
+            jobOffer.HtmlPath = $"jjit/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.html";
+            await SavePage(page, jobOffer.HtmlPath);
 
-    private async Task ScrapDescription(JobOffer jobOffer, IPage page)
-    {
-        var description = await page.EvaluateAsync<string?>(@"() => {
+            await Task.WhenAll(
+                ScrapeFromInjectScript(jobOffer, page),
+                ScrapDescription(jobOffer, page),
+                ScrapCompany(jobOffer.Company, page)
+            );
+
+            return jobOffer;
+        }
+
+        private async Task ScrapDescription(JobOffer jobOffer, IPage page)
+        {
+            var description = await page.EvaluateAsync<string?>(@"() => {
             let h3Elements = document.querySelectorAll('h3.MuiTypography-root.MuiTypography-h3')
             return h3Elements[h3Elements.length - 1]?.parentElement?.parentElement?.textContent
         }");
 
-        jobOffer.Description = description;
+            jobOffer.Description = description;
 
-        if (description is null)
-            return;
+            if (description is null)
+                return;
 
-        jobOffer.MyKeywords = Config.Keywords
-            .Where(keyword => jobOffer.Description!.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-    }
+            jobOffer.MyKeywords = ScrapeConfig.Keywords
+                .Where(keyword => jobOffer.Description!.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
 
-    private static async Task ScrapeFromInjectScript(JobOffer job, IPage page)
-    {
-        var dataInjectScript = await page.EvaluateAsync<string?>(@"
+        private static async Task ScrapeFromInjectScript(JobOffer job, IPage page)
+        {
+            var dataInjectScript = await page.EvaluateAsync<string?>(@"
             Array.from(document.querySelectorAll('script')).findLast(s => s.textContent.includes('createdAt'))?.textContent
         ");
 
-        var dataLines = dataInjectScript?.Split(',');
+            var dataLines = dataInjectScript?.Split(',');
 
-        job.PublishedAt = Extract(dataLines, "publishedAt").TryParseDate();
-        job.ApplyUrl = Extract(dataLines, "applyUrl");
-    }
+            job.PublishedAt = Extract(dataLines, "publishedAt").TryParseDate();
+            job.ApplyUrl = Extract(dataLines, "applyUrl");
+        }
 
-    private static string? Extract(string[]? dataLines, string key)
-    {
-        var applyUrl = dataLines?.FirstOrDefault(l => l.Contains(key))?.Split("\"")[^2].Replace("\\", "");
+        private static string? Extract(string[]? dataLines, string key)
+        {
+            var applyUrl = dataLines?.FirstOrDefault(l => l.Contains(key))?.Split("\"")[^2].Replace("\\", "");
 
-        if (applyUrl?.StartsWith("https") == true)
-            return applyUrl;
+            if (applyUrl?.StartsWith("https") == true)
+                return applyUrl;
 
-        return null;
-    }
+            return null;
+        }
 
-    private async Task ScrapCompany(Company company, IPage page)
-    {
-        var url = await page.EvaluateAsync<string?>(
-            "document.querySelector('a[name=\\\"company_profile_button\\\"]')?.getAttribute('href')");
+        private async Task ScrapCompany(Company company, IPage page)
+        {
+            var url = await page.EvaluateAsync<string?>(
+                "document.querySelector('a[name=\\\"company_profile_button\\\"]')?.getAttribute('href')");
 
-        company.JjitUrl = url;
+            company.JjitUrl = url;
+        }
     }
 }

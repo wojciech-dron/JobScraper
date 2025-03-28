@@ -1,135 +1,134 @@
 ﻿using System.Text.RegularExpressions;
-using System.Web;
 using JobScraper.Logic.Common;
 using JobScraper.Models;
+using JobScraper.Persistence;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 
 namespace JobScraper.Logic.NoFluffJobs;
 
-public class NoFluffJobsListScraper : ScrapperBase
+public class NoFluffJobsListScraper
 {
-    private readonly string _baseUrl;
-    protected override DataOrigin DataOrigin => DataOrigin.JustJoinIt;
+    public record Command : ScrapeCommand;
 
-    public NoFluffJobsListScraper(
-        IOptions<ScraperConfig> config,
-        ILogger<NoFluffJobsListScraper> logger) : base(config, logger)
+    public class Handler : ListScraperBase<Command>
     {
-        _baseUrl = Config.NoFluffJobsBaseUrl;
-    }
+        public Handler(IOptions<ScraperConfig> config,
+            ILogger<Handler> logger,
+            JobsDbContext dbContext)
+            : base(config, logger, dbContext)
+        { }
 
-    public async IAsyncEnumerable<List<JobOffer>> ScrapeJobs()
-    {
-        var searchUrl = Config.NoFluffJobsSearchUrl;
+        protected override DataOrigin DataOrigin => DataOrigin.JustJoinIt;
 
-        if (string.IsNullOrEmpty(searchUrl))
-            throw new ArgumentException("SearchUrl is null or empty", nameof(searchUrl));
-
-        Logger.LogInformation("NoFluffJobs scraping for url {SearchUrl}", searchUrl);
-
-        var page = await LoadUntilAsync(searchUrl, waitSeconds: Config.WaitForListSeconds);
-
-        var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
-        var pageNumber = 0;
-
-        await SaveScrenshoot(page, $"NoFluffJobs/list/{fetchDate}/{pageNumber}.png");
-        await SavePage(page, $"NoFluffJobs/list/{fetchDate}/{pageNumber}.html");
-
-        var newJobs = await ScrapeJobsFromList(page);
-        var previousJobs = new List<JobOffer>();
-        yield return newJobs;
-
-        while (newJobs.Count > 0)
+        public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs()
         {
-            pageNumber++;
-            previousJobs.AddRange(newJobs);
+            if (string.IsNullOrEmpty(SearchUrl))
+                throw new ArgumentException("SearchUrl is null or empty", nameof(SearchUrl));
 
-            Logger.LogInformation("NoFluffJobs - scraping page {PageNumber}", pageNumber);
+            Logger.LogInformation("NoFluffJobs scraping for url {SearchUrl}", SearchUrl);
 
-            var nextButton = await page.QuerySelectorAsync("button.tw-btn.tw-btn-primary.tw-px-8.tw-block.tw-btn-xl");
+            var page = await LoadUntilAsync(SearchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds);
 
-            if (nextButton is null)
-                break;
-
-            await nextButton.ClickAsync();
-            await page.WaitForTimeoutAsync(Config.WaitForListSeconds * 1000);
+            var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
+            var pageNumber = 0;
 
             await SaveScrenshoot(page, $"NoFluffJobs/list/{fetchDate}/{pageNumber}.png");
             await SavePage(page, $"NoFluffJobs/list/{fetchDate}/{pageNumber}.html");
 
-            var jobsFromPage = await ScrapeJobsFromList(page);
-
-            var previousOfferUrls = previousJobs.Select(sc => sc.OfferUrl).ToArray();
-            newJobs = jobsFromPage.Where(j => !previousOfferUrls.Contains(j.OfferUrl)).ToList();
-
+            var newJobs = await ScrapeJobsFromList(page);
+            var previousJobs = new List<JobOffer>();
             yield return newJobs;
-        }
 
-        Logger.LogInformation("NoFluffJobs - scrapping complete");
-    }
-
-    private async Task<List<JobOffer>> ScrapeJobsFromList(IPage page)
-    {
-        var titles = await page.EvaluateAsync<string[]>(
-            "Array.from(document.querySelectorAll('nfj-posting-item-title > header > h3')).map(x => x.textContent)");
-
-        var urls = await page.EvaluateAsync<string[]>(
-            "Array.from(document.querySelectorAll('a.posting-list-item')).map(x => x.getAttribute('href'))");
-
-        var salaries = await page.EvaluateAsync<string[]>(
-            "Array.from(document.querySelectorAll('nfj-posting-item-salary')).map(x => x.textContent)");
-
-        var jobKeys = await page.EvaluateAsync<string[]>(
-            "Array.from(document.querySelectorAll('nfj-posting-item-tiles')).map(x => x.textContent)");
-
-        var companyNames = await page.EvaluateAsync<string[]>(
-            "Array.from(document.querySelectorAll('aside.tw-w-full > footer > h4')).map(x => x.textContent)");
-
-        var locations = await page.EvaluateAsync<string[]>(
-            "Array.from(document.querySelectorAll('nfj-posting-item-city')).map(x => x.textContent)");
-
-        var jobs = new List<JobOffer>();
-        for (var i = 0; i < titles.Length; i++)
-        {
-            var title = titles[i].Replace("NOWA", "").Trim();
-            var url = Config.NoFluffJobsBaseUrl + urls[i];
-            var salary = salaries[i].Trim('\n').Replace("\u00a0", "").Replace(" ", "");
-            var offerJobKeys = jobKeys[i].Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToList();
-            var companyName = companyNames[i].Trim();
-            var location = locations[i].Replace("  ", " ").Replace("  ", " ").Trim();
-
-            var jobOffer = new JobOffer
+            while (newJobs.Count > 0)
             {
-                Title = title,
-                OfferUrl = url,
-                OfferKeywords = offerJobKeys,
-                CompanyName = companyName,
-                Location = location,
-                Origin = DataOrigin.NoFluffJobs
-            };
+                pageNumber++;
+                previousJobs.AddRange(newJobs);
 
-            SetSalary(jobOffer, salary);
+                Logger.LogInformation("NoFluffJobs - scraping page {PageNumber}", pageNumber);
 
-            jobs.Add(jobOffer);
+                var nextButton = await page.QuerySelectorAsync("button.tw-btn.tw-btn-primary.tw-px-8.tw-block.tw-btn-xl");
+
+                if (nextButton is null)
+                    break;
+
+                await nextButton.ClickAsync();
+                await page.WaitForTimeoutAsync(ScrapeConfig.WaitForListSeconds * 1000);
+
+                await SaveScrenshoot(page, $"NoFluffJobs/list/{fetchDate}/{pageNumber}.png");
+                await SavePage(page, $"NoFluffJobs/list/{fetchDate}/{pageNumber}.html");
+
+                var jobsFromPage = await ScrapeJobsFromList(page);
+
+                var previousOfferUrls = previousJobs.Select(sc => sc.OfferUrl).ToArray();
+                newJobs = jobsFromPage.Where(j => !previousOfferUrls.Contains(j.OfferUrl)).ToList();
+
+                yield return newJobs;
+            }
+
+            Logger.LogInformation("NoFluffJobs - scrapping complete");
         }
 
-        return jobs;
-    }
+        private async Task<List<JobOffer>> ScrapeJobsFromList(IPage page)
+        {
+            var titles = await page.EvaluateAsync<string[]>(
+                "Array.from(document.querySelectorAll('nfj-posting-item-title > header > h3')).map(x => x.textContent)");
 
-    private void SetSalary(JobOffer jobOffer, string salary)
-    {
-        // Example: 18000–24000PLN
+            var urls = await page.EvaluateAsync<string[]>(
+                "Array.from(document.querySelectorAll('a.posting-list-item')).map(x => x.getAttribute('href'))");
 
-        var match = Regex.Match(salary, @"^(\d+)–(\d+)([A-Z]+)$");
+            var salaries = await page.EvaluateAsync<string[]>(
+                "Array.from(document.querySelectorAll('nfj-posting-item-salary')).map(x => x.textContent)");
 
-        if (!match.Success)
-            return;
+            var jobKeys = await page.EvaluateAsync<string[]>(
+                "Array.from(document.querySelectorAll('nfj-posting-item-tiles')).map(x => x.textContent)");
 
-        jobOffer.SalaryMinMonth = int.Parse(match.Groups[1].Value);
-        jobOffer.SalaryMaxMonth = int.Parse(match.Groups[2].Value);
-        jobOffer.SalaryCurrency = match.Groups[3].Value;
+            var companyNames = await page.EvaluateAsync<string[]>(
+                "Array.from(document.querySelectorAll('aside.tw-w-full > footer > h4')).map(x => x.textContent)");
+
+            var locations = await page.EvaluateAsync<string[]>(
+                "Array.from(document.querySelectorAll('nfj-posting-item-city')).map(x => x.textContent)");
+
+            var jobs = new List<JobOffer>();
+            for (var i = 0; i < titles.Length; i++)
+            {
+                var title = titles[i].Replace("NOWA", "").Trim();
+                var url = BaseUrl + urls[i];
+                var salary = salaries[i].Trim('\n').Replace("\u00a0", "").Replace(" ", "");
+                var offerJobKeys = jobKeys[i].Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).ToList();
+                var companyName = companyNames[i].Trim();
+                var location = locations[i].Replace("  ", " ").Replace("  ", " ").Trim();
+
+                var jobOffer = new JobOffer
+                {
+                    Title = title,
+                    OfferUrl = url,
+                    OfferKeywords = offerJobKeys,
+                    CompanyName = companyName,
+                    Location = location,
+                    Origin = DataOrigin.NoFluffJobs
+                };
+
+                SetSalary(jobOffer, salary);
+
+                jobs.Add(jobOffer);
+            }
+
+            return jobs;
+        }
+
+        private void SetSalary(JobOffer jobOffer, string salary)
+        {
+            // Example: 18000–24000PLN
+
+            var match = Regex.Match(salary, @"^(\d+)–(\d+)([A-Z]+)$");
+
+            if (!match.Success)
+                return;
+
+            jobOffer.SalaryMinMonth = int.Parse(match.Groups[1].Value);
+            jobOffer.SalaryMaxMonth = int.Parse(match.Groups[2].Value);
+            jobOffer.SalaryCurrency = match.Groups[3].Value;
+        }
     }
 }
-
-

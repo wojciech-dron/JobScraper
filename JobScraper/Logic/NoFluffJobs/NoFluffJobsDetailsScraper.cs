@@ -1,57 +1,65 @@
 ﻿using JobScraper.Logic.Common;
 using JobScraper.Models;
+using JobScraper.Persistence;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 
 namespace JobScraper.Logic.NoFluffJobs;
 
-public class NoFluffJobsDetailsScraper : ScrapperBase
+public class NoFluffJobsDetailsScraper
 {
-    protected override DataOrigin DataOrigin => DataOrigin.JustJoinIt;
+    public record Command : ScrapeCommand;
 
-    public NoFluffJobsDetailsScraper(
-        IOptions<ScraperConfig> config,
-        ILogger<NoFluffJobsDetailsScraper> logger) : base(config, logger)
-    { }
-
-    public async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
+    public class Handler : DetailsScrapperBase<Command>
     {
-        Logger.LogInformation("Scraping job details for {OfferUrl}", jobOffer.OfferUrl);
+        public Handler(IOptions<ScraperConfig> config,
+            ILogger<Handler> logger,
+            JobsDbContext dbContext)
+            : base(config, logger, dbContext)
+        { }
 
-        var page = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: Config.WaitForDetailsSeconds);
+        protected override DataOrigin DataOrigin => DataOrigin.NoFluffJobs;
 
-        jobOffer.ScreenShotPath = $"NoFluffJobs/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.png";
-        await SaveScrenshoot(page, jobOffer.ScreenShotPath);
+        public override async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
+        {
+            Logger.LogInformation("Scraping job details for {OfferUrl}", jobOffer.OfferUrl);
 
-        jobOffer.HtmlPath = $"NoFluffJobs/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.html";
-        await SavePage(page, jobOffer.HtmlPath);
+            var page = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: ScrapeConfig.WaitForDetailsSeconds);
 
-        await Task.WhenAll(
-            ScrapDescription(jobOffer, page),
-            ScrapCompany(jobOffer.Company, page)
-        );
+            jobOffer.ScreenShotPath = $"NoFluffJobs/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.png";
+            await SaveScrenshoot(page, jobOffer.ScreenShotPath);
 
-        return jobOffer;
-    }
+            jobOffer.HtmlPath = $"NoFluffJobs/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.html";
+            await SavePage(page, jobOffer.HtmlPath);
 
-    private async Task ScrapDescription(JobOffer jobOffer, IPage page)
-    {
-        var description = await page.EvaluateAsync<string?>(@"
-            document.querySelector('common-posting-content-wrapper')?.textContent;
-        ");
+            await Task.WhenAll(
+                ScrapeDescription(jobOffer, page),
+                ScrapCompany(jobOffer.Company, page)
+            );
 
-        if (description is null)
-            return;
+            return jobOffer;
+        }
 
-        jobOffer.Description = description;
-        jobOffer.MyKeywords = FindMyKeywords(jobOffer);
-    }
+        private async Task ScrapeDescription(JobOffer jobOffer, IPage page)
+        {
+            var description = await page.EvaluateAsync<string?>(@"
+                document.querySelector('common-posting-content-wrapper')?.textContent;
+            ");
 
-    private async Task ScrapCompany(Company company, IPage page)
-    {
-        var url = await page.EvaluateAsync<string?>(
-            "document.querySelector('common-posting-company-about > article > header > h2 > a')?.getAttribute('href')");
+            if (description is null)
+                return;
 
-        company.NoFluffJobsUrl = url;
+            jobOffer.Description = description;
+            jobOffer.MyKeywords = FindMyKeywords(jobOffer);
+        }
+
+        private async Task ScrapCompany(Company company, IPage page)
+        {
+            var url = await page.EvaluateAsync<string?>(
+                "document.querySelector('common-posting-company-about > article > header > h2 > a')?.getAttribute('href')");
+
+            company.NoFluffJobsUrl = url;
+        }
     }
 }
+

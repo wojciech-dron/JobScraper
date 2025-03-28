@@ -6,21 +6,9 @@ public class ScraperConfig
 {
     public static string SectionName => "ScraperConfig";
 
-    public string JjitBaseUrl { get; set; } = "https://justjoin.it";
-    public string? JjitSearchUrl { get; set; }
-
-    public string IndeedBaseUrl { get; set; } = "https://www.indeed.com";
-    public string? IndeedSearchUrl { get; set; }
-
-    public string NoFluffJobsBaseUrl { get; set; } = "https://nofluffjobs.com";
-    public string? NoFluffJobsSearchUrl { get; set; }
-
     public bool ShowBrowserWhenScraping { get; set; }
     public BrowserTypeEnum BrowserType { get; set; } = BrowserTypeEnum.Chromium;
-    public string SearchTerm { get; set; } = "C#";
-    public string Location { get; set; } = "";
     public int ListingAgeInDays { get; set; } = 15;
-    public bool RemoteJobsOnly { get; set; }
 
     public float WaitForListSeconds { get; set; } = 10;
     public float WaitForScrollSeconds { get; set; } = 4;
@@ -30,5 +18,13 @@ public class ScraperConfig
     public string[] AvoidJobKeywords { get; set; } = [];
 
     public string PageSavingDirectory { get; set; } = ".\\Data\\jobs";
+
+    public Dictionary<DataOrigin, OriginConfig> Providers { get; set; } = new();
+    public DataOrigin[] GetEnabledOrigins() => Providers.Keys.ToArray();
+    public bool IsEnabled(DataOrigin origin) => Providers.ContainsKey(origin);
 }
 
+public class OriginConfig
+{
+    public string SearchUrl { get; set; } = "";
+}
