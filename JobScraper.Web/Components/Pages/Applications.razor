@@ -12,6 +12,7 @@
 
 <h1>Applications</h1>
 
+<div class="overflow-auto">
 <QuickGrid @ref="@grid" Items="applications" Pagination="@pagination" class="table">
     <TemplateColumn Title="Details">
         <button class="btn btn-primary" @onclick="_ => _applicationOfferModal.ShowAsync(context.JobOffer)">Modify</button>
@@ -62,6 +63,8 @@
     <PropertyColumn Property="@(p => p.Comments)" Sortable="true"/>
 
 </QuickGrid>
+</div>
+
 <ApplicationOfferModal @ref="_applicationOfferModal" OnUpdate="@(() => grid.RefreshDataAsync())" />
 
 <Paginator State="@pagination">

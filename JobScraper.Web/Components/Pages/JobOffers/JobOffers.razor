@@ -13,6 +13,7 @@
 
 <h1>Job offers</h1>
 
+<div class="overflow-auto">
 <QuickGrid @ref="@grid" Items="jobOffers" Pagination="@pagination" class="table small-padding-table">
     <TemplateColumn SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Application == null))" Title="Apply">
         <ColumnOptions>
@@ -105,6 +106,7 @@
         </ColumnOptions>
     </PropertyColumn>
 </QuickGrid>
+</div>
 
 @if (pagination.TotalItemCount is 0)
 {
