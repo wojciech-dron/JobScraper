@@ -58,3 +58,29 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+.col-header-content {
+    display: flex; !important;
+    flex-direction: column;
+}
+
+.col-title {
+    display: flex; /* So that we can make col-title-text expand as much as possible, and still hide overflow with ellipsis */
+    min-width: 0px;
+    flex-grow: 1;
+    padding-bottom: 5px;
+}
+
+button {
+    border: none;
+    background: none;
+    position: relative;
+    cursor: pointer;
+}
+
+.filter {
+}
+
+th {
+    vertical-align: top;
+}
