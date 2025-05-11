@@ -5,6 +5,7 @@ using JobScraper.Logic;
 using JobScraper.Logic.Indeed;
 using JobScraper.Logic.Jjit;
 using JobScraper.Logic.NoFluffJobs;
+using JobScraper.Logic.PracujPl;
 using JobScraper.Persistence;
 using MediatR;
 
@@ -43,4 +44,6 @@ public class Commands(IMediator mediator)
 
     public async Task NoFluffJobsList() => await mediator.Send(new NoFluffJobsListScraper.Command());
     public async Task NoFluffJobsDetails() => await mediator.Send(new NoFluffJobsDetailsScraper.Command());
+
+    public async Task PracujPlList() => await mediator.Send(new PracujPlListScraper.Command());
 }
