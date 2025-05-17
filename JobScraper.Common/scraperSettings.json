@@ -11,7 +11,7 @@
         "SearchUrl": "https://nofluffjobs.com/pl/praca-zdalna/backend?criteria=requirement%3DC%23%20salary%3Epln20000m%20category%3Dfullstack%20jobLanguage%3Dpl,en%20seniority%3Dmid,senior,expert"
       },
       "PracujPl": {
-        "SearchUrl": "https://it.pracuj.pl/praca/praca%20zdalna;wm,home-office?et=18%2C4&its=backend&itth=39"
+        "SearchUrl": "https://it.pracuj.pl/praca/praca%20zdalna;wm,home-office?et=18%2C4&sal=1&its=backend&itth=39"
       }
     },
     "PageSavingDirectory": "..\\Data\\jobs",

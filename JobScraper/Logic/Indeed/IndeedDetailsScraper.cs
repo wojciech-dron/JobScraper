@@ -69,14 +69,13 @@ public class IndeedDetailsScraper
             if (rawSalary.Contains("year")) period = SalaryPeriod.Year;
 
             var minMonth = int.Parse(minMaxMatch.Groups[1].Value);
-            job.SalaryMinMonth = minMonth * (int)period / 12;
+            job.SalaryMinMonth = minMonth.ApplyMonthPeriod(period);
 
             var maxMonth = int.Parse(minMaxMatch.Groups[2].Value);
-            job.SalaryMaxMonth = maxMonth * (int)period / 12;
+            job.SalaryMaxMonth = maxMonth.ApplyMonthPeriod(period);
 
             job.SalaryCurrency = "USD";
         }
-
         private async Task ScrapDescription(JobOffer jobOffer, IPage page)
         {
             var jobDescription = await page.EvaluateAsync<string>(
@@ -113,15 +112,6 @@ public class IndeedDetailsScraper
 
             company.IndeedUrl = url;
         }
-    }
-
-    public enum SalaryPeriod
-    {
-        Hour = 12 * 30 * 24,
-        Day = 12 * 30,
-        Week = 12 * 4,
-        Month = 12,
-        Year = 1,
     }
 }
 

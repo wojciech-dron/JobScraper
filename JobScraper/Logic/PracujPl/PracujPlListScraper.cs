@@ -9,11 +9,11 @@ using Microsoft.Playwright;
 
 namespace JobScraper.Logic.PracujPl;
 
-public class PracujPlListScraper
+public partial class PracujPlListScraper
 {
     public record Command : ScrapeCommand;
 
-    public class Handler : ListScraperBase<Command>
+    public partial class Handler : ListScraperBase<Command>
     {
         public Handler(IOptions<ScraperConfig> config,
             ILogger<Handler> logger,
@@ -90,25 +90,24 @@ public class PracujPlListScraper
                 """
                 () => {
                     const offersContainers = document.querySelectorAll('div[data-test="positioned-offer"], div[data-test="default-offer"]');
-
                     const results = Array.from(offersContainers).map(offer => {        
-                      const offerUrlElements = offer.querySelectorAll('a[data-test="link-offer"]');
-                      const jobKeysElements = offer.querySelectorAll('ul li');
-
-                      return {        
-                          Title: offer.querySelector('h2[data-test="offer-title"]')?.textContent.trim() ?? '',
-                          OfferUrls: Array.from(offerUrlElements).map(item => item.href.trim()),
-                          Salary: offer.querySelector('span[data-test="offer-salary"]')?.textContent.trim() ?? '',
-                          JobKeys: Array.from(jobKeysElements).map(item => item.textContent.trim()),
-                          CompanyName: offer.querySelector('[data-test="text-company-name"]')?.textContent.trim() ?? '',
-                          CompanyUrl: offer.querySelector('[data-test="link-company-profile"]')?.href.trim() ?? '',
-                          Location: offer.querySelector('h4[data-test="text-region"]')?.textContent.trim() ?? '',
-                          PublishDate: offer.querySelector('p[data-test="text-added"]')?.textContent.trim().split(': ')[1] ?? ''
-                      };
+                        const offerUrlElements = offer.querySelectorAll('a[data-test="link-offer"]');
+                        const jobKeysElements = offer.querySelectorAll('ul li');
+                        const data = {        
+                            Title: offer.querySelector('h2[data-test="offer-title"]')?.textContent.trim() ?? '',
+                            OfferUrls: Array.from(offerUrlElements).map(item => item.href.trim()),
+                            Salary: offer.querySelector('span[data-test="offer-salary"]')?.textContent.trim() ?? '',
+                            JobKeys: Array.from(jobKeysElements).map(item => item.textContent.trim()),
+                            CompanyName: offer.querySelector('[data-test="text-company-name"]')?.textContent.trim() ?? '',
+                            CompanyUrl: offer.querySelector('[data-test="link-company-profile"]')?.href.trim() ?? '',
+                            Location: offer.querySelector('h4[data-test="text-region"]')?.textContent.trim() ?? '',
+                            PublishDate: offer.querySelector('p[data-test="text-added"]')?.textContent.trim().split(': ')[1] ?? ''
+                        };
+                        return data;
                     });
-
-                    return JSON.stringify(results);
-                }
+                    console.log(results);  // Log the results array instead of individual data objects
+                return JSON.stringify(results);
+                };
                 """);
 
             var scrapedOffers = JsonSerializer.Deserialize<JobData[]>(result)!;
@@ -149,18 +148,35 @@ public class PracujPlListScraper
             return jobs;
         }
 
-        private void SetSalary(JobOffer jobOffer, string salary)
+        private void SetSalary(JobOffer jobOffer, string rawSalary)
         {
             // Example: "6 500–7 500 zł brutto / mies."
             // Example: "200–220 zł netto (+ VAT) / godz."
-            var match = Regex.Match(salary, @"^(\d+)–(\d+)([A-Z]+)$");
+            // Example: "22 000 zł netto (+ VAT) / mies."
 
+            var match = SalaryRegex().Match(rawSalary);
             if (!match.Success)
                 return;
 
-            jobOffer.SalaryMinMonth = int.Parse(match.Groups[1].Value);
-            jobOffer.SalaryMaxMonth = int.Parse(match.Groups[2].Value);
+            var isGross = match.Groups[4].Value == "brutto";
+            var taxRate = isGross ? 0.23m : 0;
+            var period = SalaryPeriod.Month;
+            if (rawSalary.Contains("hour")) period = SalaryPeriod.Hour;
+            if (rawSalary.Contains("day")) period = SalaryPeriod.Day;
+            if (rawSalary.Contains("week")) period = SalaryPeriod.Week;
+            if (rawSalary.Contains("year")) period = SalaryPeriod.Year;
+
+            var minSalary = int.Parse(match.Groups[1].Value);
+            jobOffer.SalaryMinMonth = minSalary.ApplyMonthPeriod(period).ToNetValue(taxRate);
+
+            var maxSalary = int.Parse(match.Groups[2].Value);
+            jobOffer.SalaryMaxMonth = maxSalary.ApplyMonthPeriod(period).ToNetValue(taxRate);
+
             jobOffer.SalaryCurrency = match.Groups[3].Value;
         }
+
+        [GeneratedRegex(@"^(\d+)(?:–(\d+))?\s*([A-Z]+)\s*(brutto|netto)(?:\s*\(\+\s*VAT\))?\s*/\s*(mies\.|godz\.)$",
+            RegexOptions.IgnoreCase)]
+        private static partial Regex SalaryRegex();
     }
 }
