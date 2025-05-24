@@ -140,7 +140,7 @@ public partial class PracujPlListScraper
                     Description = description.ToString()
                 };
 
-                SetSalary(jobOffer, data.Salary);
+                SalaryParser.SetSalary(jobOffer, data.Salary);
 
                 jobs.Add(jobOffer);
             }
@@ -148,32 +148,6 @@ public partial class PracujPlListScraper
             return jobs;
         }
 
-        private void SetSalary(JobOffer jobOffer, string rawSalary)
-        {
-            // Example: "6 500–7 500 zł brutto / mies."
-            // Example: "200–220 zł netto (+ VAT) / godz."
-            // Example: "22 000 zł netto (+ VAT) / mies."
-
-            var match = SalaryRegex().Match(rawSalary);
-            if (!match.Success)
-                return;
-
-            var isGross = match.Groups[4].Value == "brutto";
-            var taxRate = isGross ? 0.23m : 0;
-            var period = SalaryPeriod.Month;
-            if (rawSalary.Contains("hour")) period = SalaryPeriod.Hour;
-            if (rawSalary.Contains("day")) period = SalaryPeriod.Day;
-            if (rawSalary.Contains("week")) period = SalaryPeriod.Week;
-            if (rawSalary.Contains("year")) period = SalaryPeriod.Year;
-
-            var minSalary = int.Parse(match.Groups[1].Value);
-            jobOffer.SalaryMinMonth = minSalary.ApplyMonthPeriod(period).ToNetValue(taxRate);
-
-            var maxSalary = int.Parse(match.Groups[2].Value);
-            jobOffer.SalaryMaxMonth = maxSalary.ApplyMonthPeriod(period).ToNetValue(taxRate);
-
-            jobOffer.SalaryCurrency = match.Groups[3].Value;
-        }
 
         [GeneratedRegex(@"^(\d+)(?:–(\d+))?\s*([A-Z]+)\s*(brutto|netto)(?:\s*\(\+\s*VAT\))?\s*/\s*(mies\.|godz\.)$",
             RegexOptions.IgnoreCase)]
