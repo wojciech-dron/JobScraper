@@ -1,4 +1,5 @@
-﻿using JobScraper.Logic.Common;
+﻿using System.Text.Json;
+using JobScraper.Logic.Common;
 using JobScraper.Models;
 using JobScraper.Persistence;
 using Microsoft.Extensions.Options;
@@ -6,6 +7,7 @@ using Microsoft.Playwright;
 
 namespace JobScraper.Logic.PracujPl;
 
+[Obsolete("Not used, data from list is enough")]
 public class PracujPlDetailsScraper
 {
     public record Command : ScrapeCommand;
@@ -23,43 +25,38 @@ public class PracujPlDetailsScraper
         public override async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
         {
             Logger.LogInformation("Scraping job details for {OfferUrl}", jobOffer.OfferUrl);
-
             var page = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: ScrapeConfig.WaitForDetailsSeconds);
 
-            jobOffer.ScreenShotPath = $"{DataOrigin}/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.png";
-            await SaveScrenshoot(page, jobOffer.ScreenShotPath);
-
-            jobOffer.HtmlPath = $"{DataOrigin}/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.html";
-            await SavePage(page, jobOffer.HtmlPath);
-
-            await Task.WhenAll(
-                ScrapeDescription(jobOffer, page),
-                ScrapCompany(jobOffer.Company, page)
-            );
+            await SaveScreenshot(jobOffer, page);
+            await SavePage(jobOffer, page);
+            await ScrapeDetails(jobOffer, page);
 
             return jobOffer;
         }
 
-        private async Task ScrapeDescription(JobOffer jobOffer, IPage page)
-        {
-            var description = await page.EvaluateAsync<string?>(@"
-                document.querySelector('common-posting-content-wrapper')?.textContent;
-            ");
+        record JobData(string? Description);
 
-            if (description is null)
+        private async Task ScrapeDetails(JobOffer jobOffer, IPage page)
+        {
+            var result = await page.EvaluateAsync<string>(
+                """
+                () => {
+                    const results = {
+                        description: document.querySelector('#offer-details div')?.textContent
+                    };
+                    console.log(results);
+                    
+                    return JSON.stringify(results);
+                };
+                """);
+
+            var data = JsonSerializer.Deserialize<JobData>(result)!;
+
+            if (data.Description is null)
                 return;
 
-            jobOffer.Description = description;
+            jobOffer.Description += data.Description;
             jobOffer.MyKeywords = FindMyKeywords(jobOffer);
-        }
-
-        private async Task ScrapCompany(Company company, IPage page)
-        {
-            var url = await page.EvaluateAsync<string?>(
-                "document.querySelector('common-posting-company-about > article > header > h2 > a')?.getAttribute('href')");
-
-            company.NoFluffJobsUrl = url;
         }
     }
 }
-

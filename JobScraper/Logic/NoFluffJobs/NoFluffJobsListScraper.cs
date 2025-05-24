@@ -7,11 +7,11 @@ using Microsoft.Playwright;
 
 namespace JobScraper.Logic.NoFluffJobs;
 
-public class NoFluffJobsListScraper
+public partial class NoFluffJobsListScraper
 {
     public record Command : ScrapeCommand;
 
-    public class Handler : ListScraperBase<Command>
+    public partial class Handler : ListScraperBase<Command>
     {
         public Handler(IOptions<ScraperConfig> config,
             ILogger<Handler> logger,
@@ -106,7 +106,7 @@ public class NoFluffJobsListScraper
                     OfferKeywords = offerJobKeys,
                     CompanyName = companyName,
                     Location = location,
-                    Origin = DataOrigin.NoFluffJobs
+                    Origin = DataOrigin
                 };
 
                 SetSalary(jobOffer, salary);
@@ -120,8 +120,7 @@ public class NoFluffJobsListScraper
         private void SetSalary(JobOffer jobOffer, string salary)
         {
             // Example: 18000–24000PLN
-
-            var match = Regex.Match(salary, @"^(\d+)–(\d+)([A-Z]+)$");
+            var match = SalaryRegex().Match(salary);
 
             if (!match.Success)
                 return;
@@ -130,5 +129,8 @@ public class NoFluffJobsListScraper
             jobOffer.SalaryMaxMonth = int.Parse(match.Groups[2].Value);
             jobOffer.SalaryCurrency = match.Groups[3].Value;
         }
+
+        [GeneratedRegex(@"^(\d+)–(\d+)([A-Z]+)$")]
+        private static partial Regex SalaryRegex();
     }
 }

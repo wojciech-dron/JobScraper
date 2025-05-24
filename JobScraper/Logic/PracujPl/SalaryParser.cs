@@ -17,6 +17,8 @@ public partial class SalaryParser
         if (string.IsNullOrWhiteSpace(rawSalary))
             return;
 
+        rawSalary = rawSalary.Replace("\u00a0", "");
+
         // Extract numbers from the salary string
         var numbers = ExtractNumbers(rawSalary);
         if (numbers.Count == 0)

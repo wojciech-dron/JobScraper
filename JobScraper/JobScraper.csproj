@@ -28,5 +28,9 @@
     <ItemGroup>
       <ProjectReference Include="..\JobScraper.Common\JobScraper.Common.csproj" />
     </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="JobScraper.Tests" />
+    </ItemGroup>
     
 </Project>

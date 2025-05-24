@@ -69,6 +69,17 @@ public abstract class ScrapperBase : IAsyncDisposable
         });
     }
 
+    protected async Task SavePage(JobOffer jobOffer, IPage page)
+    {
+        jobOffer.HtmlPath = $"{DataOrigin}/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.html";
+        await SavePage(page, jobOffer.HtmlPath);
+    }
+    protected async Task SaveScreenshot(JobOffer jobOffer, IPage page)
+    {
+        jobOffer.ScreenShotPath = $"{DataOrigin}/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.png";
+        await SaveScrenshoot(page, jobOffer.ScreenShotPath);
+    }
+
     protected async Task SaveScrenshoot(IPage page, string path)
     {
         path = PrepareDestination(path);
@@ -133,6 +144,13 @@ public abstract class ScrapperBase : IAsyncDisposable
     {
         return ScrapeConfig.Keywords
             .Where(keyword => jobOffer.Description!.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+    }
+
+    protected List<string> FindMyKeywords(string description)
+    {
+        return ScrapeConfig.Keywords
+            .Where(keyword => description!.Contains(keyword, StringComparison.OrdinalIgnoreCase))
             .ToList();
     }
 

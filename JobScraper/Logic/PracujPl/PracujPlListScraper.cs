@@ -1,6 +1,6 @@
-﻿using System.Text;
+﻿using System.Globalization;
+using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using JobScraper.Logic.Common;
 using JobScraper.Models;
 using JobScraper.Persistence;
@@ -9,11 +9,11 @@ using Microsoft.Playwright;
 
 namespace JobScraper.Logic.PracujPl;
 
-public partial class PracujPlListScraper
+public class PracujPlListScraper
 {
     public record Command : ScrapeCommand;
 
-    public partial class Handler : ListScraperBase<Command>
+    public class Handler : ListScraperBase<Command>
     {
         public Handler(IOptions<ScraperConfig> config,
             ILogger<Handler> logger,
@@ -78,6 +78,7 @@ public partial class PracujPlListScraper
             string[] OfferUrls,
             string Salary,
             string[] JobKeys,
+            string Description,
             string CompanyName,
             string CompanyUrl,
             string Location,
@@ -89,15 +90,22 @@ public partial class PracujPlListScraper
             var result = await page.EvaluateAsync<string>(
                 """
                 () => {
+                    // expand details
+                    const extendDetailsButtons = document.querySelectorAll('[data-test="section-short-description"] div.invisible span');
+                    [...extendDetailsButtons].forEach(x => x.click());
+                
                     const offersContainers = document.querySelectorAll('div[data-test="positioned-offer"], div[data-test="default-offer"]');
                     const results = Array.from(offersContainers).map(offer => {        
                         const offerUrlElements = offer.querySelectorAll('a[data-test="link-offer"]');
                         const jobKeysElements = offer.querySelectorAll('ul li');
+                        const descElements = document.querySelectorAll('li[data-test^="offer-additional-info-"]');
+                
                         const data = {        
                             Title: offer.querySelector('h2[data-test="offer-title"]')?.textContent.trim() ?? '',
                             OfferUrls: Array.from(offerUrlElements).map(item => item.href.trim()),
                             Salary: offer.querySelector('span[data-test="offer-salary"]')?.textContent.trim() ?? '',
                             JobKeys: Array.from(jobKeysElements).map(item => item.textContent.trim()),
+                            Description: offer.querySelector('[data-test="section-short-description"]')?.textContent.trim() ?? '',
                             CompanyName: offer.querySelector('[data-test="text-company-name"]')?.textContent.trim() ?? '',
                             CompanyUrl: offer.querySelector('[data-test="link-company-profile"]')?.href.trim() ?? '',
                             Location: offer.querySelector('h4[data-test="text-region"]')?.textContent.trim() ?? '',
@@ -105,7 +113,7 @@ public partial class PracujPlListScraper
                         };
                         return data;
                     });
-                    console.log(results);  // Log the results array instead of individual data objects
+                    console.log(results);
                 return JSON.stringify(results);
                 };
                 """);
@@ -119,15 +127,8 @@ public partial class PracujPlListScraper
                 if (string.IsNullOrEmpty(url))
                     continue;
 
-                var description = new StringBuilder();
-                if (data.OfferUrls.Length > 1)
-                {
-                    description.AppendLine("Offer has more links:");
-                    foreach (var offerUrl in data.OfferUrls)
-                    {
-                        description.AppendLine(offerUrl);
-                    }
-                }
+                var description = ParseDescription(data);
+                var myKeywords = FindMyKeywords(description);
 
                 var jobOffer = new JobOffer
                 {
@@ -137,7 +138,10 @@ public partial class PracujPlListScraper
                     CompanyName = data.CompanyName,
                     Location = data.Location,
                     Origin = DataOrigin,
-                    Description = description.ToString()
+                    Description = description,
+                    MyKeywords = myKeywords,
+                    PublishedAt = ParseDate(data.PublishDate),
+                    DetailsScrapeStatus = DetailsScrapeStatus.Scraped, // skip details scraping
                 };
 
                 SalaryParser.SetSalary(jobOffer, data.Salary);
@@ -148,9 +152,29 @@ public partial class PracujPlListScraper
             return jobs;
         }
 
+        private static string ParseDescription(JobData data)
+        {
+            var descBuilder = new StringBuilder(data.Description);
+            descBuilder.AppendLine();
 
-        [GeneratedRegex(@"^(\d+)(?:–(\d+))?\s*([A-Z]+)\s*(brutto|netto)(?:\s*\(\+\s*VAT\))?\s*/\s*(mies\.|godz\.)$",
-            RegexOptions.IgnoreCase)]
-        private static partial Regex SalaryRegex();
+            foreach (var desc in data.JobKeys)
+                descBuilder.AppendLine(desc);
+
+            if (data.OfferUrls.Length <= 1)
+                return descBuilder.ToString();
+
+            descBuilder.AppendLine();
+            descBuilder.AppendLine("Offer has more links:");
+
+            foreach (var offerUrl in data.OfferUrls)
+                descBuilder.AppendLine(offerUrl);
+
+            return descBuilder.ToString();
+        }
+
+        internal static DateTime? ParseDate(string dateStr) =>
+            DateTime.TryParse(dateStr, new CultureInfo("pl-PL"), out var dateTime)
+                ? dateTime
+                : null;
     }
 }
