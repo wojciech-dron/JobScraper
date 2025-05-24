@@ -84,3 +84,9 @@ button {
 th {
     vertical-align: top;
 }
+
+.text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+}

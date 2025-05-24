@@ -4,6 +4,7 @@
 @using JobScraper.Common.Extensions
 @using JobScraper.Models
 @using JobScraper.Persistence
+@using JobScraper.Web.Components.Components.Select
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.EntityFrameworkCore
 @using JobScraper.Web.Components.Modals
@@ -46,12 +47,11 @@
     </PropertyColumn>
     <PropertyColumn Property="@(p => p.Status)" Sortable="true">
         <ColumnOptions>
-            <select multiple @bind="@StatusFilter" @onfocusout="SetQueryParams">
-                @foreach (var item in Enum.GetValues(typeof(ApplyStatus)))
-                {
-                    <option value="@item">@item</option>
-                }
-            </select>
+            <MySelect
+                MultiSelect
+                @Options="OptionsFor<ApplyStatus>()"
+                @bind-SelectedOptions="@StatusFilter">
+            </MySelect>
         </ColumnOptions>
     </PropertyColumn>
     <PropertyColumn Property="@(p => p.SentCv)" Sortable="true"/>
@@ -93,17 +93,19 @@
     [SupplyParameterFromQuery] [Parameter] public string? IsRejectedFilter { get; set; } = "false";
     [SupplyParameterFromQuery] [Parameter] public string? TitleFilter { get; set; } = "";
     [SupplyParameterFromQuery] [Parameter] public string? CompanyFilter { get; set; } = "";
-    [SupplyParameterFromQuery] [Parameter] public string[]? StatusFilter { get; set; } = [];
+    [SupplyParameterFromQuery] [Parameter] public ApplyStatus[]? StatusFilter { get; set; } = [];
 
     IQueryable<Application> applications => context.Applications
         .Include(jo => jo.JobOffer.Company)
         .WhereIf(IsRejectedFilter?.Length > 0, a => IsRejectedFilter == "true" ? a.Status == ApplyStatus.Rejected : a.Status != ApplyStatus.Rejected)
         .WhereIf(!string.IsNullOrEmpty(TitleFilter), a => a.JobOffer.Title.ToLower().Contains(TitleFilter!.ToLower()))
         .WhereIf(!string.IsNullOrEmpty(CompanyFilter), a => a.JobOffer.Company.Name.ToLower().Contains(CompanyFilter!.ToLower()))
-        .WhereIf(StatusFilter?.Length > 0, jo => StatusFilter!.Contains(jo.Status.ToString()))
+        .WhereIf(StatusFilter?.Length > 0, jo => StatusFilter!.Contains(jo.Status))
         .OrderByDescending(jo => jo.RespondedAt)
         .ThenByDescending(jo => jo.AppliedAt);
 
+    private List<TEnum> OptionsFor<TEnum>() where TEnum : struct, Enum =>
+        Enum.GetValues<TEnum>().ToList();
     protected override async Task OnInitializedAsync()
     {
         context = await DbFactory.CreateDbContextAsync();
@@ -121,7 +123,7 @@
         if (CompanyFilter?.Length    > 0) query["CompanyFilter"] = CompanyFilter;
 
         for (var i = 0; i < StatusFilter?.Length; i++)
-            query.Add("StatusFilter", StatusFilter![i]);
+            query.Add("StatusFilter", StatusFilter[i].ToString());
 
         uriBuilder.Query = query.ToString();
 
