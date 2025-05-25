@@ -19,7 +19,7 @@ public partial class NoFluffJobsListScraper
             : base(config, logger, dbContext)
         { }
 
-        protected override DataOrigin DataOrigin => DataOrigin.JustJoinIt;
+        protected override DataOrigin DataOrigin => DataOrigin.NoFluffJobs;
 
         public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs()
         {
@@ -33,7 +33,7 @@ public partial class NoFluffJobsListScraper
             var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
             var pageNumber = 0;
 
-            await SaveScrenshoot(page, $"NoFluffJobs/list/{fetchDate}/{pageNumber}.png");
+            await SaveScreenshot(page, $"NoFluffJobs/list/{fetchDate}/{pageNumber}.png");
             await SavePage(page, $"NoFluffJobs/list/{fetchDate}/{pageNumber}.html");
 
             var newJobs = await ScrapeJobsFromList(page);
@@ -55,7 +55,7 @@ public partial class NoFluffJobsListScraper
                 await nextButton.ClickAsync();
                 await page.WaitForTimeoutAsync(ScrapeConfig.WaitForListSeconds * 1000);
 
-                await SaveScrenshoot(page, $"NoFluffJobs/list/{fetchDate}/{pageNumber}.png");
+                await SaveScreenshot(page, $"NoFluffJobs/list/{fetchDate}/{pageNumber}.png");
                 await SavePage(page, $"NoFluffJobs/list/{fetchDate}/{pageNumber}.html");
 
                 var jobsFromPage = await ScrapeJobsFromList(page);

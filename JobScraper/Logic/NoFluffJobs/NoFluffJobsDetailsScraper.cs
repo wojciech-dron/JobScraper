@@ -27,7 +27,7 @@ public class NoFluffJobsDetailsScraper
             var page = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: ScrapeConfig.WaitForDetailsSeconds);
 
             jobOffer.ScreenShotPath = $"NoFluffJobs/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.png";
-            await SaveScrenshoot(page, jobOffer.ScreenShotPath);
+            await SaveScreenshot(page, jobOffer.ScreenShotPath);
 
             jobOffer.HtmlPath = $"NoFluffJobs/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.html";
             await SavePage(page, jobOffer.HtmlPath);

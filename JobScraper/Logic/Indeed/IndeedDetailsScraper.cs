@@ -29,7 +29,7 @@ public class IndeedDetailsScraper
             await indeedPage.WaitForTimeoutAsync(ScrapeConfig.WaitForDetailsSeconds * 1000); // Wait for the page to load
 
             jobOffer.ScreenShotPath = $"indeed/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.png";
-            await SaveScrenshoot(indeedPage, jobOffer.ScreenShotPath);
+            await SaveScreenshot(indeedPage, jobOffer.ScreenShotPath);
 
             jobOffer.HtmlPath = $"indeed/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.html";
             await SavePage(indeedPage, jobOffer.HtmlPath);

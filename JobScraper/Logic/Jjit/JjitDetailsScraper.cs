@@ -18,7 +18,7 @@ public class JjitDetailsScraper
             : base(config, logger, dbContext)
         { }
 
-        protected override DataOrigin DataOrigin => DataOrigin.NoFluffJobs;
+        protected override DataOrigin DataOrigin => DataOrigin.JustJoinIt;
 
         public override async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
         {
@@ -28,7 +28,7 @@ public class JjitDetailsScraper
             await page.WaitForTimeoutAsync(ScrapeConfig.WaitForDetailsSeconds * 1000); // Wait for the page to load
 
             jobOffer.ScreenShotPath = $"jjit/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.png";
-            await SaveScrenshoot(page, jobOffer.ScreenShotPath);
+            await SaveScreenshot(page, jobOffer.ScreenShotPath);
 
             jobOffer.HtmlPath = $"jjit/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.html";
             await SavePage(page, jobOffer.HtmlPath);

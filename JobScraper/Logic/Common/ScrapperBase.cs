@@ -77,10 +77,10 @@ public abstract class ScrapperBase : IAsyncDisposable
     protected async Task SaveScreenshot(JobOffer jobOffer, IPage page)
     {
         jobOffer.ScreenShotPath = $"{DataOrigin}/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.png";
-        await SaveScrenshoot(page, jobOffer.ScreenShotPath);
+        await SaveScreenshot(page, jobOffer.ScreenShotPath);
     }
 
-    protected async Task SaveScrenshoot(IPage page, string path)
+    protected async Task SaveScreenshot(IPage page, string path)
     {
         path = PrepareDestination(path);
 

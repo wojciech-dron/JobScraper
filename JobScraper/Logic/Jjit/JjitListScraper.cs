@@ -36,7 +36,7 @@ public class JjitListScraper
             var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
             var pageNumber = 0;
 
-            await SaveScrenshoot(page, $"jjit/list/{fetchDate}/{pageNumber}.png");
+            await SaveScreenshot(page, $"jjit/list/{fetchDate}/{pageNumber}.png");
             await SavePage(page, $"jjit/list/{fetchDate}/{pageNumber}.html");
 
             var newJobs = await ScrapeJobsFromList(page);
@@ -54,7 +54,7 @@ public class JjitListScraper
                 await page.EvaluateAsync($"window.scrollTo(0, {scrollHeight});");
                 await page.WaitForTimeoutAsync(ScrapeConfig.WaitForScrollSeconds * 1000);
 
-                await SaveScrenshoot(page, $"jjit/list/{fetchDate}/{pageNumber}.png");
+                await SaveScreenshot(page, $"jjit/list/{fetchDate}/{pageNumber}.png");
                 await SavePage(page, $"jjit/list/{fetchDate}/{pageNumber}.html");
 
                 var jobsFromPage = await ScrapeJobsFromList(page);

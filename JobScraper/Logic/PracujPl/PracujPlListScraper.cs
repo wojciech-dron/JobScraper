@@ -35,7 +35,7 @@ public class PracujPlListScraper
             var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
             var pageNumber = 0;
 
-            await SaveScrenshoot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
+            await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
             await SavePage(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.html");
 
             // scrape first page
@@ -58,7 +58,7 @@ public class PracujPlListScraper
                 await nextButton.ClickAsync();
                 await page.WaitForTimeoutAsync(ScrapeConfig.WaitForListSeconds * 1000);
 
-                await SaveScrenshoot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
+                await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
                 await SavePage(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.html");
 
                 // scrape next page
