@@ -155,7 +155,7 @@ public class PracujPlListScraper
 
         private static string ParseDescription(JobData data)
         {
-            var descBuilder = new StringBuilder(data.Description);
+            var descBuilder = new StringBuilder(data.Description.Replace("O projekcie", ""));
             descBuilder.AppendLine();
 
             foreach (var desc in data.JobKeys)

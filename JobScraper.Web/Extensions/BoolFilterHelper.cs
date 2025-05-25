@@ -17,5 +17,12 @@ public class BoolFilterHelper
         true => "Hidden",
         false => "Visible"
     };
+
+    public static string RejectedStringSelector(bool? value) => value switch
+    {
+        null => "All",
+        true => "Rejected",
+        false => "Non rejected"
+    };
 }
 

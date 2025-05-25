@@ -8,7 +8,7 @@ public class Application : IUpdatable
 {
     public string OfferUrl { get; set; } = null!;
     public DateTime AppliedAt { get; set; } = DateTime.UtcNow;
-    public string SentCv { get; set; } = "OP CV EN.pdf";
+    public string SentCv { get; set; }
     public DateTime? RespondedAt { get; set; }
     public string? Comments { get; set; }
     public int? ExpectedMonthSalary { get; set; }

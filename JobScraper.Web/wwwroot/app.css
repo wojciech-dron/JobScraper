@@ -85,6 +85,10 @@ th {
     vertical-align: top;
 }
 
+#table-container {
+    min-height: 80vh;
+}
+
 .text-truncate {
     overflow: hidden;
     text-overflow: ellipsis;

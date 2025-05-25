@@ -8,11 +8,6 @@
         <div class="row">
             <div class="col-md-3">
                 <h4>Offer details</h4>
-                <a href="@_jobOffer.OfferUrl" target="_blank">Offer page</a><br/>
-                @if (!string.IsNullOrEmpty(_jobOffer.ApplyUrl))
-                {
-                    <a href="@_jobOffer.ApplyUrl" target="_blank">Apply page</a><br/>
-                }
                 <strong>Title:</strong> @_jobOffer.Title<br/>
                 <strong>Company Name:</strong>
                 <span>@(_jobOffer.CompanyName ?? "Not specified")</span><br/>
@@ -31,7 +26,9 @@
                 @if (ShowHideButton)
                 {
                     <div class="form-group pt-3 pb-1">
-                        <label for="comments">Offer comments: (updates on show/hide offer)</label>
+                        <label for="comments">
+                            <b>Offer comments:</b> (updates on show/hide or create/update application record)
+                        </label>
                         <InputTextArea id="offer-comments" @bind-Value="@_jobOffer.Comments" class="form-control"/>
                     </div>
 
@@ -46,8 +43,11 @@
 
                     <button class="btn btn-secondary ms-1" @onclick="CancelAsync">Cancel</button>
                 }
+            </div>
 
-                <h4 class="pt-5">Application record</h4>
+            <div class="col-md-3">
+
+                <h4>Application record</h4>
                 <EditForm Model="@_application">
                     <DataAnnotationsValidator/>
                     <ValidationSummary/>
@@ -92,8 +92,19 @@
                 </EditForm>
 
             </div>
-            <div class="col-md-9">
-                <strong>Description:</strong> <br />
+            <div class="col-md-6">
+                <h4>Description:</h4>
+                <a href="@_jobOffer.OfferUrl" target="_blank">
+                    <button class="btn btn-primary">Go to offer page</button>
+                </a>
+                <br/>
+                <br/>
+
+                @if (!string.IsNullOrEmpty(_jobOffer.ApplyUrl))
+                {
+                    <a href="@_jobOffer.ApplyUrl" target="_blank">Apply page</a>
+                    <br/>
+                }
                 <span style="white-space: pre-line">
                     @_jobOffer.Description
                 </span>

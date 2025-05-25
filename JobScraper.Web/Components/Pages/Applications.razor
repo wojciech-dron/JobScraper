@@ -8,54 +8,83 @@
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.EntityFrameworkCore
 @using JobScraper.Web.Components.Modals
+@using JobScraper.Web.Extensions
 
 <PageTitle>Applications</PageTitle>
 
 <h1>Applications</h1>
 
-<div class="overflow-auto">
+<div id="table-container" class="overflow-auto">
 <QuickGrid @ref="@grid" Items="applications" Pagination="@pagination" class="table">
     <TemplateColumn Title="Details">
         <button class="btn btn-primary" @onclick="_ => _applicationOfferModal.ShowAsync(context.JobOffer)">Modify</button>
     </TemplateColumn>
     <TemplateColumn SortBy="@(GridSort<Application>.ByAscending(p => p.Status))" Title="Rejected">
-        <ColumnOptions>
-            <select @bind="@IsRejectedFilter" @onfocusout="SetQueryParams">
-                <option value="">All</option>
-                <option value="true">Rejected</option>
-                <option value="false">Non rejected</option>
-            </select>
-        </ColumnOptions>
+        <HeaderTemplate>
+            <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                <div class="col-title-text">@context.Title</div>
+                <div class="sort-indicator" aria-hidden="true"></div>
+            </button>
+            <MySelect
+                @bind-SelectedOption="@IsRejectedFilter"
+                Options="@BoolFilterHelper.Options"
+                StringSelector="@BoolFilterHelper.RejectedStringSelector"
+            />
+        </HeaderTemplate>
         <ChildContent>
             <button class="btn btn-secondary" @onclick="async _ => await RejectApply(context)">Reject</button>
-
         </ChildContent>
     </TemplateColumn>
     <PropertyColumn Property="@(p => p.JobOffer.Company.Name)" Title="Company" Sortable="true">
-        <ColumnOptions>
-            <div class="search-box">
-                <input type="search" autofocus @bind="CompanyFilter" @bind:event="oninput" @onchange="SetQueryParams"/>
-            </div>
-        </ColumnOptions>
+        <HeaderTemplate>
+            <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                <div class="col-title-text">@context.Title</div>
+                <div class="sort-indicator" aria-hidden="true"></div>
+            </button>
+            <input placeholder="Filter..."
+                   @bind="CompanyFilter"
+                   class="form-control form-control-sm"/>
+        </HeaderTemplate>
     </PropertyColumn>
-    <PropertyColumn Property="@(p => p.JobOffer.Title)" Sortable="true">
-        <ColumnOptions>
-            <div class="search-box">
-                <input type="search" autofocus @bind="TitleFilter" @bind:event="oninput" placeholder="Filter..."/>
-            </div>
-        </ColumnOptions>
-    </PropertyColumn>
+    <TemplateColumn class="text-truncate" Title="Title" SortBy="@(GridSort<Application>.ByAscending(p => p.JobOffer.Title))">
+        <HeaderTemplate>
+            <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                <div class="col-title-text">@context.Title</div>
+                <div class="sort-indicator" aria-hidden="true"></div>
+            </button>
+            <input placeholder="Filter..."
+                   @bind="TitleFilter"
+                   class="form-control form-control-sm"/>
+        </HeaderTemplate>
+        <ChildContent>
+            <span title="@context.JobOffer.Title">@context.JobOffer.Title></span>
+        </ChildContent>
+    </TemplateColumn>
     <PropertyColumn Property="@(p => p.Status)" Sortable="true">
-        <ColumnOptions>
+        <HeaderTemplate>
+            <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                <div class="col-title-text">@context.Title</div>
+                <div class="sort-indicator" aria-hidden="true"></div>
+            </button>
             <MySelect
-                MultiSelect
-                @Options="OptionsFor<ApplyStatus>()"
+                Options="Enum.GetValues<ApplyStatus>()"
                 @bind-SelectedOptions="@StatusFilter">
             </MySelect>
-        </ColumnOptions>
+        </HeaderTemplate>
     </PropertyColumn>
     <PropertyColumn Property="@(p => p.SentCv)" Sortable="true"/>
-    <PropertyColumn Property="@(p => p.JobOffer.Origin)" Sortable="true"/>
+    <PropertyColumn class="col-1" Property="@(p => p.JobOffer.Origin)" Sortable="true">
+        <HeaderTemplate>
+            <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                <div class="col-title-text">@context.Title</div>
+                <div class="sort-indicator" aria-hidden="true"></div>
+            </button>
+            <MySelect
+                @bind-SelectedOptions="@OriginFilter"
+                Options="@originOptions"
+            />
+        </HeaderTemplate>
+    </PropertyColumn>
     <PropertyColumn Property="@(p => p.ExpectedMonthSalary)" Sortable="true"/>
     <PropertyColumn Property="@(p => p.AppliedAt)" Format="yyyy-MM-dd" Sortable="true"/>
     <PropertyColumn Property="@(p => p.RespondedAt)" Format="yyyy-MM-dd" Sortable="true"/>
@@ -64,8 +93,6 @@
 
 </QuickGrid>
 </div>
-
-<ApplicationOfferModal @ref="_applicationOfferModal" OnUpdate="@(() => grid.RefreshDataAsync())" />
 
 <Paginator State="@pagination">
     <SummaryTemplate>
@@ -81,6 +108,8 @@
     </SummaryTemplate>
 </Paginator>
 
+<ApplicationOfferModal @ref="_applicationOfferModal" OnUpdate="@(() => grid.RefreshDataAsync())"/>
+
 @inject IDbContextFactory<JobsDbContext> DbFactory
 @inject NavigationManager NavigationManager
 
@@ -90,44 +119,26 @@
     PaginationState pagination = new() { ItemsPerPage = 50 };
     ApplicationOfferModal _applicationOfferModal = null!;
 
-    [SupplyParameterFromQuery] [Parameter] public string? IsRejectedFilter { get; set; } = "false";
-    [SupplyParameterFromQuery] [Parameter] public string? TitleFilter { get; set; } = "";
-    [SupplyParameterFromQuery] [Parameter] public string? CompanyFilter { get; set; } = "";
-    [SupplyParameterFromQuery] [Parameter] public ApplyStatus[]? StatusFilter { get; set; } = [];
+    string[] originOptions = Enum.GetValues<DataOrigin>().Select(x => x.ToString()).ToArray();
+
+    public bool? IsRejectedFilter { get; set; } = false;
+    public string? TitleFilter { get; set; } = "";
+    public string? CompanyFilter { get; set; } = "";
+    public ApplyStatus[]? StatusFilter { get; set; } = [];
+    public string[]? OriginFilter { get; set; } = [];
 
     IQueryable<Application> applications => context.Applications
         .Include(jo => jo.JobOffer.Company)
-        .WhereIf(IsRejectedFilter?.Length > 0, a => IsRejectedFilter == "true" ? a.Status == ApplyStatus.Rejected : a.Status != ApplyStatus.Rejected)
+        .WhereIf(IsRejectedFilter.HasValue, a => IsRejectedFilter == true ? a.Status == ApplyStatus.Rejected : a.Status != ApplyStatus.Rejected)
         .WhereIf(!string.IsNullOrEmpty(TitleFilter), a => a.JobOffer.Title.ToLower().Contains(TitleFilter!.ToLower()))
         .WhereIf(!string.IsNullOrEmpty(CompanyFilter), a => a.JobOffer.Company.Name.ToLower().Contains(CompanyFilter!.ToLower()))
         .WhereIf(StatusFilter?.Length > 0, jo => StatusFilter!.Contains(jo.Status))
         .OrderByDescending(jo => jo.RespondedAt)
         .ThenByDescending(jo => jo.AppliedAt);
 
-    private List<TEnum> OptionsFor<TEnum>() where TEnum : struct, Enum =>
-        Enum.GetValues<TEnum>().ToList();
     protected override async Task OnInitializedAsync()
     {
         context = await DbFactory.CreateDbContextAsync();
-
-        IsRejectedFilter ??= "false";
-    }
-
-    private void SetQueryParams()
-    {
-        var uriBuilder = new UriBuilder(NavigationManager.Uri);
-        var query = HttpUtility.ParseQueryString("");
-
-        if (IsRejectedFilter?.Length > 0) query["IsRejectedFilter"] = IsRejectedFilter;
-        if (TitleFilter?.Length      > 0) query["TitleFilter"] = TitleFilter;
-        if (CompanyFilter?.Length    > 0) query["CompanyFilter"] = CompanyFilter;
-
-        for (var i = 0; i < StatusFilter?.Length; i++)
-            query.Add("StatusFilter", StatusFilter[i].ToString());
-
-        uriBuilder.Query = query.ToString();
-
-        NavigationManager.NavigateTo(uriBuilder.ToString(), forceLoad: false);
     }
 
     private async Task RejectApply(Application application)

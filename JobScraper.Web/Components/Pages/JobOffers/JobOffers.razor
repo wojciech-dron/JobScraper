@@ -15,7 +15,7 @@
 
 <h1>Job offers</h1>
 
-<div class="overflow-auto">
+<div id="table-container" class="overflow-auto">
 <QuickGrid @ref="@grid" Items="jobOffers" Pagination="@pagination" class="table small-padding-table">
     <TemplateColumn SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Application == null))" Title="Apply">
         <HeaderTemplate>
@@ -71,7 +71,7 @@
                    class="form-control form-control-sm"/>
         </HeaderTemplate>
     </PropertyColumn>
-    <PropertyColumn class="col-3 text-truncate" Property="@(p => p.Title)" Sortable="true">
+    <TemplateColumn class="col-3 text-truncate" Title="Title" SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Title))">
         <HeaderTemplate>
             <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                 <div class="col-title-text">@context.Title</div>
@@ -81,7 +81,10 @@
                    @bind="TitleFilter"
                    class="form-control form-control-sm"/>
         </HeaderTemplate>
-    </PropertyColumn>
+        <ChildContent>
+            <span title="@context.Title">@context.Title</span>
+        </ChildContent>
+    </TemplateColumn>
     <PropertyColumn class="" Property="@(p => p.SalaryMinMonth)" Title="Min" Sortable="true">
         <HeaderTemplate>
             <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
@@ -104,7 +107,7 @@
                    @bind="SalaryMaxFilter"
                    type="number"
                    class="form-control form-control-sm"/>
-            </HeaderTemplate>
+        </HeaderTemplate>
     </PropertyColumn>
     <PropertyColumn class="" Property="@(p => p.SalaryCurrency)" Title="Currency" Sortable="true">
         <HeaderTemplate>
@@ -119,11 +122,11 @@
             </MySelect>
         </HeaderTemplate>
     </PropertyColumn>
-    <PropertyColumn class="col" Property="@(p => p.ScrapedAt)" Format="yyyy-MM-dd" Sortable="true"/>
-    <PropertyColumn class="col text-nowrap" Property="@(p => p.UpdatedAt)" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
-    <PropertyColumn class="col-1" Property="@(p => string.Join(", ", p.MyKeywords))" Title="My keywords" Sortable="false">
+    <PropertyColumn class="col" Property="@(p => p.ScrapedAt)" Format="yyyy-MM-dd" Sortable="true" />
+    <PropertyColumn class="col text-nowrap" Property="@(p => p.UpdatedAt)" Format="yyyy-MM-dd HH:mm" Sortable="true" />
+    <PropertyColumn class="col-1 text-nowrap" Property="@(p => string.Join(", ", p.MyKeywords))" Title="My keywords">
         <HeaderTemplate>
-            <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+            <button class="col-title mb-1" type="button">
                 <div class="col-title-text">@context.Title</div>
                 <div class="sort-indicator" aria-hidden="true"></div>
             </button>
@@ -131,12 +134,24 @@
                 MultiSelect
                 @bind-SelectedOptions="@MyKeywordsFilter"
                 Options="@myKeywordsOptions"
-                DefaultText="Select keywords "
             />
         </HeaderTemplate>
     </PropertyColumn>
     <PropertyColumn class="col-1" Property="@(p => p.Comments)" Sortable="true"/>
-    <PropertyColumn class="col-2 text-truncate" Property="@(p => p.Location)" Sortable="true"/>
+    <TemplateColumn class="text-truncate" Title="Location"SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Location))">
+        <HeaderTemplate>
+            <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                <div class="col-title-text">@context.Title</div>
+                <div class="sort-indicator" aria-hidden="true"></div>
+            </button>
+            <input placeholder="Filter..."
+                   @bind="LocationFilter"
+                   class="form-control form-control-sm"/>
+        </HeaderTemplate>
+        <ChildContent>
+            <span title="@context.Location">@context.Location</span>
+        </ChildContent>
+    </TemplateColumn>
     <PropertyColumn class="col-1" Property="@(p => p.Origin)" Sortable="true">
         <HeaderTemplate>
             <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
@@ -158,9 +173,6 @@
         <p>No visible offers found. Let's scrape some new :)</p>
     </div>
 }
-
-<ApplicationOfferModal @ref="_applicationOfferModal" ShowHideButton OnUpdate="@(() => grid.RefreshDataAsync())" />
-
 <Paginator State="@pagination">
     <SummaryTemplate>
         <div class="d-flex justify-content-between align-items-center w-auto">
@@ -175,6 +187,8 @@
     </SummaryTemplate>
 </Paginator>
 
+<ApplicationOfferModal @ref="_applicationOfferModal" ShowHideButton OnUpdate="@(() => grid.RefreshDataAsync())"/>
+
 @inject IDbContextFactory<JobsDbContext> DbFactory
 @inject IOptions<ScraperConfig> ScraperConfig;
 @inject NavigationManager NavigationManager
@@ -188,15 +202,16 @@
     string[] currencyOptions = [];
     string[] originOptions = Enum.GetValues<DataOrigin>().Select(x => x.ToString()).ToArray();
 
-    [SupplyParameterFromQuery] [Parameter] public string? TitleFilter { get; set; } = "";
-    [SupplyParameterFromQuery] [Parameter] public string? CompanyFilter { get; set; } = "";
-    [SupplyParameterFromQuery] [Parameter] public bool? IsAppliedFilter { get; set; } = false;
-    [SupplyParameterFromQuery] [Parameter] public bool? IsHiddenFilter { get; set; } = false;
-    [SupplyParameterFromQuery] [Parameter] public int? SalaryMinFilter { get; set; }
-    [SupplyParameterFromQuery] [Parameter] public int? SalaryMaxFilter { get; set; }
-    [SupplyParameterFromQuery] [Parameter] public string[]? CurrencyFilter { get; set; } = [];
-    [SupplyParameterFromQuery] [Parameter] public string[]? OriginFilter { get; set; } = [];
-    [SupplyParameterFromQuery] [Parameter] public string[]? MyKeywordsFilter { get; set; } = [];
+    public string? TitleFilter { get; set; } = "";
+    public string? CompanyFilter { get; set; } = "";
+    public string? LocationFilter { get; set; } = "";
+    public bool? IsAppliedFilter { get; set; } = false;
+    public bool? IsHiddenFilter { get; set; } = false;
+    public int? SalaryMinFilter { get; set; }
+    public int? SalaryMaxFilter { get; set; }
+    public string[]? CurrencyFilter { get; set; } = [];
+    public string[]? OriginFilter { get; set; } = [];
+    public string[]? MyKeywordsFilter { get; set; } = [];
 
     IQueryable<JobOffer> jobOffers => context.JobOffers
         .Include(jo => jo.Company)
@@ -204,6 +219,7 @@
         .Where(jo => jo.DetailsScrapeStatus == DetailsScrapeStatus.Scraped)
         .WhereIf(!string.IsNullOrEmpty(TitleFilter), jo => jo.Title.ToLower().Contains(TitleFilter!.ToLower()))
         .WhereIf(!string.IsNullOrEmpty(CompanyFilter), jo => jo.Company.Name.ToLower().Contains(CompanyFilter!.ToLower()))
+        .WhereIf(!string.IsNullOrEmpty(LocationFilter), jo => jo.Location!.ToLower().Contains(LocationFilter!.ToLower()))
         .WhereIf(OriginFilter?.Length     > 0, jo => OriginFilter!.Contains(jo.Origin.ToString()))
         .WhereIf(MyKeywordsFilter?.Length > 0, jo => jo.MyKeywords.Any(mk => MyKeywordsFilter!.Contains(mk)))
         .WhereIf(CurrencyFilter?.Length   > 0, jo => CurrencyFilter!.Contains(jo.SalaryCurrency))
