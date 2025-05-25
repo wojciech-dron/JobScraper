@@ -51,6 +51,7 @@ public enum DataOrigin
     NoFluffJobs,
     LinkedIn,
     PracujPl,
+    RocketJobs,
 }
 
 public class JobOfferModelBuilder : IEntityTypeConfiguration<JobOffer>

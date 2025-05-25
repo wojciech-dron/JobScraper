@@ -5,13 +5,13 @@ using JobScraper.Persistence;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 
-namespace JobScraper.Logic.Jjit;
+namespace JobScraper.Logic.RocketJobs;
 
-public class JjitListScraper
+public partial class RocketJobsListScraper
 {
     public record Command : ScrapeCommand;
 
-    public class Handler : ListScraperBase<Command>
+    public partial class Handler : ListScraperBase<Command>
     {
         public Handler(IOptions<ScraperConfig> config,
             ILogger<Handler> logger,
@@ -19,25 +19,25 @@ public class JjitListScraper
             : base(config, logger, dbContext)
         { }
 
-        protected override DataOrigin DataOrigin => DataOrigin.JustJoinIt;
+        protected override DataOrigin DataOrigin => DataOrigin.RocketJobs;
 
         public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs()
         {
             if (string.IsNullOrEmpty(SearchUrl))
                 throw new ArgumentException("Search URL is not set", nameof(SearchUrl));
 
-            Logger.LogInformation("Justjoin.it scraping for url {SearchUrl}", SearchUrl);
+            Logger.LogInformation("{DataOrigin} scraping for url {SearchUrl}", DataOrigin, SearchUrl);
 
             var page = await LoadUntilAsync(SearchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds,
-                successCondition: async p => (await p.QuerySelectorAllAsync("li")).Count > 6);
+                successCondition: async p => (await p.QuerySelectorAllAsync(".offer-card")).Count > 4);
 
             await AcceptCookies(page);
 
             var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
             var pageNumber = 0;
 
-            await SaveScreenshot(page, $"jjit/list/{fetchDate}/{pageNumber}.png");
-            await SavePage(page, $"jjit/list/{fetchDate}/{pageNumber}.html");
+            await SaveScreenshot(page, $"RocketJobs/list/{fetchDate}/{pageNumber}.png");
+            await SavePage(page, $"RocketJobs/list/{fetchDate}/{pageNumber}.html");
 
             var newJobs = await ScrapeJobsFromList(page);
             yield return newJobs;
@@ -47,15 +47,15 @@ public class JjitListScraper
                 pageNumber++;
                 var previousJobs = newJobs;
 
-                Logger.LogInformation("Justjoin.it - scraping page {PageNumber}", pageNumber);
+                Logger.LogInformation("{DataOrigin} - scraping page {PageNumber}", DataOrigin, pageNumber);
 
                 // scroll down
                 var scrollHeight = pageNumber * 1200;
                 await page.EvaluateAsync($"window.scrollTo(0, {scrollHeight});");
                 await page.WaitForTimeoutAsync(ScrapeConfig.WaitForScrollSeconds * 1000);
 
-                await SaveScreenshot(page, $"jjit/list/{fetchDate}/{pageNumber}.png");
-                await SavePage(page, $"jjit/list/{fetchDate}/{pageNumber}.html");
+                await SaveScreenshot(page, $"RocketJobs/list/{fetchDate}/{pageNumber}.png");
+                await SavePage(page, $"RocketJobs/list/{fetchDate}/{pageNumber}.html");
 
                 var jobsFromPage = await ScrapeJobsFromList(page);
 
@@ -65,7 +65,7 @@ public class JjitListScraper
                 yield return newJobs;
             }
 
-            Logger.LogInformation("Justjoin.it - scrapping complete");
+            Logger.LogInformation("{DataOrigin} - scrapping complete", DataOrigin);
         }
 
         private async Task AcceptCookies(IPage page)
@@ -74,7 +74,7 @@ public class JjitListScraper
             if (cookiesAccept is null)
                 return;
 
-            Logger.LogInformation("Justjoin.it - accepting cookies");
+            Logger.LogInformation("{DataOrigin} - accepting cookies", DataOrigin);
             await cookiesAccept.ClickAsync();
 
             await page.WaitForTimeoutAsync(1 * 1000);
@@ -83,43 +83,43 @@ public class JjitListScraper
         {
             var jobs = new List<JobOffer>();
 
-            var jobElements = await page.QuerySelectorAllAsync("div[data-index]");
+            var jobElements = await page.QuerySelectorAllAsync(".offer-card");
             var jobsText = await Task.WhenAll(jobElements.Select(async j => await j.InnerTextAsync()));
 
             // Use EvaluateFunctionAsync to get the href attribute of the <a> element
             var urls = await page.EvaluateAsync<string[]>(@"
-            Array.from(document.querySelectorAll('div[data-index] > div > div > a'))
+            Array.from(document.querySelectorAll('.offer-card'))
                 .map(element => element.getAttribute('href'));
-        ");
+            ");
 
             for (var i = 0; i < jobsText.Length; i++)
             {
                 var job = new JobOffer();
                 // "Senior .NET Developer  20 000 - 24 000 PLN  New  Qodeca  Warszawa  , +9  Locations  Fully remote  C#  Microsoft Azure"
                 var phrases = jobsText[i].Split(['\n'], StringSplitOptions.RemoveEmptyEntries).ToList();
-                if (phrases.Count < 9)
+                if (phrases.Count < 5)
                     continue;
 
                 job.OfferUrl = BaseUrl + urls.ElementAtOrDefault(i) ?? "";
-                job.Origin = DataOrigin;
                 job.Title = phrases[0];
+                job.Origin = DataOrigin.JustJoinIt;
                 ScrapSalary(job, phrases[1]);
-                job.AgeInfo = phrases[2];
-                job.CompanyName = phrases[3];
-                job.Location = phrases[4];
-                if (phrases[6].Contains("Locations"))
+                job.CompanyName = phrases[2];
+                job.Location = phrases[3];
+                if (phrases[4].Contains(", +"))
                 {
-                    job.Location += $"{phrases[5]} {phrases[6]}";
+                    job.Location += $"{phrases[4]} {phrases[5]}";
+                    phrases.RemoveAt(4);
                     phrases.RemoveAt(5);
-                    phrases.RemoveAt(6);
                 }
 
-                job.OfferKeywords = phrases.Skip(6).ToList();
+                job.OfferKeywords = phrases[4..^1];
+                job.AgeInfo = phrases.Last();
 
                 jobs.Add(job);
             }
 
-            Logger.LogInformation("Justjoin.it scraping completed. Total jobs: {JobsCount}", jobs.Count);
+            Logger.LogInformation("{DataOrigin} scraping completed. Total jobs: {JobsCount}", DataOrigin, jobs.Count);
 
             return jobs;
         }
@@ -131,8 +131,8 @@ public class JjitListScraper
 
             rawSalary = rawSalary.Replace(" ", "");
 
-            var minMaxMatch = Regex.Match(rawSalary, @"(\d+)-(\d+)");
-            var currencyMatch = Regex.Match(rawSalary, @"[A-Z]{3}");
+            var minMaxMatch = MinMaxRegex().Match(rawSalary);
+            var currencyMatch = CurrencyRegex().Match(rawSalary);
             if (!minMaxMatch.Success || !currencyMatch.Success)
                 return;
 
@@ -140,5 +140,11 @@ public class JjitListScraper
             job.SalaryMaxMonth = int.Parse(minMaxMatch.Groups[2].Value);
             job.SalaryCurrency = currencyMatch.Value;
         }
+
+        [GeneratedRegex(@"(\d+)-(\d+)")]
+        private static partial Regex MinMaxRegex();
+
+        [GeneratedRegex(@"[A-Z]{3}")]
+        private static partial Regex CurrencyRegex();
     }
 }
