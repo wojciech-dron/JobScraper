@@ -67,12 +67,16 @@
                 <div class="sort-indicator" aria-hidden="true"></div>
             </button>
             <MySelect
+                MultiSelect
                 Options="Enum.GetValues<ApplyStatus>()"
                 @bind-SelectedOptions="@StatusFilter">
             </MySelect>
         </HeaderTemplate>
     </PropertyColumn>
-    <PropertyColumn Property="@(p => p.SentCv)" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.ExpectedMonthSalary)" Title="ExpectedSalary" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.Comments)" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.AppliedAt)" Format="yyyy-MM-dd" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.RespondedAt)" Format="yyyy-MM-dd" Sortable="true"/>
     <PropertyColumn class="col-1" Property="@(p => p.JobOffer.Origin)" Sortable="true">
         <HeaderTemplate>
             <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
@@ -80,16 +84,14 @@
                 <div class="sort-indicator" aria-hidden="true"></div>
             </button>
             <MySelect
+                MultiSelect
                 @bind-SelectedOptions="@OriginFilter"
                 Options="@originOptions"
             />
         </HeaderTemplate>
     </PropertyColumn>
-    <PropertyColumn Property="@(p => p.ExpectedMonthSalary)" Sortable="true"/>
-    <PropertyColumn Property="@(p => p.AppliedAt)" Format="yyyy-MM-dd" Sortable="true"/>
-    <PropertyColumn Property="@(p => p.RespondedAt)" Format="yyyy-MM-dd" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.SentCv)" Sortable="true"/>
     <PropertyColumn Property="@(p => p.UpdatedAt)" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
-    <PropertyColumn Property="@(p => p.Comments)" Sortable="true"/>
 
 </QuickGrid>
 </div>

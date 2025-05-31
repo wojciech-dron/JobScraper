@@ -44,8 +44,6 @@ public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IReque
                 await RetryPolicy.ExecuteAsync(async () =>
                     await ScrapeJobDetails(job));
 
-                await DisposeAsync();
-
                 job.DetailsScrapeStatus = DetailsScrapeStatus.Scraped;
 
                 await DbContext.SaveChangesAsync(cancellationToken);
@@ -58,6 +56,10 @@ public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IReque
                 await DbContext.SaveChangesAsync(cancellationToken);
 
                 throw;
+            }
+            finally
+            {
+                Dispose();
             }
         }
     }

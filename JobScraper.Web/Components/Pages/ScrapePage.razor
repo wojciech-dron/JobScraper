@@ -2,8 +2,9 @@
 @rendermode InteractiveServer
 @using JobScraper.Logic
 @using MediatR
-@inject IMediator Mediator
+@inject IServiceProvider ServiceProvider
 @inject ILogger<ScrapePage> Logger
+
 
 <h3>Job Scraper</h3>
 
@@ -33,8 +34,11 @@
 
         try
         {
+            using var scope = ServiceProvider.CreateScope();
+            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+
             var request = new ScrapePipeline.Request();
-            await Mediator.Send(request, CancellationToken.None);
+            await mediator.Send(request, CancellationToken.None);
 
             statusMessage = "Scrape finished succesfuly";
         }

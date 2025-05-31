@@ -36,6 +36,8 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
             Logger.LogInformation("Syncing {DataOrigin} jobs...", DataOrigin);
             await SyncJobsFromList(jobs, cancellationToken);
         }
+
+        Dispose();
     }
 
     public async Task SyncJobsFromList(List<JobOffer> jobs, CancellationToken cancellationToken)

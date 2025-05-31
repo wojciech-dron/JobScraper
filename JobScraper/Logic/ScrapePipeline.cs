@@ -4,6 +4,8 @@ using JobScraper.Logic.Common;
 using JobScraper.Logic.Indeed;
 using JobScraper.Logic.Jjit;
 using JobScraper.Logic.NoFluffJobs;
+using JobScraper.Logic.PracujPl;
+using JobScraper.Logic.RocketJobs;
 using JobScraper.Models;
 using MediatR;
 using Microsoft.Extensions.Options;
@@ -40,6 +42,8 @@ public class ScrapePipeline
                 DataOrigin.Indeed      => new IndeedListScraper.Command(),
                 DataOrigin.JustJoinIt  => new JjitListScraper.Command(),
                 DataOrigin.NoFluffJobs => new NoFluffJobsListScraper.Command(),
+                DataOrigin.PracujPl    => new PracujPlListScraper.Command(),
+                DataOrigin.RocketJobs  => new RocketJobsListScraper.Command(),
 
                 _ => throw new NotImplementedException($"List scraping not implemented for {origin}")
 
@@ -48,15 +52,20 @@ public class ScrapePipeline
 
             // details
             _logger.LogInformation("Scraping details for origins: {EnabledOrigins}", string.Join(", ", enabledOrigins));
-            var detailsCommands = enabledOrigins.Select<DataOrigin, ScrapeCommand>(origin => origin switch
+            var detailsCommands = enabledOrigins.Select<DataOrigin, ScrapeCommand?>(origin => origin switch
             {
                 DataOrigin.Indeed      => new IndeedDetailsScraper.Command(),
                 DataOrigin.JustJoinIt  => new JjitDetailsScraper.Command(),
                 DataOrigin.NoFluffJobs => new NoFluffJobsDetailsScraper.Command(),
+                DataOrigin.PracujPl    => null,
+                DataOrigin.RocketJobs  => new RocketJobsDetailsScraper.Command(),
 
                 _ => throw new NotImplementedException($"List scraping not implemented for {origin}")
             });
-            await Task.WhenAll(detailsCommands.Select(c => _mediator.SendWithRetry(c, cancellationToken)));
+            await Task.WhenAll(detailsCommands
+                .Where(c => c is not null)
+                .Select(c => _mediator.SendWithRetry(c!, cancellationToken)
+            ));
 
 
             _logger.LogInformation("Scraping completed successfully");

@@ -12,7 +12,11 @@ public static class Setup
     {
         if (environment.IsProduction())
         {
-            configuration.AddJsonFile(Path.Combine(environment.ContentRootPath, "..", "scraperSettings.json"), optional: true, reloadOnChange: true);
+            configuration.AddJsonFile(Path.Combine(environment.ContentRootPath, "..", "scraperSettings.json"),
+                optional: true,
+                reloadOnChange: true);
+
+            return configuration;
         }
 
         var appPath = Path.Combine(environment.ContentRootPath);
@@ -22,6 +26,7 @@ public static class Setup
 
         configuration.AddJsonFile(Path.Combine(appPath, "scraperSettings.json"), optional: false, reloadOnChange: true);
         configuration.AddJsonFile(Path.Combine(appPath, "scraperSettings.Development.json"), optional: true, reloadOnChange: true);
+
 
 
         return configuration;

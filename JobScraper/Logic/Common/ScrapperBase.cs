@@ -13,7 +13,7 @@ using Polly.Retry;
 
 namespace JobScraper.Logic.Common;
 
-public abstract class ScrapperBase : IAsyncDisposable
+public abstract class ScrapperBase : IDisposable
 {
     protected readonly ScraperConfig ScrapeConfig;
     protected readonly OriginConfig OriginConfig;
@@ -38,7 +38,7 @@ public abstract class ScrapperBase : IAsyncDisposable
 
     public static readonly AsyncRetryPolicy<JobOffer> RetryPolicy =
         Policy<JobOffer>.Handle<Exception>()
-            .WaitAndRetryAsync(2, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+            .WaitAndRetryAsync(1, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
     public ScrapperBase(IOptions<ScraperConfig> config,
         ILogger<ScrapperBase> logger)
@@ -54,9 +54,11 @@ public abstract class ScrapperBase : IAsyncDisposable
 
     public async Task<IPage> NewPageAsync()
     {
-        _playwright ??= await new PlaywrightExtra(ScrapeConfig.BrowserType)
+        Dispose();
+
+        _playwright = await new PlaywrightExtra(ScrapeConfig.BrowserType)
             .Install()
-            .Use(new StealthExtraPlugin(new StealthHardwareConcurrencyOptions(4)))
+            .Use(new StealthExtraPlugin(new StealthHardwareConcurrencyOptions(1)))
             .Use(new AnonymizeUaExtraPlugin())
             .LaunchAsync(new()
             {
@@ -111,7 +113,7 @@ public abstract class ScrapperBase : IAsyncDisposable
         Func<IPage, Task<bool>>? successCondition = null,
         float waitSeconds = 5)
     {
-        const int maxAttempts = 3;
+        const int maxAttempts = 2;
         successCondition ??= async p => (await p.QuerySelectorAllAsync("main.error")).Count == 0;
 
         IPage page;
@@ -154,10 +156,10 @@ public abstract class ScrapperBase : IAsyncDisposable
             .ToList();
     }
 
-    public async ValueTask DisposeAsync()
+    public void Dispose()
     {
         if (_playwright != null)
-            await _playwright.DisposeAsync();
+            _playwright.Dispose();
 
         _playwright = null;
     }

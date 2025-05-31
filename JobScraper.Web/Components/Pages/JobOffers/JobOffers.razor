@@ -15,7 +15,7 @@
 
 <h1>Job offers</h1>
 
-<div id="table-container" class="overflow-auto">
+<div id="table-container" class="overflow-auto" >
 <QuickGrid @ref="@grid" Items="jobOffers" Pagination="@pagination" class="table small-padding-table">
     <TemplateColumn SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Application == null))" Title="Apply">
         <HeaderTemplate>
@@ -122,23 +122,8 @@
             </MySelect>
         </HeaderTemplate>
     </PropertyColumn>
-    <PropertyColumn class="col" Property="@(p => p.ScrapedAt)" Format="yyyy-MM-dd" Sortable="true" />
-    <PropertyColumn class="col text-nowrap" Property="@(p => p.UpdatedAt)" Format="yyyy-MM-dd HH:mm" Sortable="true" />
-    <PropertyColumn class="col-1 text-nowrap" Property="@(p => string.Join(", ", p.MyKeywords))" Title="My keywords">
-        <HeaderTemplate>
-            <button class="col-title mb-1" type="button">
-                <div class="col-title-text">@context.Title</div>
-                <div class="sort-indicator" aria-hidden="true"></div>
-            </button>
-            <MySelect
-                MultiSelect
-                @bind-SelectedOptions="@MyKeywordsFilter"
-                Options="@myKeywordsOptions"
-            />
-        </HeaderTemplate>
-    </PropertyColumn>
     <PropertyColumn class="col-1" Property="@(p => p.Comments)" Sortable="true"/>
-    <TemplateColumn class="text-truncate" Title="Location"SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Location))">
+    <TemplateColumn class="text-truncate" Title="Location" SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Location))">
         <HeaderTemplate>
             <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                 <div class="col-title-text">@context.Title</div>
@@ -152,6 +137,7 @@
             <span title="@context.Location">@context.Location</span>
         </ChildContent>
     </TemplateColumn>
+
     <PropertyColumn class="col-1" Property="@(p => p.Origin)" Sortable="true">
         <HeaderTemplate>
             <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
@@ -161,6 +147,21 @@
             <MySelect
                 @bind-SelectedOptions="@OriginFilter"
                 Options="@originOptions"
+            />
+        </HeaderTemplate>
+    </PropertyColumn>
+    <PropertyColumn class="col" Property="@(p => p.ScrapedAt)" Format="yyyy-MM-dd" Sortable="true"/>
+    <PropertyColumn class="col text-nowrap" Property="@(p => p.UpdatedAt)" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
+    <PropertyColumn class="col-1 text-nowrap" Property="@(p => string.Join(", ", p.MyKeywords))" Title="My keywords">
+        <HeaderTemplate>
+            <button class="col-title mb-1" type="button">
+                <div class="col-title-text">@context.Title</div>
+                <div class="sort-indicator" aria-hidden="true"></div>
+            </button>
+            <MySelect
+                MultiSelect
+                @bind-SelectedOptions="@MyKeywordsFilter"
+                Options="@myKeywordsOptions"
             />
         </HeaderTemplate>
     </PropertyColumn>
@@ -196,7 +197,7 @@
 @code {
     QuickGrid<JobOffer> grid = null!;
     JobsDbContext context = null!;
-    PaginationState pagination = new() { ItemsPerPage = 50 };
+    PaginationState pagination = new() { ItemsPerPage = 20 };
     ApplicationOfferModal _applicationOfferModal = null!;
     string[] myKeywordsOptions = [];
     string[] currencyOptions = [];

@@ -11,7 +11,15 @@ public static class MediatrExtensions
     {
         var retryPolicy = Policy.Handle<Exception>()
             .WaitAndRetryAsync(retryAttempts, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
-
-        return retryPolicy.ExecuteAsync(async () => await mediator.Send(request, cancellationToken));
+        try
+        {
+            return retryPolicy.ExecuteAsync(async () => await mediator.Send(request, cancellationToken));
+        }
+        catch (Exception e)
+        {
+            // fast workaround, dont stop when its an error
+            Console.WriteLine(e);
+            return Task.CompletedTask;
+        }
     }
 }

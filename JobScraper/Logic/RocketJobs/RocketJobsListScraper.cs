@@ -102,7 +102,7 @@ public partial class RocketJobsListScraper
 
                 job.OfferUrl = BaseUrl + urls.ElementAtOrDefault(i) ?? "";
                 job.Title = phrases[0];
-                job.Origin = DataOrigin.JustJoinIt;
+                job.Origin = DataOrigin;
                 ScrapSalary(job, phrases[1]);
                 job.CompanyName = phrases[2];
                 job.Location = phrases[3];
