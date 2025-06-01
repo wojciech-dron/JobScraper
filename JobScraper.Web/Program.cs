@@ -17,7 +17,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddQuickGridEntityFrameworkAdapter();
 builder.Services.AddBlazorBootstrap();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateJobOfferValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<JobOfferValidator>();
 
 
 builder.Logging.AddOtelLogging(builder.Configuration, "JobScraper.Web");

@@ -1,18 +1,20 @@
 ﻿@page "/add-offer"
+@page "/edit-offer/{OfferUrl}"
 @rendermode InteractiveServer
 @using JobScraper.Models
 @using JobScraper.Persistence
 @using Microsoft.EntityFrameworkCore
 @using Blazored.FluentValidation
+@using JobScraper.Web.Validators
 
-<PageTitle>Add Job Offer</PageTitle>
+<PageTitle>@(isEdit ? "Edit Job Offer" : "Add Job Offer")</PageTitle>
 
-<h1>Add Job Offer</h1>
+<h1>@(isEdit ? "Edit Job Offer" : "Add Job Offer")</h1>
 
 <div class="row">
     <div class="col-md-8">
         <EditForm Model="@jobOffer" OnValidSubmit="SaveAsync">
-            <FluentValidationValidator />
+            <FluentValidationValidator Options="@(options => options.IncludeRuleSets(isEdit ? "EditRuleSet" : "AddRuleSet"))"/>
             <ValidationSummary />
 
             <div class="row mb-3">
@@ -24,7 +26,7 @@
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="offerUrl" class="form-label bold">Offer URL* (must be unique)</label>
-                    <InputText id="offerUrl" @bind-Value="jobOffer.OfferUrl" class="form-control" required />
+                    <InputText id="offerUrl" @bind-Value="jobOffer.OfferUrl" class="form-control" required disabled="@limitEdit" />
                     <ValidationMessage For="@(() => jobOffer.OfferUrl)" />
                 </div>
             </div>
@@ -40,7 +42,7 @@
             <div class="row mb-3">
                 <div class="col-md-6">
                     <label for="companyName" class="form-label">Company Name*</label>
-                    <InputText id="companyName" @bind-Value="jobOffer.CompanyName" class="form-control" required />
+                    <InputText id="companyName" @bind-Value="jobOffer.CompanyName" class="form-control" required disabled="@limitEdit" />
                     <ValidationMessage For="@(() => jobOffer.CompanyName)" />
                 </div>
             </div>
@@ -99,7 +101,7 @@
 
             <div class="row mb-3">
                 <div class="col-md-12">
-                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="submit" class="btn btn-primary">@(isEdit ? "Update" : "Save")</button>
                     <a href="/" class="btn btn-secondary ms-2">Cancel</a>
                 </div>
             </div>
@@ -109,14 +111,23 @@
 
 @inject IDbContextFactory<JobsDbContext> DbContextFactory
 @inject NavigationManager NavigationManager
+@inject JobOfferValidator JobOfferValidator
 
 @code {
+    [Parameter]
+    public string? OfferUrl { get; set; }
+
+    private bool isEdit => !string.IsNullOrEmpty(OfferUrl);
+    private bool limitEdit => isEdit && jobOffer.Origin != DataOrigin.Manual; // limit scraped update
     private JobsDbContext _context;
+    private FluentValidationValidator? validator;
+
     private JobOffer jobOffer = new()
     {
         Origin = DataOrigin.Manual,
         DetailsScrapeStatus = DetailsScrapeStatus.Scraped,
-        ScrapedAt = DateTime.UtcNow
+        ScrapedAt = DateTime.UtcNow,
+        SalaryCurrency = "PLN"
     };
 
     private string offerKeywordsInput = string.Empty;
@@ -125,18 +136,31 @@
     protected override async Task OnInitializedAsync()
     {
         _context = await DbContextFactory.CreateDbContextAsync();
+
+        if (!isEdit)
+            return;
+
+        var existingOffer = await _context.JobOffers
+            .Include(j => j.Company)
+            .FirstOrDefaultAsync(j => j.OfferUrl == OfferUrl);
+
+        jobOffer = existingOffer ?? throw new ArgumentException($"Job offer wit url: {OfferUrl} not found");
+
+        // Set keywords for input fields
+        offerKeywordsInput = string.Join(", ", jobOffer.OfferKeywords);
+        myKeywordsInput = string.Join(", ", jobOffer.MyKeywords);
     }
 
     private async Task SaveAsync()
     {
-        // Validation is now handled by FluentValidation
-
         // Process keywords
         jobOffer.OfferKeywords = ToKeywordsArray(offerKeywordsInput);
         jobOffer.MyKeywords = ToKeywordsArray(myKeywordsInput);
-        jobOffer.Company = await ResolveCompany(jobOffer.CompanyName);
+        jobOffer.Company = await ResolveCompany(jobOffer.CompanyName!);
 
-        await _context.AddAsync(jobOffer);
+        if (!isEdit)
+            await _context.AddAsync(jobOffer);
+
         await _context.SaveChangesAsync();
 
         // Navigate back to the job offers list

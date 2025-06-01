@@ -32,16 +32,19 @@
                         <InputTextArea id="offer-comments" @bind-Value="@_jobOffer.Comments" class="form-control"/>
                     </div>
 
-                    if (_jobOffer.Hidden)
-                    {
-                        <button class="btn btn-primary" @onclick="ShowOffer">Show offer</button>
-                    }
-                    else
-                    {
-                        <button class="btn btn-primary" @onclick="HideOffer">Hide offer</button>
-                    }
+                    <div class="mt-2">
+                        @if (_jobOffer.Hidden)
+                        {
+                            <button class="btn btn-primary" @onclick="ShowOffer">Show offer</button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-primary" @onclick="HideOffer">Hide offer</button>
+                        }
 
-                    <button class="btn btn-secondary ms-1" @onclick="CancelAsync">Cancel</button>
+                        <button class="btn btn-info ms-1" @onclick="EditOffer">Edit offer</button>
+                        <button class="btn btn-secondary ms-1" @onclick="CancelAsync">Cancel</button>
+                    </div>
                 }
             </div>
 
@@ -116,7 +119,8 @@
     </BodyTemplate>
 </Modal>
 
-@inject IDbContextFactory<JobsDbContext> DbContextFactory;
+@inject IDbContextFactory<JobsDbContext> DbContextFactory
+@inject NavigationManager NavigationManager
 @code {
     private bool _isEdit = false;
     private Modal _modal = default!;
@@ -198,6 +202,12 @@
         _context.Update(_jobOffer);
         await _context.SaveChangesAsync();
         OnUpdate?.Invoke();
+    }
+    
+    private async Task EditOffer()
+    {
+        await _modal.HideAsync();
+        NavigationManager.NavigateTo($"/edit-offer/{Uri.EscapeDataString(_jobOffer.OfferUrl)}");
     }
 
     public async ValueTask DisposeAsync() => await _context.DisposeAsync();
