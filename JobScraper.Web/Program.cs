@@ -1,7 +1,11 @@
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using JobScraper;
 using JobScraper.Common;
+using JobScraper.Models;
 using JobScraper.Persistence;
 using JobScraper.Web.Components;
+using JobScraper.Web.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +17,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddQuickGridEntityFrameworkAdapter();
 builder.Services.AddBlazorBootstrap();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateJobOfferValidator>();
 
 
 builder.Logging.AddOtelLogging(builder.Configuration, "JobScraper.Web");

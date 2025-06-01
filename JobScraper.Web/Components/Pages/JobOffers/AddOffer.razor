@@ -1,0 +1,173 @@
+﻿@page "/add-offer"
+@rendermode InteractiveServer
+@using JobScraper.Models
+@using JobScraper.Persistence
+@using Microsoft.EntityFrameworkCore
+@using Blazored.FluentValidation
+
+<PageTitle>Add Job Offer</PageTitle>
+
+<h1>Add Job Offer</h1>
+
+<div class="row">
+    <div class="col-md-8">
+        <EditForm Model="@jobOffer" OnValidSubmit="SaveAsync">
+            <FluentValidationValidator />
+            <ValidationSummary />
+
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <p class="text-muted">Fields marked with * are required.</p>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="offerUrl" class="form-label bold">Offer URL* (must be unique)</label>
+                    <InputText id="offerUrl" @bind-Value="jobOffer.OfferUrl" class="form-control" required />
+                    <ValidationMessage For="@(() => jobOffer.OfferUrl)" />
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="title" class="form-label ">Title*</label>
+                    <InputText id="title" @bind-Value="jobOffer.Title" class="form-control" required />
+                    <ValidationMessage For="@(() => jobOffer.Title)" />
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="companyName" class="form-label">Company Name*</label>
+                    <InputText id="companyName" @bind-Value="jobOffer.CompanyName" class="form-control" required />
+                    <ValidationMessage For="@(() => jobOffer.CompanyName)" />
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="location" class="form-label">Location</label>
+                    <InputText id="location" @bind-Value="jobOffer.Location" class="form-control" />
+                    <ValidationMessage For="@(() => jobOffer.Location)" />
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="salaryMinMonth" class="form-label">Min Monthly Salary</label>
+                    <InputNumber id="salaryMinMonth" @bind-Value="jobOffer.SalaryMinMonth" class="form-control" />
+                    <ValidationMessage For="@(() => jobOffer.SalaryMinMonth)" />
+                </div>
+                <div class="col-md-4">
+                    <label for="salaryMaxMonth" class="form-label">Max Monthly Salary</label>
+                    <InputNumber id="salaryMaxMonth" @bind-Value="jobOffer.SalaryMaxMonth" class="form-control" />
+                    <ValidationMessage For="@(() => jobOffer.SalaryMaxMonth)" />
+                </div>
+                <div class="col-md-4">
+                    <label for="salaryCurrency" class="form-label">Currency</label>
+                    <InputText id="salaryCurrency" @bind-Value="jobOffer.SalaryCurrency" class="form-control" />
+                    <ValidationMessage For="@(() => jobOffer.SalaryCurrency)" />
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="offerKeywords" class="form-label">Offer Keywords (separated with ,)</label>
+                    <InputText id="offerKeywords" @bind-Value="offerKeywordsInput" class="form-control" />
+                </div>
+                <div class="col-md-6">
+                    <label for="myKeywords" class="form-label">My Keywords (separated with ,)</label>
+                    <InputText id="myKeywords" @bind-Value="myKeywordsInput" class="form-control" />
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="publishedAt" class="form-label">Published At</label>
+                    <InputDate id="publishedAt" @bind-Value="jobOffer.PublishedAt" class="form-control"/>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <label for="description" class="form-label">Description</label>
+                    <InputTextArea id="description" @bind-Value="jobOffer.Description" class="form-control" rows="5" />
+                    <ValidationMessage For="@(() => jobOffer.Description)" />
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-primary">Save</button>
+                    <a href="/" class="btn btn-secondary ms-2">Cancel</a>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@inject IDbContextFactory<JobsDbContext> DbContextFactory
+@inject NavigationManager NavigationManager
+
+@code {
+    private JobsDbContext _context;
+    private JobOffer jobOffer = new()
+    {
+        Origin = DataOrigin.Manual,
+        DetailsScrapeStatus = DetailsScrapeStatus.Scraped,
+        ScrapedAt = DateTime.UtcNow
+    };
+
+    private string offerKeywordsInput = string.Empty;
+    private string myKeywordsInput = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _context = await DbContextFactory.CreateDbContextAsync();
+    }
+
+    private async Task SaveAsync()
+    {
+        // Validation is now handled by FluentValidation
+
+        // Process keywords
+        jobOffer.OfferKeywords = ToKeywordsArray(offerKeywordsInput);
+        jobOffer.MyKeywords = ToKeywordsArray(myKeywordsInput);
+        jobOffer.Company = await ResolveCompany(jobOffer.CompanyName);
+
+        await _context.AddAsync(jobOffer);
+        await _context.SaveChangesAsync();
+
+        // Navigate back to the job offers list
+        NavigationManager.NavigateTo("/");
+    }
+
+    private async Task<Company> ResolveCompany(string companyName)
+    {
+        var company = await _context.Companies.FindAsync(companyName);
+        if (company is not null)
+            return company;
+
+        company = new Company
+        {
+            Name = companyName
+        };
+
+        await _context.Companies.AddAsync(company);
+
+        return company;
+    }
+
+    private static List<string> ToKeywordsArray(string keywordsInput)
+    {
+        if (string.IsNullOrWhiteSpace(keywordsInput))
+            return [];
+
+        return keywordsInput
+            .Split(',')
+            .Select(k => k.Trim())
+            .Where(k => !string.IsNullOrWhiteSpace(k))
+            .ToList();
+    }
+}

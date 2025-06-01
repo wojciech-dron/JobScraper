@@ -26,7 +26,7 @@ public class JobOffer : IUpdatable
     public string? SalaryCurrency { get; set; }
     public string Comments { get; set; } = "";
 
-    // Jjit only
+    // Jjit, rocketjobs, manual only
     public string? AgeInfo { get; set; }
     public DateTime? PublishedAt { get; set; }
 
