@@ -38,6 +38,10 @@ public class PracujPlListScraper
             await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
             await SavePage(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.html");
 
+            var cookieButton = await page.QuerySelectorAsync("button[data-test='button-submitCookie']");
+            if (cookieButton is not null)
+                await cookieButton.ClickAsync();
+
             // scrape first page
             var newJobs = await ScrapeJobsFromList(page);
             var previousJobs = new List<JobOffer>();
@@ -50,16 +54,15 @@ public class PracujPlListScraper
 
                 Logger.LogInformation("{DataOrigin} - scraping page {PageNumber}", DataOrigin, pageNumber);
 
-                var nextButton = await page.QuerySelectorAsync("button.tw-btn.tw-btn-primary.tw-px-8.tw-block.tw-btn-xl");
-
+                var nextButton = await page.QuerySelectorAsync("button[data-test='bottom-pagination-button-next']");
                 if (nextButton is null)
                     break;
 
                 await nextButton.ClickAsync();
                 await page.WaitForTimeoutAsync(ScrapeConfig.WaitForListSeconds * 1000);
 
-                await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
-                await SavePage(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.html");
+                // await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
+                // await SavePage(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.html");
 
                 // scrape next page
                 var jobsFromPage = await ScrapeJobsFromList(page);
@@ -123,7 +126,7 @@ public class PracujPlListScraper
             var jobs = new List<JobOffer>();
             foreach (var data in scrapedOffers)
             {
-                var url = data.OfferUrls.FirstOrDefault();
+                var url = data.OfferUrls.FirstOrDefault()?.Split('?').FirstOrDefault();
                 if (string.IsNullOrEmpty(url))
                     continue;
 
@@ -168,7 +171,7 @@ public class PracujPlListScraper
             descBuilder.AppendLine("Offer has more links:");
 
             foreach (var offerUrl in data.OfferUrls)
-                descBuilder.AppendLine(offerUrl);
+                descBuilder.AppendLine(offerUrl.Split('?').FirstOrDefault());
 
             return descBuilder.ToString();
         }

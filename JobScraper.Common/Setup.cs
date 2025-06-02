@@ -27,8 +27,6 @@ public static class Setup
         configuration.AddJsonFile(Path.Combine(appPath, "scraperSettings.json"), optional: false, reloadOnChange: true);
         configuration.AddJsonFile(Path.Combine(appPath, "scraperSettings.Development.json"), optional: true, reloadOnChange: true);
 
-
-
         return configuration;
     }
 

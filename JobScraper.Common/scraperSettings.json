@@ -19,7 +19,7 @@
     },
     "PageSavingDirectory": "..\\Data\\jobs",
     "ShowBrowserWhenScraping": false,
-    "BrowserType": "Firefox",
+    "BrowserType": "Chromium",
     "WaitForListSeconds": 10,
     "WaitForScrollSeconds": 4,
     "WaitForDetailsSeconds": 5,
