@@ -14,7 +14,6 @@ Główne funkcjonalności to:
 - strona z aplikacji użytkownika (filrtowanie, sortowanie oraz odrzucanie)
 
 W planach na ten moment mam:
-- dodwanie ofert ręcznie
 - rozwinięcie strony z pobieraniem o konfigurację linków, żeby nie trzeba było grzebać w plikach json
 
 Uwagi:
@@ -22,9 +21,9 @@ Uwagi:
 - scrapowanie (pobieranie ofert) dla pracuj pl i rocketjobs jest dosyć niestabilne, może rzucać błędami
   i działac długo (zwłaszcza rocketjobs), w razie problemów wystarczy ponowić
 - może następować duże zużycie zasobów ponieważ w odpalana jest przeglądarka do pobierania ofert (można ją odpalać w trybie ukrytym - "ShowBrowserWhenScraping": false w scraperSettings.json)
+- aby usunąć dane należy usunąć folder Data
 
 WAŻNE:
-- Po zmianie linków musimy ponownie odpalić program, aby zaktualizować konfigurację
 - Dla stron innych niż pracuj.pl starajmy się dodawać linki z maksymalnie przefiltrowanymi ofertami, każda oferta wydłuży czas pobierania ofert
 - przy modyfikacji konfiguracji stron należy zwrócić uwagę na to aby link był w obrębie cudzysłowiów (")
 
