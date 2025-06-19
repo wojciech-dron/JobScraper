@@ -130,12 +130,9 @@ public class OlxListScraper
                 };
 
                 // skip first row if salary parsed successfully
-                if (TryParseSalary(jobOffer, data.FirstRowData[0]))
+                if (SalaryParser.TryParseSalary(jobOffer, data.FirstRowData[0]))
                     data.FirstRowData.RemoveAt(0);
 
-                var description = ParseDescription(data);
-                var myKeywords = FindMyKeywords(description);
-                var dataLocation = data.Location.Replace("Miejsce pracy:", "").Replace("Siedziba firmy:", "");
 
 
                 jobs.Add(jobOffer);
@@ -143,35 +140,5 @@ public class OlxListScraper
 
             return jobs;
         }
-
-        private bool TryParseSalary(JobOffer jobOffer, string salaryRaw)
-        {
-            throw new NotImplementedException();
-        }
-
-        private static string ParseDescription(JobData data)
-        {
-            var descBuilder = new StringBuilder(data.Description.Replace("O projekcie", ""));
-            descBuilder.AppendLine();
-
-            foreach (var desc in data.JobKeys)
-                descBuilder.AppendLine(desc);
-
-            if (data.OfferUrls.Length <= 1)
-                return descBuilder.ToString();
-
-            descBuilder.AppendLine();
-            descBuilder.AppendLine("Offer has more links:");
-
-            foreach (var offerUrl in data.OfferUrls)
-                descBuilder.AppendLine(offerUrl.Split('?').FirstOrDefault());
-
-            return descBuilder.ToString();
-        }
-
-        internal static DateTime? ParseDate(string dateStr) =>
-            DateTime.TryParse(dateStr, new CultureInfo("pl-PL"), out var dateTime)
-                ? dateTime
-                : null;
     }
 }

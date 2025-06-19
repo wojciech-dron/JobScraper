@@ -2,6 +2,7 @@
 using System.Text;
 using System.Text.Json;
 using JobScraper.Logic.Common;
+using JobScraper.Logic.Olx;
 using JobScraper.Models;
 using JobScraper.Persistence;
 using Microsoft.Extensions.Options;
@@ -148,7 +149,7 @@ public class PracujPlListScraper
                     DetailsScrapeStatus = DetailsScrapeStatus.Scraped, // skip details scraping
                 };
 
-                SalaryParser.SetSalary(jobOffer, data.Salary);
+                SalaryParser.TryParseSalary(jobOffer, data.Salary);
 
                 jobs.Add(jobOffer);
             }

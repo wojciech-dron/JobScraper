@@ -6,7 +6,7 @@ namespace JobScraper.Logic.Olx;
 
 public partial class SalaryParser
 {
-    public static void SetSalary(JobOffer jobOffer, string rawSalary)
+    public static bool TryParseSalary(JobOffer jobOffer, string rawSalary)
     {
         // Examples:
         // "22 000 zł netto (+ VAT) / mies."
@@ -14,24 +14,29 @@ public partial class SalaryParser
         // "7 000–10 000 zł / mies. (zal. od umowy)"
         // "130–150 zł netto (+ VAT) / godz."
 
-        if (string.IsNullOrWhiteSpace(rawSalary))
-            return;
 
-        rawSalary = rawSalary.Replace("\u00a0", "");
+        if (string.IsNullOrWhiteSpace(rawSalary))
+            return false;
+
+        if (!HasAnyNumberRegex().IsMatch(rawSalary))
+            return false;
+
+        rawSalary = rawSalary
+            .Replace("\u00a0", "")
+            .Replace("-", "–");
 
         // Extract numbers from the salary string
         var numbers = ExtractNumbers(rawSalary);
         if (numbers.Count == 0)
-            return;
+            return false;
 
-        int minSalary = numbers[0];
-        int? maxSalary = numbers.Count > 1 ? numbers[1] : null;
-        string currency = "zł"; // Default currency
+        var minSalary = numbers[0];
+        decimal? maxSalary = numbers.Count > 1 ? numbers[1] : null;
 
         // Determine tax rate
-        decimal taxRate = 0m;
-        bool isContractDependent = rawSalary.Contains("zal. od umowy");
-        bool isBrutto = rawSalary.Contains("brutto");
+        var taxRate = 0m;
+        var isContractDependent = rawSalary.Contains("zal. od umowy");
+        var isBrutto = rawSalary.Contains("brutto");
 
         if (isBrutto && !isContractDependent)
             taxRate = 0.23m;
@@ -55,12 +60,16 @@ public partial class SalaryParser
         else
             jobOffer.SalaryMaxMonth = jobOffer.SalaryMinMonth;
 
-        jobOffer.SalaryCurrency = currency;
+        jobOffer.SalaryCurrency = GetCurrency(rawSalary);
+
+        return true;
     }
 
-    private static List<int> ExtractNumbers(string input)
+    private static List<decimal> ExtractNumbers(string input)
     {
-        var result = new List<int>();
+        var result = new List<decimal>();
+
+        input = input.Replace(" ", "");
 
         // First, check if there's a range with '–' character
         if (input.Contains("–"))
@@ -70,12 +79,12 @@ public partial class SalaryParser
             {
                 // Extract the first number (before '–')
                 var firstNumberStr = ExtractNumberString(parts[0]);
-                if (int.TryParse(firstNumberStr, out int firstNumber))
+                if (decimal.TryParse(firstNumberStr, out var firstNumber))
                     result.Add(firstNumber);
 
                 // Extract the second number (after '–')
                 var secondNumberStr = ExtractNumberString(parts[1]);
-                if (int.TryParse(secondNumberStr, out int secondNumber))
+                if (decimal.TryParse(secondNumberStr, out var secondNumber))
                     result.Add(secondNumber);
 
                 return result;
@@ -83,11 +92,11 @@ public partial class SalaryParser
         }
 
         // If no range found, extract all numbers
-        var matches = System.Text.RegularExpressions.Regex.Matches(input, @"\d+(?:\s\d+)?");
-        foreach (System.Text.RegularExpressions.Match match in matches)
+        var matches = SalaryRegex().Matches(input);
+        foreach (Match match in matches)
         {
             var numberStr = match.Value.Replace(" ", "");
-            if (int.TryParse(numberStr, out int number))
+            if (int.TryParse(numberStr, out var number))
                 result.Add(number);
         }
 
@@ -96,12 +105,28 @@ public partial class SalaryParser
 
     private static string ExtractNumberString(string input)
     {
-        var match = System.Text.RegularExpressions.Regex.Match(input, @"\d+(?:\s\d+)?");
-        return match.Success ? match.Value.Replace(" ", "") : string.Empty;
+        var match = SalaryRegex().Match(input);
+
+        return match.Success
+            ? match.Value
+            : string.Empty;
     }
 
-    [GeneratedRegex(
-        @"(?<min>\d+(?:\s\d+)?)\s*(?:–(?<max>\d+(?:\s\d+)?))?\s*(?<currency>[a-zA-Z]+)(?:\s*(?<taxType>brutto|netto)(?:\s*\(\+\s*VAT\))?)?\s*/\s*(?<period>mies\.|godz\.)(?:\s*\(zal\.\s*od\s*umowy\))?",
-        RegexOptions.IgnoreCase)]
+    private static string GetCurrency(string rawSalary)
+    {
+        var match = CurrencyRegex().Match(rawSalary);
+        if (!match.Success)
+            return "PLN";
+
+        return match.Groups[0].Value;
+    }
+
+    [GeneratedRegex(@"\d")]
+    private static partial Regex HasAnyNumberRegex();
+
+    [GeneratedRegex(@"\d+[\d,.]*")]
     private static partial Regex SalaryRegex();
+
+    [GeneratedRegex(@"[a-zA-Ząćęłńóśźż]{1,3}")]
+    private static partial Regex CurrencyRegex();
 }
