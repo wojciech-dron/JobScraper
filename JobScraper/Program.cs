@@ -5,6 +5,7 @@ using JobScraper.Logic;
 using JobScraper.Logic.Indeed;
 using JobScraper.Logic.Jjit;
 using JobScraper.Logic.NoFluffJobs;
+using JobScraper.Logic.Olx;
 using JobScraper.Logic.PracujPl;
 using JobScraper.Logic.RocketJobs;
 using JobScraper.Persistence;
@@ -50,4 +51,6 @@ public class Commands(IMediator mediator)
 
     public async Task RocketJobsDetails() => await mediator.Send(new RocketJobsDetailsScraper.Command());
     public async Task RocketJobsList() => await mediator.Send(new RocketJobsListScraper.Command());
+
+    public async Task OlxJobsList() => await mediator.Send(new OlxListScraper.Command());
 }

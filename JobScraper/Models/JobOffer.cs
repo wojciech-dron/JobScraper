@@ -52,6 +52,7 @@ public enum DataOrigin
     LinkedIn,
     PracujPl,
     RocketJobs,
+    Olx,
 }
 
 public class JobOfferModelBuilder : IEntityTypeConfiguration<JobOffer>
