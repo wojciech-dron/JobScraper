@@ -35,7 +35,7 @@
             <button class="btn btn-secondary" @onclick="async _ => await RejectApply(context)">Reject</button>
         </ChildContent>
     </TemplateColumn>
-    <PropertyColumn Property="@(p => p.JobOffer.Company.Name)" Title="Company" Sortable="true">
+    <PropertyColumn Property="@(p => p.JobOffer.CompanyName)" Title="Company" Sortable="true">
         <HeaderTemplate>
             <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                 <div class="col-title-text">@context.Title</div>
@@ -133,7 +133,7 @@
         .Include(jo => jo.JobOffer.Company)
         .WhereIf(IsRejectedFilter.HasValue, a => IsRejectedFilter == true ? a.Status == ApplyStatus.Rejected : a.Status != ApplyStatus.Rejected)
         .WhereIf(!string.IsNullOrEmpty(TitleFilter), a => a.JobOffer.Title.ToLower().Contains(TitleFilter!.ToLower()))
-        .WhereIf(!string.IsNullOrEmpty(CompanyFilter), a => a.JobOffer.Company.Name.ToLower().Contains(CompanyFilter!.ToLower()))
+        .WhereIf(!string.IsNullOrEmpty(CompanyFilter), a => a.JobOffer.CompanyName!.ToLower().Contains(CompanyFilter!.ToLower()))
         .WhereIf(StatusFilter?.Length > 0, jo => StatusFilter!.Contains(jo.Status))
         .OrderByDescending(jo => jo.RespondedAt)
         .ThenByDescending(jo => jo.AppliedAt);

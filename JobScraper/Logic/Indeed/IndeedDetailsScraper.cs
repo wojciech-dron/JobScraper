@@ -39,7 +39,7 @@ public class IndeedDetailsScraper
             await Task.WhenAll(
                 ScrapApplyUrl(jobOffer, indeedPage),
                 ScrapDescription(jobOffer, indeedPage),
-                ScrapCompany(jobOffer.Company, indeedPage),
+                ScrapCompany(jobOffer.Company!, indeedPage),
                 ScrapSalary(jobOffer, indeedPage)
             );
 

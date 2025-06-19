@@ -80,7 +80,7 @@ public class OlxListScraper
             string Title,
             string Url,
             string? CompanyName,
-            List<string> FirstRowData,
+            Stack<string> FirstRowData,
             List<string> SecondRowData
         );
 
@@ -92,15 +92,15 @@ public class OlxListScraper
                     const offersContainers = document.querySelectorAll('div.jobs-ad-card');
                     
                     const results = Array.from(offersContainers).map(offer => {        
-                        const titleContainer = offer.querySelector('div > div > a');
+                        const titleContainer = [...offer.querySelectorAll('div > div > a')].at(-1);
                         const firstRow = offer.querySelector('div:nth-child(2) > div > div');
                         const secondRow = offer.querySelector('div:nth-child(2) > div > div:nth-child(2)');
                 
                         const data = {        
                             Title: titleContainer?.textContent,
                             Url: titleContainer?.getAttribute('href')?.trim(),
-                            CompanyName: offer.querySelector('div > div > p')?.textContent?.trim(),
-                            FirstRowData: [...firstRow.querySelectorAll('div > div > p')].map(p => p.textContent?.trim()),
+                            CompanyName: titleContainer.parentNode.querySelector('p')?.textContent?.trim(),
+                            FirstRowData: [...firstRow.querySelectorAll('div > div > p')].map(p => p.textContent?.trim()).reverse(),
                             SecondRowData: [...secondRow.querySelectorAll('button')].map(p => p.textContent?.trim()),
                         };
                         
@@ -119,6 +119,9 @@ public class OlxListScraper
                 if (string.IsNullOrEmpty(data.Url))
                     continue;
 
+                if (jobs.Any(j => j.OfferUrl.EndsWith(data.Url)))
+                    continue;
+
                 var jobOffer = new JobOffer
                 {
                     Title = data.Title,
@@ -130,10 +133,11 @@ public class OlxListScraper
                 };
 
                 // skip first row if salary parsed successfully
-                if (SalaryParser.TryParseSalary(jobOffer, data.FirstRowData[0]))
-                    data.FirstRowData.RemoveAt(0);
+                if (SalaryParser.TryParseSalary(jobOffer, data.FirstRowData.First()))
+                    data.FirstRowData.Pop();
 
-
+                jobOffer.Location = data.FirstRowData.Pop();
+                jobOffer.OfferKeywords.AddRange(data.FirstRowData);
 
                 jobs.Add(jobOffer);
             }

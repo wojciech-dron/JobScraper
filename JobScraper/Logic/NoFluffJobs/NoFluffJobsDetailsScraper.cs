@@ -34,7 +34,7 @@ public class NoFluffJobsDetailsScraper
 
             await Task.WhenAll(
                 ScrapeDescription(jobOffer, page),
-                ScrapCompany(jobOffer.Company, page)
+                ScrapCompany(jobOffer.Company!, page)
             );
 
             return jobOffer;

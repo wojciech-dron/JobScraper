@@ -36,7 +36,7 @@ public class RocketJobsDetailsScraper
             await Task.WhenAll(
                 ScrapeFromInjectScript(jobOffer, page),
                 ScrapDescription(jobOffer, page),
-                ScrapCompany(jobOffer.Company, page)
+                ScrapCompany(jobOffer.Company!, page)
             );
 
             return jobOffer;

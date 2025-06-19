@@ -32,7 +32,7 @@ public class JobOffer : IUpdatable
 
     public DetailsScrapeStatus DetailsScrapeStatus { get; set; } = DetailsScrapeStatus.ToScrape;
 
-    public Company Company { get; set; } = null!;
+    public Company? Company { get; set; }
     public Application? Application { get; set; }
 }
 

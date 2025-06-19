@@ -52,5 +52,5 @@ public class Commands(IMediator mediator)
     public async Task RocketJobsDetails() => await mediator.Send(new RocketJobsDetailsScraper.Command());
     public async Task RocketJobsList() => await mediator.Send(new RocketJobsListScraper.Command());
 
-    public async Task OlxJobsList() => await mediator.Send(new OlxListScraper.Command());
+    public async Task OlxList() => await mediator.Send(new OlxListScraper.Command());
 }

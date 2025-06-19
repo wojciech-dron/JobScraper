@@ -60,7 +60,7 @@
             }
         </ChildContent>
     </TemplateColumn>
-    <PropertyColumn class="col-2" Property="@(p => p.Company.Name)" Sortable="true" Title="Company">
+    <PropertyColumn class="col-2" Property="@(p => p.CompanyName)" Sortable="true" Title="Company">
         <HeaderTemplate>
             <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                 <div class="col-title-text">@context.Title</div>
@@ -219,7 +219,7 @@
         .Include(jo => jo.Application)
         .Where(jo => jo.DetailsScrapeStatus == DetailsScrapeStatus.Scraped)
         .WhereIf(!string.IsNullOrEmpty(TitleFilter), jo => jo.Title.ToLower().Contains(TitleFilter!.ToLower()))
-        .WhereIf(!string.IsNullOrEmpty(CompanyFilter), jo => jo.Company.Name.ToLower().Contains(CompanyFilter!.ToLower()))
+        .WhereIf(!string.IsNullOrEmpty(CompanyFilter), jo => jo.CompanyName!.ToLower().Contains(CompanyFilter!.ToLower()))
         .WhereIf(!string.IsNullOrEmpty(LocationFilter), jo => jo.Location!.ToLower().Contains(LocationFilter!.ToLower()))
         .WhereIf(OriginFilter?.Length     > 0, jo => OriginFilter!.Contains(jo.Origin.ToString()))
         .WhereIf(MyKeywordsFilter?.Length > 0, jo => jo.MyKeywords.Any(mk => MyKeywordsFilter!.Contains(mk)))

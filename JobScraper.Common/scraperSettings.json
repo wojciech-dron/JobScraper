@@ -15,6 +15,9 @@
       },
       "RocketJobs": {
         "SearchUrl": "https://rocketjobs.pl/oferty-pracy/wszystkie-lokalizacje/finanse/ksiegowosc?widelki=tak&keyword=ksi%C4%99gowy&orderBy=DESC&sortBy=published#wiecej-filtrow"
+      },
+      "Olx": {
+        "SearchUrl": "https://www.olx.pl/oferty/q-praca/"
       }
     },
     "PageSavingDirectory": "..\\Data\\jobs",

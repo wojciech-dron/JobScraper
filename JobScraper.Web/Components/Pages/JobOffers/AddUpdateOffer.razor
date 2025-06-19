@@ -119,8 +119,7 @@
 
     private bool isEdit => !string.IsNullOrEmpty(OfferUrl);
     private bool limitEdit => isEdit && jobOffer.Origin != DataOrigin.Manual; // limit scraped update
-    private JobsDbContext _context;
-    private FluentValidationValidator? validator;
+    private JobsDbContext _context = null!;
 
     private JobOffer jobOffer = new()
     {
