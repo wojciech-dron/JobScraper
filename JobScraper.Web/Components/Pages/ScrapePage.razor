@@ -1,55 +1,79 @@
 ﻿@page "/scrape"
+@using JobScraper.Models
 @rendermode InteractiveServer
-@using JobScraper.Logic
-@using MediatR
 @inject IServiceProvider ServiceProvider
 @inject ILogger<ScrapePage> Logger
 
+<h2>Scraping</h2>
 
-<h3>Job Scraper</h3>
+<div class="mt-5 d-flex flex-column">
 
-<span>
-    Scrape pipeline is designed to skip already scraped jobs.
-    You can retry with no worry :)
-</span>
-<br />
+    <button class="btn btn-primary mb-3" @onclick="StartScraping" disabled="@isScraping">
+        @(isScraping ? "Scraping..." : "Start Scraping")
+    </button>
 
-<button class="btn btn-primary" @onclick="StartScraping" disabled="@isScraping">
-    @(isScraping ? "Scraping..." : "Start Scraping")
-</button>
-<br />
-<p>@statusMessage</p>
+    <span>
+        Scrape pipeline is designed to skip already scraped jobs.
+        You can retry with no worry :)
+    </span>
 
-@code {
-    private bool isScraping = false;
-    private string statusMessage = "";
+    <br/>
+    <p>@statusMessage</p>
 
-    private async Task StartScraping()
+</div>
+
+
+<div class="d-flex flex-column mb-5">
+    <h4>Configure providers</h4>
+
+    @foreach (var provider in providers)
     {
-        if (isScraping)
-            return;
+        <div class="row mb-3">
+            <div class="form-group col-md-2">
+                <label for="DataOrigin">Origin:</label>
+                <InputSelect id="DataOrigin" @bind-Value="@provider.DataOrigin" class="form-control">
+                    @foreach (var value in DataOriginHelpers.Scrapable)
+                    {
+                        <option value="@value">@value</option>
+                    }
+                </InputSelect>
+                @if (provider.DataOrigin.HasDetailsScraping())
+                {
+                    <span class="text-info" title="@detailsInfo">
+                    Increases scraping time*
+                </span>
+                }
+            </div>
 
-        isScraping = true;
-        statusMessage = "Scraping in progress... You can observe progress in the console logs.";
+            <div class="form-group col-md-9">
+                <label for="SearchUrl">Search Url:</label>
+                <InputText
+                    id="SearchUrl"
+                    class="form-control"
+                    placeholder="Enter full search url"
+                    @bind-Value="@provider.SearchUrl"
+                    />
+            </div>
 
-        try
-        {
-            using var scope = ServiceProvider.CreateScope();
-            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            <div class="form-group col-md-1 d-flex flex-column">
+                <label>Actions:</label>
+                <button type="button" class="btn btn-secondary" @onclick="() => Remove(provider)">Remove</button>
+            </div>
 
-            var request = new ScrapePipeline.Request();
-            await mediator.Send(request, CancellationToken.None);
 
-            statusMessage = "Scrape finished succesfuly";
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "An error occurred during the scraping process");
-            statusMessage = $"Error: {ex.Message}";
-        }
-        finally
-        {
-            isScraping = false;
-        }
+        </div>
     }
+
+    <button type="button" class="btn btn-secondary mt-3" @onclick="AddProvider">Add provider</button>
+</div>
+
+<h4>Configure settings</h4>
+
+@code
+{
+    private const string detailsInfo = "This origin requires additional details scraping for each offer, " +
+        "that drastically increase scraping time.";
+
+    private void AddProvider() => providers.Add(new());
+    private void Remove(OriginConfigViewModel provider) => providers.Remove(provider);
 }

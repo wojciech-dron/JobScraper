@@ -43,18 +43,6 @@ public enum DetailsScrapeStatus
     Failed,
 }
 
-public enum DataOrigin
-{
-    Manual,
-    Indeed,
-    JustJoinIt,
-    NoFluffJobs,
-    LinkedIn,
-    PracujPl,
-    RocketJobs,
-    Olx,
-}
-
 public class JobOfferModelBuilder : IEntityTypeConfiguration<JobOffer>
 {
     public void Configure(EntityTypeBuilder<JobOffer> builder)
