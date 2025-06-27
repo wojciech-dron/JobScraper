@@ -32,6 +32,9 @@ public static class DataOriginHelpers
         DataOrigin.Indeed,
     ];
 
+    public static bool IsScrapable(this DataOrigin origin) =>
+        Scrapable.Contains(origin);
+
     public static bool HasDetailsScraping(this DataOrigin origin) =>
         WithDetailsScraping.Contains(origin);
 }

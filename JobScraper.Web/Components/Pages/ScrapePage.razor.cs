@@ -14,7 +14,7 @@ public partial class ScrapePage
 
     private bool isScraping = false;
     private string statusMessage = "";
-    private List<OriginConfigViewModel> providers { get; set; } = [];
+    private List<SourceConfig> sources { get; set; } = [];
     private ScraperConfig config = new();
 
     public ScrapePage(IDbContextFactory<JobsDbContext> dbFactory,
@@ -24,8 +24,10 @@ public partial class ScrapePage
         _dbFactory = dbFactory;
         _serviceProvider = serviceProvider;
         _logger = logger;
-
     }
+
+
+
 
     private async Task StartScraping()
     {
@@ -54,11 +56,6 @@ public partial class ScrapePage
         {
             isScraping = false;
         }
-    }
-
-    private class OriginConfigViewModel : OriginConfig
-    {
-        public DataOrigin DataOrigin { get; set; } = DataOrigin.PracujPl;
     }
 }
 

@@ -1,27 +1,51 @@
-﻿using PlaywrightExtraSharp.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using PlaywrightExtraSharp.Models;
 
 namespace JobScraper.Models;
 
 public class ScraperConfig
 {
-    public static string SectionName => "ScraperConfig";
+    public int Id { get; set; }
 
     public string PageSavingDirectory { get; set; } = @".\Data\jobs";
     public float WaitForListSeconds { get; set; } = 10;
     public float WaitForScrollSeconds { get; set; } = 4;
     public float WaitForDetailsSeconds { get; set; } = 5;
 
-    public bool ShowBrowserWhenScraping { get; set; }
+    public bool ShowBrowserWhenScraping { get; set; } = false;
     public BrowserTypeEnum BrowserType { get; set; } = BrowserTypeEnum.Chromium;
-    public string[] Keywords { get; set; } = [];
+    public List<string> Keywords { get; set; } = [];
 
-    public Dictionary<DataOrigin, OriginConfig> Providers { get; set; } = new();
+    public List<SourceConfig> Sources { get; set; } = [];
 
-    public DataOrigin[] GetEnabledOrigins() => Providers.Keys.ToArray();
-    public bool IsEnabled(DataOrigin origin) => Providers.ContainsKey(origin);
+    public DataOrigin[] GetEnabledOrigins() => Sources.Select(x => x.DataOrigin).ToArray();
+    public bool IsEnabled(DataOrigin origin) => Sources.Any(x => x.DataOrigin == origin);
 }
 
-public class OriginConfig
+public class SourceConfig
 {
+    // ReSharper disable once EntityFramework.ModelValidation.UnlimitedStringLength
     public string SearchUrl { get; set; } = "";
+    public DataOrigin DataOrigin { get; set; } = DataOrigin.PracujPl;
+}
+
+public class ScraperConfigModelBuilder : IEntityTypeConfiguration<ScraperConfig>
+{
+    public void Configure(EntityTypeBuilder<ScraperConfig> builder)
+    {
+        builder.ToTable("ScraperConfigs");
+
+        builder.HasKey(x => x.Id);
+
+        builder.Ignore(x => x.PageSavingDirectory);
+        builder.Property(x => x.WaitForListSeconds);
+        builder.Property(x => x.WaitForScrollSeconds);
+        builder.Property(x => x.WaitForDetailsSeconds);
+
+        builder.Property(x => x.BrowserType).HasConversion<string>();
+        builder.PrimitiveCollection(x => x.Keywords);
+
+        builder.OwnsMany(x => x.Sources, b => b.ToJson("SourcesJson"));
+    }
 }

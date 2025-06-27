@@ -1,47 +1,31 @@
 ﻿@page "/scrape"
 @using JobScraper.Models
+@using PlaywrightExtraSharp.Models
 @rendermode InteractiveServer
 @inject IServiceProvider ServiceProvider
 @inject ILogger<ScrapePage> Logger
 
 <h2>Scraping</h2>
 
-<div class="mt-5 d-flex flex-column">
-
-    <button class="btn btn-primary mb-3" @onclick="StartScraping" disabled="@isScraping">
-        @(isScraping ? "Scraping..." : "Start Scraping")
-    </button>
-
-    <span>
-        Scrape pipeline is designed to skip already scraped jobs.
-        You can retry with no worry :)
-    </span>
-
-    <br/>
-    <p>@statusMessage</p>
-
-</div>
-
-
 <div class="d-flex flex-column mb-5">
-    <h4>Configure providers</h4>
+    <h4>Configure sources</h4>
 
-    @foreach (var provider in providers)
+    @foreach (var source in sources)
     {
-        <div class="row mb-3">
+        <div class="row">
             <div class="form-group col-md-2">
                 <label for="DataOrigin">Origin:</label>
-                <InputSelect id="DataOrigin" @bind-Value="@provider.DataOrigin" class="form-control">
-                    @foreach (var value in DataOriginHelpers.Scrapable)
-                    {
+                <InputSelect id="DataOrigin" @bind-Value="@source.DataOrigin" class="form-control">
+                    @foreach (var value in DataOriginHelpers.Scrapable) {
                         <option value="@value">@value</option>
                     }
                 </InputSelect>
-                @if (provider.DataOrigin.HasDetailsScraping())
+                @if (source.DataOrigin.HasDetailsScraping())
                 {
-                    <span class="text-info" title="@detailsInfo">
-                    Increases scraping time*
-                </span>
+                    <span class="text-info small" title="@originInfo">
+                        Increases scraping time
+                        <i class="bi bi-question-circle"></i>
+                    </span>
                 }
             </div>
 
@@ -51,29 +35,90 @@
                     id="SearchUrl"
                     class="form-control"
                     placeholder="Enter full search url"
-                    @bind-Value="@provider.SearchUrl"
+                    @bind-Value="@source.SearchUrl"
                     />
             </div>
 
             <div class="form-group col-md-1 d-flex flex-column">
                 <label>Actions:</label>
-                <button type="button" class="btn btn-secondary" @onclick="() => Remove(provider)">Remove</button>
+                <button type="button" class="btn btn-danger" @onclick="() => sources.Remove(source)">Remove</button>
             </div>
-
-
         </div>
     }
+    <button type="button" class="btn btn-primary mt-3" @onclick="() => sources.Add(new())">Add source</button>
+</div>
+<div class="row">
 
-    <button type="button" class="btn btn-secondary mt-3" @onclick="AddProvider">Add provider</button>
+    <div class="col-md-6 d-flex flex-column mb-5">
+        <h4>Keywords</h4>
+        <label class="mb-1">Configured keywords will be highlighted in the Job offer list.</label>
+        @foreach (var index in Enumerable.Range(0, config.Keywords.Count))
+        {
+            <div class="row mb-1">
+                <div class="col-md-9">
+                    <InputText
+                        class="form-control col-md-1"
+                        placeholder="Eg. księgowość, programista, praca zdalna"
+                        ValueExpression="@(() => config.Keywords[index])"
+                        ValueChanged="(v) => UpdateKeyword(index, v)"
+                    />
+                    </div>
+                <div class="col-md-3 d-flex flex-column">
+                <button class="btn btn-danger"
+                        @onclick="() => config.Keywords.RemoveAt(index)">
+                    Remove
+                </button>
+                </div>
+            </div>
+        }
+        <button class="btn btn-primary"
+                @onclick="() => config.Keywords.Add(string.Empty)">
+            Add keyword
+        </button>
+    </div>
+
+    <div class="col-md-6 mb-5">
+        <h4>Scrape settings</h4>
+        <div class="mb-1">
+            <label for="BrowserType">Browser type:</label>
+            <InputSelect id="BrowserType" @bind-Value="@config.BrowserType" class="form-control">
+                @foreach (var type in Enum.GetValues<BrowserTypeEnum>()) {
+                    <option value="@type">@type</option>
+                }
+            </InputSelect>
+        </div>
+        <div class="mb-1">
+            <label for="ShowBrowserWhenScraping">Show browser when scraping:</label>
+            <InputSelect id="ShowBrowserWhenScraping" @bind-Value="@config.ShowBrowserWhenScraping" class="form-control">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </InputSelect>
+        </div>
+    </div>
 </div>
 
-<h4>Configure settings</h4>
+<div class="blockquote-footer">
+    <h4>Scraping</h4>
+    <button class="btn btn-success mb-3" @onclick="StartScraping" disabled="@isScraping">
+        @(isScraping ? "Scraping..." : "Start Scraping")
+    </button>
+    <span>
+        Scrape pipeline is designed to skip already scraped jobs.
+        You can retry with no worry :)
+    </span>
+
+    <p>@statusMessage</p>
+</div>
 
 @code
 {
-    private const string detailsInfo = "This origin requires additional details scraping for each offer, " +
+    private const string originInfo = "This origin requires additional details scraping for each offer, " +
         "that drastically increase scraping time.";
 
-    private void AddProvider() => providers.Add(new());
-    private void Remove(OriginConfigViewModel provider) => providers.Remove(provider);
+    private const string keywordsInfo = "Configured keywords will be highlighted in the Job offer list";
+
+    private void UpdateKeyword(int index, string? newValue)
+    {
+        config.Keywords[index] = newValue ?? "";
+    }
 }

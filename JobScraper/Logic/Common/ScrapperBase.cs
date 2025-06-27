@@ -16,7 +16,7 @@ namespace JobScraper.Logic.Common;
 public abstract class ScrapperBase : IDisposable
 {
     protected readonly ScraperConfig ScrapeConfig;
-    protected readonly OriginConfig OriginConfig;
+    protected readonly SourceConfig SourceConfig;
     protected readonly ILogger<ScrapperBase> Logger;
     private PlaywrightExtra? _playwright;
 
@@ -25,7 +25,7 @@ public abstract class ScrapperBase : IDisposable
     public bool IsEnabled { get; }
     public string BaseUrl { get; }
 
-    public string SearchUrl => OriginConfig.SearchUrl;
+    public string SearchUrl => SourceConfig.SearchUrl;
     private static readonly string[] UserAgentStrings =
     [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.2227.0 Safari/537.36",
@@ -45,10 +45,10 @@ public abstract class ScrapperBase : IDisposable
     {
         Logger = logger;
         ScrapeConfig = config.Value;
-        OriginConfig = ScrapeConfig.Providers.GetValueOrDefault(DataOrigin, new OriginConfig());
+        SourceConfig = ScrapeConfig.Sources.FirstOrDefault(x => x.DataOrigin == DataOrigin) ?? new();
         IsEnabled = ScrapeConfig.IsEnabled(DataOrigin);
 
-        var uri = new Uri(OriginConfig.SearchUrl);
+        var uri = new Uri(SourceConfig.SearchUrl);
         BaseUrl = $"{uri.Scheme}://{uri.Host}";
     }
 

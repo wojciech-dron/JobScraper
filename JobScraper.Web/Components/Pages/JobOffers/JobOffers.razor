@@ -199,7 +199,7 @@
     JobsDbContext context = null!;
     PaginationState pagination = new() { ItemsPerPage = 20 };
     ApplicationOfferModal _applicationOfferModal = null!;
-    string[] myKeywordsOptions = [];
+    List<string> myKeywordsOptions = [];
     string[] currencyOptions = [];
     string[] originOptions = Enum.GetValues<DataOrigin>().Select(x => x.ToString()).ToArray();
 
@@ -262,7 +262,7 @@
             query.Add("CurrencyFilter", CurrencyFilter![i]);
 
         for (var i = 0; i < OriginFilter?.Length; i++)
-            query.Add("OriginFilter", OriginFilter![i].ToString());
+            query.Add("OriginFilter", OriginFilter![i]);
 
         for (var i = 0; i < MyKeywordsFilter?.Length; i++)
             query.Add("MyKeywordsFilter", MyKeywordsFilter![i]);
