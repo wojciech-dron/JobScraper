@@ -32,7 +32,14 @@
             />
         </HeaderTemplate>
         <ChildContent>
-            <button class="btn btn-secondary" @onclick="async _ => await RejectApply(context)">Reject</button>
+            @if (context.Status == ApplyStatus.Rejected)
+            {
+                <button class="btn btn-secondary" @onclick="async _ => await ShowApply(context)">Show</button>
+            }
+            else
+            {
+                <button class="btn btn-secondary" @onclick="async _ => await RejectApply(context)">Reject</button>
+            }
         </ChildContent>
     </TemplateColumn>
     <PropertyColumn Property="@(p => p.JobOffer.CompanyName)" Title="Company" Sortable="true">
@@ -148,6 +155,13 @@
     private async Task RejectApply(Application application)
     {
         application.Status = ApplyStatus.Rejected;
+        await context.SaveChangesAsync();
+        await grid.RefreshDataAsync();
+    }
+
+    private async Task ShowApply(Application application)
+    {
+        application.Status = ApplyStatus.Applied;
         await context.SaveChangesAsync();
         await grid.RefreshDataAsync();
     }

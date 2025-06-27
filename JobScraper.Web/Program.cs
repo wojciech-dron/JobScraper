@@ -1,3 +1,4 @@
+using System.Globalization;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using JobScraper;
@@ -38,8 +39,15 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// pl
+var supportedCultures = new []{ new CultureInfo("pl-PL") };
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures
+});
 
+app.UseHttpsRedirection();
 
 app.UseAntiforgery();
 

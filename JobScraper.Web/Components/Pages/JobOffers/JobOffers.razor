@@ -30,12 +30,10 @@
             />
         </HeaderTemplate>
         <ChildContent>
-            @if (context.Application is null)
-            {
+            @if (context.Application is null) {
                 <button class="btn btn-primary" @onclick="_ => _applicationOfferModal.ShowAsync(context)">Apply</button>
             }
-            else
-            {
+            else {
                 <button class="btn btn-secondary" @onclick="_ => _applicationOfferModal.ShowAsync(context)">Modify</button>
             }
         </ChildContent>
