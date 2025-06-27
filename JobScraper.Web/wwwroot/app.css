@@ -94,3 +94,18 @@ th {
     text-overflow: ellipsis;
     max-width: 250px;
 }
+
+.footer {
+    position: fixed;
+    left: 250px;
+    bottom: 0;
+    width: calc(100% - 250px - 1.5rem);
+    background-color: var(--bs-body-bg);
+    padding-left: 2rem !important;
+    height: 50px;
+}
+
+article {
+    height: calc(100% - 103px);
+
+}

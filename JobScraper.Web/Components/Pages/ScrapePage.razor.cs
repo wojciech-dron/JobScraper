@@ -11,6 +11,7 @@ public partial class ScrapePage
     private readonly IDbContextFactory<JobsDbContext> _dbFactory;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<ScrapePage> _logger;
+    private JobsDbContext _dbContext = null!;
 
     private bool isScraping = false;
     private string statusMessage = "";
@@ -26,8 +27,24 @@ public partial class ScrapePage
         _logger = logger;
     }
 
+    protected override async Task OnInitializedAsync()
+    {
+        _dbContext = await _dbFactory.CreateDbContextAsync();
 
+        var dbConfig = await _dbContext.ScraperConfigs.FirstOrDefaultAsync();
+        if (dbConfig is null)
+        {
+            dbConfig = new ScraperConfig();
+            await _dbContext.ScraperConfigs.AddAsync(config);
+        }
 
+        config = dbConfig;
+    }
+
+    private async Task SaveConfig()
+    {
+        await _dbContext.SaveChangesAsync();
+    }
 
     private async Task StartScraping()
     {

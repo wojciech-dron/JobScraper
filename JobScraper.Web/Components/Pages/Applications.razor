@@ -14,7 +14,7 @@
 
 <h1>Applications</h1>
 
-<div id="table-container" class="overflow-auto">
+<div id="table-container" class="overflow-auto h-100">
 <QuickGrid @ref="@grid" Items="applications" Pagination="@pagination" class="table">
     <TemplateColumn Title="Details">
         <button class="btn btn-primary" @onclick="_ => _applicationOfferModal.ShowAsync(context.JobOffer)">Modify</button>
@@ -96,19 +96,21 @@
 </QuickGrid>
 </div>
 
-<Paginator State="@pagination">
-    <SummaryTemplate>
-        <div class="d-flex justify-content-between align-items-center w-auto">
-            <span class="pe-1">Page size:</span>
-            <select @bind="pagination.ItemsPerPage">
-                <option value="20">20</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-            </select>
-            <span class="ps-5">Total: <strong>@pagination.TotalItemCount</strong></span>
-        </div>
-    </SummaryTemplate>
-</Paginator>
+<div class="footer">
+    <Paginator  State="@pagination">
+        <SummaryTemplate>
+            <div class="d-flex justify-content-between align-items-center w-auto">
+                <span class="pe-1">Page size:</span>
+                <select @bind="pagination.ItemsPerPage">
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                <span class="ps-5">Total: <strong>@pagination.TotalItemCount</strong></span>
+            </div>
+        </SummaryTemplate>
+    </Paginator>
+</div>
 
 <ApplicationOfferModal @ref="_applicationOfferModal" OnUpdate="@(() => grid.RefreshDataAsync())"/>
 

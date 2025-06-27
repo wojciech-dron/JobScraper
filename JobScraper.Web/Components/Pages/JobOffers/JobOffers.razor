@@ -15,7 +15,7 @@
 
 <h1>Job offers</h1>
 
-<div id="table-container" class="overflow-auto" >
+<div id="table-container" class="overflow-auto h-100">
 <QuickGrid @ref="@grid" Items="jobOffers" Pagination="@pagination" class="table small-padding-table">
     <TemplateColumn SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Application == null))" Title="Apply">
         <HeaderTemplate>
@@ -174,19 +174,22 @@
         <p>No visible offers found. Let's scrape some new :)</p>
     </div>
 }
-<Paginator State="@pagination">
-    <SummaryTemplate>
-        <div class="d-flex justify-content-between align-items-center w-auto">
-            <span class="pe-1">Page size:</span>
-            <select @bind="pagination.ItemsPerPage">
-                <option value="20">20</option>
-                <option value="50">50</option>
-                <option value="100">100</option>
-            </select>
-            <span class="ps-5">Total: <strong>@pagination.TotalItemCount</strong></span>
-        </div>
-    </SummaryTemplate>
-</Paginator>
+
+<div class="footer">
+    <Paginator State="@pagination">
+        <SummaryTemplate>
+            <div class="d-flex justify-content-between align-items-center w-auto">
+                <span class="pe-1">Page size:</span>
+                <select @bind="pagination.ItemsPerPage">
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                <span class="ps-5">Total: <strong>@pagination.TotalItemCount</strong></span>
+            </div>
+        </SummaryTemplate>
+    </Paginator>
+</div>
 
 <ApplicationOfferModal @ref="_applicationOfferModal" ShowHideButton OnUpdate="@(() => grid.RefreshDataAsync())"/>
 
