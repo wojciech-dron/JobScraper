@@ -1,4 +1,5 @@
 ﻿using JobScraper.Models;
+using JobScraper.Persistence;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 using PlaywrightExtraSharp;
@@ -15,8 +16,9 @@ namespace JobScraper.Logic.Common;
 
 public abstract class ScrapperBase : IDisposable
 {
+    protected readonly JobsDbContext DbContext;
     protected readonly ScraperConfig ScrapeConfig;
-    protected readonly SourceConfig SourceConfig;
+    protected readonly SourceConfig Source;
     protected readonly ILogger<ScrapperBase> Logger;
     private PlaywrightExtra? _playwright;
 
@@ -25,7 +27,6 @@ public abstract class ScrapperBase : IDisposable
     public bool IsEnabled { get; }
     public string BaseUrl { get; }
 
-    public string SearchUrl => SourceConfig.SearchUrl;
     private static readonly string[] UserAgentStrings =
     [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.2227.0 Safari/537.36",
@@ -41,14 +42,15 @@ public abstract class ScrapperBase : IDisposable
             .WaitAndRetryAsync(1, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
     public ScrapperBase(IOptions<ScraperConfig> config,
-        ILogger<ScrapperBase> logger)
+        ILogger<ScrapperBase> logger, JobsDbContext dbContext)
     {
+        DbContext = dbContext;
         Logger = logger;
-        ScrapeConfig = config.Value;
-        SourceConfig = ScrapeConfig.Sources.FirstOrDefault(x => x.DataOrigin == DataOrigin) ?? new();
+        ScrapeConfig = DbContext.ScraperConfigs.First();
+        Source = ScrapeConfig.Sources.FirstOrDefault(x => x.DataOrigin == DataOrigin) ?? new();
         IsEnabled = ScrapeConfig.IsEnabled(DataOrigin);
 
-        var uri = new Uri(SourceConfig.SearchUrl);
+        var uri = new Uri(Source.SearchUrl);
         BaseUrl = $"{uri.Scheme}://{uri.Host}";
     }
 

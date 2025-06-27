@@ -21,14 +21,12 @@ public partial class RocketJobsListScraper
 
         protected override DataOrigin DataOrigin => DataOrigin.RocketJobs;
 
-        public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs()
+        public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs(SourceConfig sourceConfig)
         {
-            if (string.IsNullOrEmpty(SearchUrl))
-                throw new ArgumentException("Search URL is not set", nameof(SearchUrl));
+            var searchUrl = sourceConfig.SearchUrl;
+            Logger.LogInformation("{DataOrigin} scraping for url {SearchUrl}", DataOrigin, searchUrl);
 
-            Logger.LogInformation("{DataOrigin} scraping for url {SearchUrl}", DataOrigin, SearchUrl);
-
-            var page = await LoadUntilAsync(SearchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds,
+            var page = await LoadUntilAsync(searchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds,
                 successCondition: async p => (await p.QuerySelectorAllAsync(".offer-card")).Count > 4);
 
             await AcceptCookies(page);

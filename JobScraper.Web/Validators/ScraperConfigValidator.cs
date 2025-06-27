@@ -15,6 +15,7 @@ public class ScraperConfigValidator : AbstractValidator<ScraperConfig>
                     .WithMessage("Data origin must be scrapable.");
 
                 builder.RuleFor(x => x.SearchUrl)
+                    .Cascade(CascadeMode.Stop)
                     .NotEmpty()
                     .WithMessage("URL is required.")
                     .Matches(@"https?://[^\s]+")

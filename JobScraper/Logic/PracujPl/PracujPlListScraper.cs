@@ -24,14 +24,12 @@ public class PracujPlListScraper
 
         protected override DataOrigin DataOrigin => DataOrigin.PracujPl;
 
-        public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs()
+        public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs(SourceConfig sourceConfig)
         {
-            if (string.IsNullOrEmpty(SearchUrl))
-                throw new ArgumentException("SearchUrl is null or empty", nameof(SearchUrl));
+            var searchUrl = sourceConfig.SearchUrl;
+            Logger.LogInformation("{DataOrigin} scraping for url {SearchUrl}", DataOrigin, searchUrl);
 
-            Logger.LogInformation("{DataOrigin} scraping for url {SearchUrl}", DataOrigin, SearchUrl);
-
-            var page = await LoadUntilAsync(SearchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds);
+            var page = await LoadUntilAsync(searchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds);
 
             var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
             var pageNumber = 0;

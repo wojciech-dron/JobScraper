@@ -9,16 +9,12 @@ namespace JobScraper.Logic.Common;
 public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHandler<TScrapeCommand>
     where TScrapeCommand : ScrapeCommand
 {
-    protected readonly JobsDbContext DbContext;
-
     public ListScraperBase(IOptions<ScraperConfig> config,
         ILogger<ListScraperBase<TScrapeCommand>> logger,
-        JobsDbContext dbContext) : base(config, logger)
-    {
-        DbContext = dbContext;
-    }
+        JobsDbContext dbContext) : base(config, logger, dbContext)
+    { }
 
-    public abstract IAsyncEnumerable<List<JobOffer>> ScrapeJobs();
+    public abstract IAsyncEnumerable<List<JobOffer>> ScrapeJobs(SourceConfig sourceConfig);
 
     public async Task Handle(TScrapeCommand scrape, CancellationToken cancellationToken = default)
     {
@@ -29,9 +25,15 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
             return;
         }
 
+        if (scrape.Source.DataOrigin != DataOrigin)
+            throw new InvalidOperationException("Source data origin does not match scraper type.");
+
+        if (string.IsNullOrEmpty(scrape.Source.SearchUrl))
+            throw new InvalidOperationException($"Search url is empty. Please provide a valid search url for {DataOrigin} origin");
+
         Logger.LogInformation("Scraping {DataOrigin} jobs list...", DataOrigin);
 
-        await foreach (var jobs in ScrapeJobs().WithCancellation(cancellationToken))
+        await foreach (var jobs in ScrapeJobs(scrape.Source).WithCancellation(cancellationToken))
         {
             Logger.LogInformation("Syncing {DataOrigin} jobs...", DataOrigin);
             await SyncJobsFromList(jobs, cancellationToken);

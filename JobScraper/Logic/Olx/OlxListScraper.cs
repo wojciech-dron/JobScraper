@@ -23,14 +23,15 @@ public class OlxListScraper
 
         protected override DataOrigin DataOrigin => DataOrigin.Olx;
 
-        public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs()
+        public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs(SourceConfig sourceConfig)
         {
-            if (string.IsNullOrEmpty(SearchUrl))
-                throw new ArgumentException("SearchUrl is null or empty", nameof(SearchUrl));
+            var searchUrl = sourceConfig.SearchUrl;
+            if (string.IsNullOrEmpty(searchUrl))
+                throw new ArgumentException("SearchUrl is null or empty", nameof(searchUrl));
 
-            Logger.LogInformation("{DataOrigin} scraping for url {SearchUrl}", DataOrigin, SearchUrl);
+            Logger.LogInformation("{DataOrigin} scraping for url {SearchUrl}", DataOrigin, searchUrl);
 
-            var page = await LoadUntilAsync(SearchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds);
+            var page = await LoadUntilAsync(searchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds);
 
             var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
             var pageNumber = 0;

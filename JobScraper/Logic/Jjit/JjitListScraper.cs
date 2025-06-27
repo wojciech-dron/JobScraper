@@ -21,14 +21,12 @@ public class JjitListScraper
 
         protected override DataOrigin DataOrigin => DataOrigin.JustJoinIt;
 
-        public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs()
+        public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs(SourceConfig sourceConfig)
         {
-            if (string.IsNullOrEmpty(SearchUrl))
-                throw new ArgumentException("Search URL is not set", nameof(SearchUrl));
+            var searchUrl = sourceConfig.SearchUrl;
+            Logger.LogInformation("Justjoin.it scraping for url {SearchUrl}", searchUrl);
 
-            Logger.LogInformation("Justjoin.it scraping for url {SearchUrl}", SearchUrl);
-
-            var page = await LoadUntilAsync(SearchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds,
+            var page = await LoadUntilAsync(searchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds,
                 successCondition: async p => (await p.QuerySelectorAllAsync("li")).Count > 6);
 
             await AcceptCookies(page);

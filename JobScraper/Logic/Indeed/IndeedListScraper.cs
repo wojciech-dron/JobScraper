@@ -20,11 +20,12 @@ public class IndeedListScraper
 
         protected override DataOrigin DataOrigin => DataOrigin.Indeed;
 
-        public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs()
+        public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs(SourceConfig sourceConfig)
         {
-            Logger.LogInformation("Indeed scraping for url {SearchUrl}", SearchUrl);
+            var searchUrl = sourceConfig.SearchUrl;
+            Logger.LogInformation("Indeed scraping for url {SearchUrl}", searchUrl);
 
-            var page = await LoadUntilAsync(SearchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds);
+            var page = await LoadUntilAsync(searchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds);
 
             var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
             var pageNumber = 0;
