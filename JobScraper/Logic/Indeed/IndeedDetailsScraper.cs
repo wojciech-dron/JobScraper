@@ -85,7 +85,6 @@ public class IndeedDetailsScraper
                 return;
 
             jobOffer.Description = jobDescription;
-            jobOffer.MyKeywords = FindMyKeywords(jobOffer);
         }
 
 

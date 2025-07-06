@@ -130,7 +130,6 @@ public class PracujPlListScraper
                     continue;
 
                 var description = ParseDescription(data);
-                var myKeywords = FindMyKeywords(description);
                 var dataLocation = data.Location.Replace("Miejsce pracy:", "").Replace("Siedziba firmy:", "");
 
                 var jobOffer = new JobOffer
@@ -142,7 +141,6 @@ public class PracujPlListScraper
                     Location = dataLocation,
                     Origin = DataOrigin,
                     Description = description,
-                    MyKeywords = myKeywords,
                     PublishedAt = ParseDate(data.PublishDate),
                     DetailsScrapeStatus = DetailsScrapeStatus.Scraped, // skip details scraping
                 };

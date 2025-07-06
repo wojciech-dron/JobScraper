@@ -1,4 +1,5 @@
-﻿using JobScraper.Models;
+﻿using JobScraper.Extensions;
+using JobScraper.Models;
 using JobScraper.Persistence;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -41,6 +42,7 @@ public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IReque
                     await ScrapeJobDetails(job));
 
                 job.DetailsScrapeStatus = DetailsScrapeStatus.Scraped;
+                job.ProcessKeywords(ScrapeConfig);
 
                 await DbContext.SaveChangesAsync(cancellationToken);
             }

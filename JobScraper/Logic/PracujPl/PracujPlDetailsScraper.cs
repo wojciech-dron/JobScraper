@@ -56,7 +56,6 @@ public class PracujPlDetailsScraper
                 return;
 
             jobOffer.Description += data.Description;
-            jobOffer.MyKeywords = FindMyKeywords(jobOffer);
         }
     }
 }

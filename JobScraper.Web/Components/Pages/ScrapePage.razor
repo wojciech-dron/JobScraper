@@ -6,7 +6,7 @@
 
 <h2>Scraping</h2>
 
-<EditForm Model="config">
+<EditForm Model="config" disabled="@isWorking">
     <FluentValidationValidator @ref="validator" />
 
     <div class="row mb-5">
@@ -60,26 +60,52 @@
             <h4>Keywords</h4>
             <label class="mb-1">Configured keywords will be highlighted in the Job offer list.
                 (Keywords will be applied only for new offers)</label>
-            @foreach (var index in Enumerable.Range(0, config.Keywords.Count))
+            @foreach (var index in Enumerable.Range(0, config.MyKeywords.Count))
             {
                 <div class="row mb-1">
                     <div class="col-md-9">
                         <InputText
                             class="form-control col-md-1"
                             placeholder="Eg. księgowość, programista, praca zdalna"
-                            @bind-Value="config.Keywords[index]" />
+                            @bind-Value="config.MyKeywords[index]" />
                     </div>
                     <div class="col-md-3 d-flex flex-column">
                         <button class="btn btn-danger"
-                                @onclick="() => config.Keywords.RemoveAt(index)">
+                                @onclick="() => config.MyKeywords.RemoveAt(index)">
                             Remove
                         </button>
                     </div>
                 </div>
             }
             <button class="btn btn-secondary"
-                    @onclick="() => config.Keywords.Add(string.Empty)">
+                    @onclick="() => config.MyKeywords.Add(string.Empty)">
                 Add keyword
+            </button>
+        </div>
+
+        <div class="col-md-6 d-flex flex-column mb-5">
+            <h4>Avoid keywords</h4>
+            <label class="mb-1">Discovered jobs will be hidden if they contain any of these keywords.</label>
+            @foreach (var index in Enumerable.Range(0, config.AvoidKeywords.Count))
+            {
+                <div class="row mb-1">
+                    <div class="col-md-9">
+                        <InputText
+                            class="form-control col-md-1"
+                            placeholder="Eg. księgowość, programista, praca zdalna"
+                            @bind-Value="config.AvoidKeywords[index]" />
+                    </div>
+                    <div class="col-md-3 d-flex flex-column">
+                        <button class="btn btn-danger"
+                                @onclick="() => config.AvoidKeywords.RemoveAt(index)">
+                            Remove
+                        </button>
+                    </div>
+                </div>
+            }
+            <button class="btn btn-secondary"
+                    @onclick="() => config.AvoidKeywords.Add(string.Empty)">
+                Add avoid keyword
             </button>
         </div>
 
@@ -129,6 +155,7 @@
         <div class="spinner-border" role="status">
             <span class="sr-only"></span>
         </div>
+        <p>Do not leave this page.</p>
     }
     <p>@statusMessage</p>
 </div>

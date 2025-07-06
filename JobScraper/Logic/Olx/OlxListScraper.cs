@@ -55,7 +55,7 @@ public class OlxListScraper
 
                 Logger.LogInformation("{DataOrigin} - scraping page {PageNumber}", DataOrigin, pageNumber);
 
-                var nextButton = await page.QuerySelectorAsync("button[data-cy='bottom-pagination-button-next']");
+                var nextButton = await page.QuerySelectorAsync("a[data-testid='pagination-forward']");
                 if (nextButton is null)
                     break;
 
@@ -139,11 +139,24 @@ public class OlxListScraper
 
                 jobOffer.Location = data.FirstRowData.Pop();
                 jobOffer.OfferKeywords.AddRange(data.FirstRowData);
+                jobOffer.Description = GetDescription(jobOffer);
 
                 jobs.Add(jobOffer);
             }
 
             return jobs;
+        }
+
+        private string GetDescription(JobOffer jobOffer)
+        {
+            var stringBuilder = new StringBuilder();
+
+            foreach (var keyword in jobOffer.OfferKeywords)
+            {
+                stringBuilder.AppendLine(keyword);
+            }
+
+            return stringBuilder.ToString();
         }
     }
 }

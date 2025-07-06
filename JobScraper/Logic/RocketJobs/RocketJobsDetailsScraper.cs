@@ -54,7 +54,7 @@ public class RocketJobsDetailsScraper
             if (description is null)
                 return;
 
-            jobOffer.MyKeywords = ScrapeConfig.Keywords
+            jobOffer.MyKeywords = ScrapeConfig.MyKeywords
                 .Where(keyword => jobOffer.Description!.Contains(keyword, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }

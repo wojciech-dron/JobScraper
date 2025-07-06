@@ -15,7 +15,10 @@ public class ScraperConfig
 
     public bool ShowBrowserWhenScraping { get; set; } = false;
     public BrowserTypeEnum BrowserType { get; set; } = BrowserTypeEnum.Chromium;
-    public List<string> Keywords { get; set; } = [];
+    public List<string> MyKeywords { get; set; } = [];
+    public List<string> AvoidKeywords { get; set; } = [];
+
+
 
     public List<SourceConfig> Sources { get; set; } = [];
 
@@ -44,7 +47,8 @@ public class ScraperConfigModelBuilder : IEntityTypeConfiguration<ScraperConfig>
         builder.Property(x => x.WaitForDetailsSeconds);
 
         builder.Property(x => x.BrowserType).HasConversion<string>();
-        builder.PrimitiveCollection(x => x.Keywords);
+        builder.PrimitiveCollection(x => x.MyKeywords);
+        builder.PrimitiveCollection(x => x.AvoidKeywords);
 
         builder.OwnsMany(x => x.Sources, b => b.ToJson("SourcesJson"));
     }

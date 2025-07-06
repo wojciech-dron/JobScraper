@@ -22,8 +22,12 @@ public class ScraperConfigValidator : AbstractValidator<ScraperConfig>
                     .WithMessage("Invalid URL format.");
             });
 
-        RuleForEach(x => x.Keywords)
+        RuleForEach(x => x.MyKeywords)
             .NotEmpty()
             .WithMessage("Keyword must not be empty.");
+
+        RuleForEach(x => x.AvoidKeywords)
+            .NotEmpty()
+            .WithMessage("Avoid keyword must not be empty.");
     }
 }

@@ -1,0 +1,36 @@
+﻿using JobScraper.Models;
+
+namespace JobScraper.Extensions;
+
+public static class JobOfferKeywordExtensions
+{
+    public static void ProcessKeywords(this JobOffer jobOffer, ScraperConfig config)
+    {
+        jobOffer.MyKeywords = config.MyKeywords
+            .Where(keyword => ContainKeyword(jobOffer, keyword))
+            .ToList();
+
+        var avoidKeywords = config.AvoidKeywords
+            .Where(keyword => ContainKeyword(jobOffer, keyword))
+            .ToList();
+
+        jobOffer.OfferKeywords.AddRange(avoidKeywords);
+
+        if (avoidKeywords.Count > 0)
+            jobOffer.HideStatus = HideStatus.Hidden;
+    }
+
+    private static bool ContainKeyword(JobOffer jobOffer, string keyword)
+    {
+        if (jobOffer.Title!.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (jobOffer.OfferKeywords.Any(k => k.ToLower() == keyword.ToLower()))
+            return true;
+
+        if (jobOffer.Description!.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return jobOffer.Location?.Contains(keyword, StringComparison.OrdinalIgnoreCase) == true;
+    }
+}

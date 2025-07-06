@@ -1,4 +1,5 @@
-﻿using JobScraper.Models;
+﻿using JobScraper.Extensions;
+using JobScraper.Models;
 using JobScraper.Persistence;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +38,8 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
 
         await foreach (var jobs in ScrapeJobs(scrape.Source).WithCancellation(cancellationToken))
         {
+            jobs.ForEach(j => j.ProcessKeywords(ScrapeConfig));
+
             Logger.LogInformation("Syncing {DataOrigin} jobs...", DataOrigin);
             newJobsCount += await SyncJobsFromList(jobs, cancellationToken);
         }

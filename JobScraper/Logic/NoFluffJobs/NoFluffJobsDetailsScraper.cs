@@ -50,7 +50,6 @@ public class NoFluffJobsDetailsScraper
                 return;
 
             jobOffer.Description = description;
-            jobOffer.MyKeywords = FindMyKeywords(jobOffer);
         }
 
         private async Task ScrapCompany(Company company, IPage page)

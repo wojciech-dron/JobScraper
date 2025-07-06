@@ -56,7 +56,6 @@ public class OlxDetailsScraper
                 return;
 
             jobOffer.Description += data.Description;
-            jobOffer.MyKeywords = FindMyKeywords(jobOffer);
         }
     }
 }

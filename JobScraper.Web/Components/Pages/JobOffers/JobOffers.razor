@@ -252,7 +252,7 @@
     protected override async Task OnInitializedAsync()
     {
         dbContext = await DbFactory.CreateDbContextAsync();
-        myKeywordsOptions = ScraperConfig.Value.Keywords;
+        myKeywordsOptions = ScraperConfig.Value.MyKeywords;
         currencyOptions = await dbContext.JobOffers
             .Select(jo => jo.SalaryCurrency!)
             .Where(c => !string.IsNullOrEmpty(c))

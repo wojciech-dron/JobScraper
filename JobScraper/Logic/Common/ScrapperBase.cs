@@ -144,19 +144,6 @@ public abstract class ScrapperBase : IDisposable
         return page;
     }
 
-    protected List<string> FindMyKeywords(JobOffer jobOffer)
-    {
-        return ScrapeConfig.Keywords
-            .Where(keyword => jobOffer.Description!.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-    }
-
-    protected List<string> FindMyKeywords(string description)
-    {
-        return ScrapeConfig.Keywords
-            .Where(keyword => description!.Contains(keyword, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-    }
 
     public void Dispose()
     {
