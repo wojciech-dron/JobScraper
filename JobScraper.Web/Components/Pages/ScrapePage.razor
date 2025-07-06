@@ -57,7 +57,7 @@
 
     <div class="row">
         <div class="col-md-6 d-flex flex-column mb-5">
-            <h4>Keywords</h4>
+            <h4>My Keywords</h4>
             <label class="mb-1">Configured keywords will be highlighted in the Job offer list.
                 (Keywords will be applied only for new offers)</label>
             @foreach (var index in Enumerable.Range(0, config.MyKeywords.Count))
@@ -81,6 +81,13 @@
                     @onclick="() => config.MyKeywords.Add(string.Empty)">
                 Add keyword
             </button>
+
+            <label class="mt-2" for="ShowBrowserWhenScraping">Star offers with my keywords:</label>
+            <InputSelect id="StarMyKeywords" @bind-Value="@config.StarMyKeywords"
+                         class="form-control">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+            </InputSelect>
         </div>
 
         <div class="col-md-6 d-flex flex-column mb-5">
@@ -111,6 +118,7 @@
 
         <div class="col-md-6 mb-5">
             <h4>Scrape settings</h4>
+
             <div class="mb-1">
                 <label for="BrowserType">Browser type:</label>
                 <InputSelect id="BrowserType" @bind-Value="@config.BrowserType" class="form-control">

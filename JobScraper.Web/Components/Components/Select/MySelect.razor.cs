@@ -38,7 +38,7 @@ public partial class MySelect<TItem> : ComponentBase
     /// Function to convert an item to a string for display in the dropdown.
     /// </summary>
     [Parameter]
-    public Func<TItem, string> StringSelector { get; set; } = item => item?.ToString() ?? string.Empty;
+    public Func<TItem?, string?> StringSelector { get; set; } = item => item?.ToString() ?? string.Empty;
 
     /// <summary>
     /// The default text to display when no options are selected.
@@ -51,7 +51,7 @@ public partial class MySelect<TItem> : ComponentBase
     /// If not set, items will be rendered using <see cref="StringSelector"/> and concatenated with a comma.
     /// </summary>
     [Parameter]
-    public RenderFragment<ICollection<TItem>>? SelectedOptionsRenderer { get; set; }
+    public RenderFragment<ICollection<TItem?>>? SelectedOptionsRenderer { get; set; }
 
     /// <summary>
     /// Whether the dropdown should be filterable.
@@ -113,7 +113,7 @@ public partial class MySelect<TItem> : ComponentBase
     /// </summary>
     [CascadingParameter(Name = "Standalone")]
     public bool Standalone { get; set; }
-    
+
     private async Task ToggleOption(TItem option)
     {
         var newSelectedOptions = new List<TItem>(SelectedOptions);
@@ -143,6 +143,9 @@ public partial class MySelect<TItem> : ComponentBase
 
     private bool IsOptionSelected(TItem option)
     {
+        if (SelectedOption?.Equals(option) == true)
+            return true;
+
         return SelectedOptions.Contains(option);
     }
 

@@ -10,11 +10,14 @@ public static class JobOfferKeywordExtensions
             .Where(keyword => ContainKeyword(jobOffer, keyword))
             .ToList();
 
+        if (config.StarMyKeywords && jobOffer.MyKeywords.Count > 0)
+            jobOffer.HideStatus = HideStatus.Starred;
+
         var avoidKeywords = config.AvoidKeywords
             .Where(keyword => ContainKeyword(jobOffer, keyword))
             .ToList();
 
-        jobOffer.OfferKeywords.AddRange(avoidKeywords);
+        jobOffer.MyKeywords.AddRange(avoidKeywords);
 
         if (avoidKeywords.Count > 0)
             jobOffer.HideStatus = HideStatus.Hidden;

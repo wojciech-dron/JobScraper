@@ -5,8 +5,8 @@ namespace JobScraper.Web.Components.Pages.JobOffers.Models;
 public enum HideStatusFilter
 {
     All,
-    Hidden,
     Visible,
+    Hidden,
     Starred,
     Regular
 }

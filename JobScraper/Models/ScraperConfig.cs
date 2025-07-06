@@ -15,11 +15,10 @@ public class ScraperConfig
 
     public bool ShowBrowserWhenScraping { get; set; } = false;
     public BrowserTypeEnum BrowserType { get; set; } = BrowserTypeEnum.Chromium;
+
+    public bool StarMyKeywords { get; set; }
     public List<string> MyKeywords { get; set; } = [];
     public List<string> AvoidKeywords { get; set; } = [];
-
-
-
     public List<SourceConfig> Sources { get; set; } = [];
 
     public DataOrigin[] GetEnabledOrigins() => Sources.Select(x => x.DataOrigin).ToArray();

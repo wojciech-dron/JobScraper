@@ -92,6 +92,20 @@
             </div>
 
             <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="mt-2" for="HideStatus">Visibility:</label>
+                    <InputSelect id="HideStatus"
+                              @bind-Value="jobOffer.HideStatus"
+                              class="form-control" >
+                        @foreach (var option in Enum.GetValues<HideStatus>())
+                        {
+                            <option value="@option">@option</option>
+                        }
+                    </InputSelect>
+                </div>
+            </div>
+
+            <div class="row mb-3">
                 <div class="col-md-12">
                     <label for="description" class="form-label">Description</label>
                     <InputTextArea id="description" @bind-Value="jobOffer.Description" class="form-control" rows="5" />

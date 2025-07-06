@@ -161,14 +161,13 @@
                 <div class="sort-indicator" aria-hidden="true"></div>
             </button>
             <MySelect
+                MultiSelect
                 @bind-SelectedOptions="@OriginFilter"
                 Options="@originOptions"
             />
         </HeaderTemplate>
     </PropertyColumn>
-    <PropertyColumn class="col" Property="@(p => p.ScrapedAt)" Format="yyyy-MM-dd" Sortable="true"/>
-    <PropertyColumn class="col text-nowrap" Property="@(p => p.UpdatedAt)" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
-    <PropertyColumn class="col-1 text-nowrap" Property="@(p => string.Join(", ", p.MyKeywords))" Title="My keywords">
+    <TemplateColumn class="col-1 text-nowrap" Title="My keywords">
         <HeaderTemplate>
             <button class="col-title mb-1" type="button">
                 <div class="col-title-text">@context.Title</div>
@@ -180,7 +179,12 @@
                 Options="@myKeywordsOptions"
             />
         </HeaderTemplate>
-    </PropertyColumn>
+        <ChildContent>
+            <span>@string.Join(", ", context.MyKeywords)</span>
+        </ChildContent>
+    </TemplateColumn>
+    <PropertyColumn class="col" Property="@(p => p.ScrapedAt)" Format="yyyy-MM-dd" Sortable="true"/>
+    <PropertyColumn class="col text-nowrap" Property="@(p => p.UpdatedAt)" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
 </QuickGrid>
 </div>
 
@@ -210,7 +214,6 @@
 <ApplicationOfferModal @ref="_applicationOfferModal" ShowHideButton OnUpdate="@(() => grid.RefreshDataAsync())"/>
 
 @inject IDbContextFactory<JobsDbContext> DbFactory
-@inject IOptions<ScraperConfig> ScraperConfig;
 @inject NavigationManager NavigationManager
 
 @code {
@@ -252,7 +255,9 @@
     protected override async Task OnInitializedAsync()
     {
         dbContext = await DbFactory.CreateDbContextAsync();
-        myKeywordsOptions = ScraperConfig.Value.MyKeywords;
+        var scraperConfig = await dbContext.ScraperConfigs.FirstOrDefaultAsync();
+
+        myKeywordsOptions = scraperConfig?.MyKeywords ?? [];
         currencyOptions = await dbContext.JobOffers
             .Select(jo => jo.SalaryCurrency!)
             .Where(c => !string.IsNullOrEmpty(c))

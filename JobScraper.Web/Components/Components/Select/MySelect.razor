@@ -16,11 +16,11 @@
             }
             else if (SelectedOptionsRenderer == null)
             {
-                @string.Join(", ", SelectedOptions.Select(StringSelector))
+                @(StringSelector(SelectedOption) ?? string.Join(", ", SelectedOptions.Select(StringSelector)))
             }
             else
             {
-                @SelectedOptionsRenderer(SelectedOptions)
+                @SelectedOptionsRenderer([..SelectedOptions, SelectedOption!])
             }
         </span>
     </button>
