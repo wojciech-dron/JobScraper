@@ -10,17 +10,6 @@ public static class Setup
     public static IConfigurationManager AddScrapperSettings(this IConfigurationManager configuration,
         IHostEnvironment environment)
     {
-        // config in root path is not necessary now
-
-        // if (environment.IsProduction())
-        // {
-        //     configuration.AddJsonFile(Path.Combine(environment.ContentRootPath, "..", "scraperSettings.json"),
-        //         optional: true,
-        //         reloadOnChange: true);
-        //
-        //     return configuration;
-        // }
-
         var appPath = Path.Combine(environment.ContentRootPath);
 
         if (Directory.Exists(Path.Combine(appPath, "bin")))

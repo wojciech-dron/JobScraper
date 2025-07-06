@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace JobScraper.Logic.Common;
 
-public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHandler<TScrapeCommand>
+public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHandler<TScrapeCommand, ScrapeResponse>
     where TScrapeCommand : ScrapeCommand
 {
     public ListScraperBase(IOptions<ScraperConfig> config,
@@ -16,13 +16,13 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
 
     public abstract IAsyncEnumerable<List<JobOffer>> ScrapeJobs(SourceConfig sourceConfig);
 
-    public async Task Handle(TScrapeCommand scrape, CancellationToken cancellationToken = default)
+    public async Task<ScrapeResponse> Handle(TScrapeCommand scrape, CancellationToken cancellationToken = default)
     {
         if (!IsEnabled)
         {
             Logger.LogWarning("Scraper is disabled. Please configure {DataOrigin} origin in scraper configuration.",
                 DataOrigin);
-            return;
+            return new ScrapeResponse(ScrapedOffersCount: 0);
         }
 
         if (scrape.Source.DataOrigin != DataOrigin)
@@ -33,19 +33,23 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
 
         Logger.LogInformation("Scraping {DataOrigin} jobs list...", DataOrigin);
 
+        var newJobsCount = 0;
+
         await foreach (var jobs in ScrapeJobs(scrape.Source).WithCancellation(cancellationToken))
         {
             Logger.LogInformation("Syncing {DataOrigin} jobs...", DataOrigin);
-            await SyncJobsFromList(jobs, cancellationToken);
+            newJobsCount += await SyncJobsFromList(jobs, cancellationToken);
         }
 
         Dispose();
+
+        return new ScrapeResponse(ScrapedOffersCount: newJobsCount);
     }
 
-    public async Task SyncJobsFromList(List<JobOffer> jobs, CancellationToken cancellationToken)
+    public async Task<int> SyncJobsFromList(List<JobOffer> jobs, CancellationToken cancellationToken)
     {
         if (jobs.Count == 0)
-            return;
+            return 0;
 
         var companies = jobs
             .Select(j => j.CompanyName)
@@ -55,7 +59,7 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
             .ToArray();
 
         await AddNewCompanies(companies, cancellationToken);
-        await SyncJobs(jobs, cancellationToken);
+        return await SyncJobs(jobs, cancellationToken);
     }
 
     private async Task AddNewCompanies(string[] companyNames, CancellationToken cancellationToken)
@@ -91,7 +95,7 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
         }
     }
 
-    private async Task SyncJobs(List<JobOffer> jobs, CancellationToken cancellationToken)
+    private async Task<int> SyncJobs(List<JobOffer> jobs, CancellationToken cancellationToken)
     {
         var keys = jobs.ConvertAll(jo => jo.OfferUrl);
 
@@ -116,5 +120,6 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
 
         await DbContext.JobOffers.AddRangeAsync(jobsToAdd, cancellationToken);
         await DbContext.SaveChangesAsync(cancellationToken);
+        return jobsToAdd.Length;
     }
 }

@@ -1,4 +1,5 @@
-﻿using JobScraper.Common.Extensions;
+﻿using Blazored.FluentValidation;
+using JobScraper.Common.Extensions;
 using JobScraper.Logic;
 using JobScraper.Logic.Common;
 using JobScraper.Logic.Indeed;
@@ -19,10 +20,11 @@ public partial class ScrapePage
     private readonly IDbContextFactory<JobsDbContext> _dbFactory;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<ScrapePage> _logger;
-    private JobsDbContext _dbContext = null!;
+    private JobsDbContext dbContext;
 
     private bool isWorking = false;
     private string statusMessage = "Ready for scraping.";
+    private FluentValidationValidator validator;
     private ScraperConfig config = new();
 
     public ScrapePage(IDbContextFactory<JobsDbContext> dbFactory,
@@ -36,27 +38,29 @@ public partial class ScrapePage
 
     protected override async Task OnInitializedAsync()
     {
-        _dbContext = await _dbFactory.CreateDbContextAsync();
-
-        var dbConfig = await _dbContext.ScraperConfigs.FirstOrDefaultAsync();
-        if (dbConfig is null)
-        {
-            dbConfig = new ScraperConfig();
-            _dbContext.ScraperConfigs.Add(config);
-        }
-
-        config = dbConfig;
+        dbContext = await _dbFactory.CreateDbContextAsync();
+        config = await dbContext.ScraperConfigs.FirstOrDefaultAsync() ?? new ScraperConfig();
     }
 
     private async Task SaveConfig()
     {
-        if (isWorking)
+        if (isWorking || !await validator.ValidateAsync())
             return;
 
         isWorking = true;
         statusMessage = "Saving configuration...";
+        await UpdatePageAsync();
 
-        await _dbContext.SaveChangesAsync();
+        if (config.Id == 0)
+        {
+            dbContext.Add(config);
+        }
+        else
+        {
+            dbContext.Update(config);
+        }
+
+        await dbContext.SaveChangesAsync();
 
         isWorking = false;
         statusMessage = "Configuration saved successfully.";
@@ -64,13 +68,14 @@ public partial class ScrapePage
 
     private async Task StartScraping()
     {
-        if (isWorking)
+        if (isWorking || !await validator.ValidateAsync())
             return;
 
         await SaveConfig();
 
         isWorking = true;
         statusMessage = "Scraping in progress...";
+        await UpdatePageAsync();
 
         try
         {
@@ -78,28 +83,56 @@ public partial class ScrapePage
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
             var sources = config.Sources;
 
-            var listCommands = sources.Select<SourceConfig, ScrapeCommand>(source => source.DataOrigin switch
-            {
-                DataOrigin.Indeed      => new IndeedListScraper.Command { Source = source },
-                DataOrigin.JustJoinIt  => new JjitListScraper.Command { Source = source },
-                DataOrigin.NoFluffJobs => new NoFluffJobsListScraper.Command { Source = source },
-                DataOrigin.PracujPl    => new PracujPlListScraper.Command { Source = source },
-                DataOrigin.RocketJobs  => new RocketJobsListScraper.Command { Source = source },
-                DataOrigin.Olx         => new OlxListScraper.Command { Source = source },
-                _                      => throw new NotImplementedException($"List scraping not implemented for {source}")
-            }).ToArray();
+            var newOffersCount = await ScrapeLists(sources, mediator);
 
-            for (int idx = 0; idx < listCommands.Length; idx++)
-            {
-                var command = listCommands[idx];
-                statusMessage = $"Scraping list pages of source: {idx + 1}/{listCommands.Length}";
-                StateHasChanged();
+            await ScrapeDetails(sources, mediator);
 
-                await mediator.SendWithRetry(command);
-            }
+            // Add new offers count
+            statusMessage = $"Scrape finished successfully for number of sources: {sources.Count}. New offers: {newOffersCount}";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred during the scraping process");
+            statusMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isWorking = false;
+            await UpdatePageAsync();
+        }
+    }
 
-            // details
-            var detailsCommands = sources.Select<SourceConfig, ScrapeCommand?>(source => source.DataOrigin switch
+    private async Task<int> ScrapeLists(List<SourceConfig> sources, IMediator mediator)
+    {
+        var listCommands = sources.Select<SourceConfig, ScrapeCommand>(source => source.DataOrigin switch
+        {
+            DataOrigin.Indeed      => new IndeedListScraper.Command { Source = source },
+            DataOrigin.JustJoinIt  => new JjitListScraper.Command { Source = source },
+            DataOrigin.NoFluffJobs => new NoFluffJobsListScraper.Command { Source = source },
+            DataOrigin.PracujPl    => new PracujPlListScraper.Command { Source = source },
+            DataOrigin.RocketJobs  => new RocketJobsListScraper.Command { Source = source },
+            DataOrigin.Olx         => new OlxListScraper.Command { Source = source },
+            _                      => throw new NotImplementedException($"List scraping not implemented for {source}")
+        }).ToArray();
+
+
+        var offersCount = 0;
+        for (int idx = 0; idx < listCommands.Length; idx++)
+        {
+            var command = listCommands[idx];
+            statusMessage = $"Scraping list pages of source: {idx + 1}/{listCommands.Length}";
+            await UpdatePageAsync();
+
+            var result = await mediator.SendWithRetry(command);
+            offersCount += result.ScrapedOffersCount;
+        }
+
+        return offersCount;
+    }
+
+    private async Task<int> ScrapeDetails(List<SourceConfig> sources, IMediator mediator)
+    {
+        var detailsCommands = sources.Select<SourceConfig, ScrapeCommand?>(source => source.DataOrigin switch
             {
                 DataOrigin.Indeed      => new IndeedDetailsScraper.Command { Source = source },
                 DataOrigin.JustJoinIt  => new JjitDetailsScraper.Command { Source = source },
@@ -112,27 +145,24 @@ public partial class ScrapePage
             }).Where(c => c is not null)
             .ToArray();
 
-            for (int idx = 0; idx < detailsCommands.Length; idx++)
-            {
-                var command = detailsCommands[idx]!;
-                statusMessage = $"Scraping details pages of source: {idx + 1}/{detailsCommands.Length}";
-                StateHasChanged();
-
-                await mediator.SendWithRetry(command);
-            }
-
-            statusMessage = "Scrape finished successfully";
-        }
-        catch (Exception ex)
+        var offersCount = 0;
+        for (int idx = 0; idx < detailsCommands.Length; idx++)
         {
-            _logger.LogError(ex, "An error occurred during the scraping process");
-            statusMessage = $"Error: {ex.Message}";
+            var command = detailsCommands[idx]!;
+            statusMessage = $"Scraping details pages of source: {idx + 1}/{detailsCommands.Length}";
+            await UpdatePageAsync();
+
+            var result = await mediator.SendWithRetry(command);
+            offersCount += result.ScrapedOffersCount;
         }
-        finally
-        {
-            isWorking = false;
-            StateHasChanged();
-        }
+
+        return offersCount;
+    }
+
+    private async Task UpdatePageAsync()
+    {
+        StateHasChanged();
+        await Task.Yield();
     }
 }
 

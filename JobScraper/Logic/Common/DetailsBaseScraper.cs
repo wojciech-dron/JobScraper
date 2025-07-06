@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 
 namespace JobScraper.Logic.Common;
 
-public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IRequestHandler<TScrapeCommand>
+public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IRequestHandler<TScrapeCommand, ScrapeResponse>
     where TScrapeCommand : ScrapeCommand
 {
     public DetailsScrapperBase(IOptions<ScraperConfig> config,
@@ -16,13 +16,13 @@ public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IReque
 
     public abstract Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer);
 
-    public virtual async Task Handle(TScrapeCommand scrape, CancellationToken cancellationToken = default)
+    public virtual async Task<ScrapeResponse> Handle(TScrapeCommand scrape, CancellationToken cancellationToken = default)
     {
         if (!IsEnabled)
         {
             Logger.LogWarning("Scraper is disabled. Please configure {DataOrigin} origin in scraper configuration.",
                 DataOrigin);
-            return;
+            return new ScrapeResponse();
         }
 
         var jobs = await DbContext.JobOffers
@@ -58,5 +58,7 @@ public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IReque
                 Dispose();
             }
         }
+
+        return new ScrapeResponse(ScrapedOffersCount: jobs.Count);
     }
 }

@@ -40,13 +40,13 @@ public class IndeedDetailsScraper
                 ScrapApplyUrl(jobOffer, indeedPage),
                 ScrapDescription(jobOffer, indeedPage),
                 ScrapCompany(jobOffer.Company!, indeedPage),
-                ScrapSalary(jobOffer, indeedPage)
+                ScrapeSalary(jobOffer, indeedPage)
             );
 
             return jobOffer;
         }
 
-        private static async Task ScrapSalary(JobOffer job, IPage page)
+        private static async Task ScrapeSalary(JobOffer job, IPage page)
         {
             var rawSalary = await page.EvaluateAsync<string?>(@"
             Array.from(document.querySelectorAll('span[class*=""js-match-insights-provider""]'))
