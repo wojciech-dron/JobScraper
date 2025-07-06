@@ -6,6 +6,7 @@
 @using JobScraper.Persistence
 @using JobScraper.Web.Components.Components.Select
 @using JobScraper.Web.Components.Modals
+@using JobScraper.Web.Components.Pages.JobOffers.Models
 @using JobScraper.Web.Extensions
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.EntityFrameworkCore
@@ -38,24 +39,33 @@
             }
         </ChildContent>
     </TemplateColumn>
-    <TemplateColumn SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Hidden))" Title="Hide">
+    <TemplateColumn SortBy="@(GridSort<JobOffer>.ByAscending(p => p.HideStatus))" Title="Hide">
         <HeaderTemplate>
             <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                 <div class="col-title-text">@context.Title</div>
                 <div class="sort-indicator" aria-hidden="true"></div>
             </button>
             <MySelect
-                @bind-SelectedOption="@IsHiddenFilter"
-                Options="@BoolFilterHelper.Options"
-                StringSelector="@BoolFilterHelper.HiddenStringSelector"
+                @bind-SelectedOption="@HideStatusFilter"
+                Options="Enum.GetValues<HideStatusFilter>()"
             />
         </HeaderTemplate>
         <ChildContent>
-            @if (context.Hidden) {
-                <button class="btn btn-secondary" @onclick="async _ => await ShowOffer(context)">Show</button>
-            } else {
-                <button class="btn btn-primary" @onclick="async _ => await HideOffer(context)">Hide</button>
-            }
+            <div class="d-flex flex-row">
+                @if (context.HideStatus == HideStatus.Hidden)
+                {
+                    <button class="btn btn-secondary" @onclick="async _ => await RegularOffer(context)">Show</button>
+                }
+                @if (context.HideStatus == HideStatus.Regular)
+                {
+                    <button class="btn btn-danger me-2" @onclick="async _ => await HideOffer(context)">Hide</button>
+                    <button class="btn btn-success" @onclick="async _ => await StarOffer(context)">Star</button>
+                }
+                @if (context.HideStatus == HideStatus.Starred)
+                {
+                    <button class="btn btn-secondary" @onclick="async _ => await RegularOffer(context)">Regular</button>
+                }
+            </div>
         </ChildContent>
     </TemplateColumn>
     <PropertyColumn class="col-2" Property="@(p => p.CompanyName)" Sortable="true" Title="Company">
@@ -80,7 +90,15 @@
                    class="form-control form-control-sm"/>
         </HeaderTemplate>
         <ChildContent>
-            <span title="@context.Title">@context.Title</span>
+            @if (context.HideStatus == HideStatus.Starred)
+            {
+                <span class="text-warning" title="@context.Title">* @context.Title</span>
+            }
+            else
+            {
+                <span title="@context.Title">@context.Title</span>
+            }
+
         </ChildContent>
     </TemplateColumn>
     <PropertyColumn class="" Property="@(p => p.SalaryMinMonth)" Title="Min" Sortable="true">
@@ -197,7 +215,7 @@
 
 @code {
     QuickGrid<JobOffer> grid = null!;
-    JobsDbContext context = null!;
+    JobsDbContext dbContext = null!;
     PaginationState pagination = new() { ItemsPerPage = 20 };
     ApplicationOfferModal _applicationOfferModal = null!;
     List<string> myKeywordsOptions = [];
@@ -208,14 +226,14 @@
     public string? CompanyFilter { get; set; } = "";
     public string? LocationFilter { get; set; } = "";
     public bool? IsAppliedFilter { get; set; } = false;
-    public bool? IsHiddenFilter { get; set; } = false;
+    public HideStatusFilter HideStatusFilter { get; set; } = HideStatusFilter.Visible;
     public int? SalaryMinFilter { get; set; }
     public int? SalaryMaxFilter { get; set; }
     public string[]? CurrencyFilter { get; set; } = [];
     public string[]? OriginFilter { get; set; } = [];
     public string[]? MyKeywordsFilter { get; set; } = [];
 
-    IQueryable<JobOffer> jobOffers => context.JobOffers
+    IQueryable<JobOffer> jobOffers => dbContext.JobOffers
         .Include(jo => jo.Company)
         .Include(jo => jo.Application)
         .Where(jo => jo.DetailsScrapeStatus == DetailsScrapeStatus.Scraped)
@@ -226,17 +244,16 @@
         .WhereIf(MyKeywordsFilter?.Length > 0, jo => jo.MyKeywords.Any(mk => MyKeywordsFilter!.Contains(mk)))
         .WhereIf(CurrencyFilter?.Length   > 0, jo => CurrencyFilter!.Contains(jo.SalaryCurrency))
         .WhereIf(IsAppliedFilter.HasValue, jo => IsAppliedFilter == true ? jo.Application != null : jo.Application == null)
-        .WhereIf(IsHiddenFilter.HasValue, jo => IsHiddenFilter   == true ? jo.Hidden : !jo.Hidden)
+        .ApplyHideStatusFilter(HideStatusFilter)
         .WhereIf(SalaryMinFilter.HasValue, jo => jo.SalaryMinMonth >= SalaryMinFilter)
         .WhereIf(SalaryMaxFilter.HasValue, jo => jo.SalaryMaxMonth >= SalaryMaxFilter)
-        .OrderBy(jo => jo.CompanyName)
-        .ThenByDescending(jo => jo.SalaryMaxMonth);
+        .OrderByDescending(jo => jo.HideStatus);
 
     protected override async Task OnInitializedAsync()
     {
-        context = await DbFactory.CreateDbContextAsync();
+        dbContext = await DbFactory.CreateDbContextAsync();
         myKeywordsOptions = ScraperConfig.Value.Keywords;
-        currencyOptions = await context.JobOffers
+        currencyOptions = await dbContext.JobOffers
             .Select(jo => jo.SalaryCurrency!)
             .Where(c => !string.IsNullOrEmpty(c))
             .Distinct()
@@ -244,48 +261,28 @@
 
         // set default filters if query params are not set
         IsAppliedFilter ??= false;
-        IsHiddenFilter ??= false;
-    }
-
-    private void SetQueryParams()
-    {
-        var uriBuilder = new UriBuilder(NavigationManager.Uri);
-        var query = HttpUtility.ParseQueryString("");
-
-        if (TitleFilter?.Length > 0) query["TitleFilter"] = TitleFilter;
-        if (CompanyFilter?.Length > 0) query["CompanyFilter"] = CompanyFilter;
-        if (IsAppliedFilter.HasValue) query["IsAppliedFilter"] = IsAppliedFilter.ToString();
-        if (IsHiddenFilter.HasValue) query["IsHiddenFilter"] = IsHiddenFilter.ToString();
-        if (SalaryMinFilter.HasValue) query["SalaryMinFilter"] = SalaryMinFilter.ToString();
-        if (SalaryMaxFilter.HasValue) query["SalaryMaxFilter"] = SalaryMaxFilter.ToString();
-
-        for (var i = 0; i < CurrencyFilter?.Length; i++)
-            query.Add("CurrencyFilter", CurrencyFilter![i]);
-
-        for (var i = 0; i < OriginFilter?.Length; i++)
-            query.Add("OriginFilter", OriginFilter![i]);
-
-        for (var i = 0; i < MyKeywordsFilter?.Length; i++)
-            query.Add("MyKeywordsFilter", MyKeywordsFilter![i]);
-
-        uriBuilder.Query = query.ToString();
-
-        NavigationManager.NavigateTo(uriBuilder.ToString(), forceLoad: false);
     }
 
     private async Task HideOffer(JobOffer jobOffer)
     {
-        jobOffer.Hidden = true;
-        await context.SaveChangesAsync();
+        jobOffer.HideStatus = HideStatus.Hidden;
+        await dbContext.SaveChangesAsync();
         await grid.RefreshDataAsync();
     }
 
-    private async Task ShowOffer(JobOffer jobOffer)
+    private async Task StarOffer(JobOffer jobOffer)
     {
-        jobOffer.Hidden = false;
-        await context.SaveChangesAsync();
+        jobOffer.HideStatus = HideStatus.Starred;
+        await dbContext.SaveChangesAsync();
         await grid.RefreshDataAsync();
     }
 
-    public async ValueTask DisposeAsync() => await context.DisposeAsync();
+    private async Task RegularOffer(JobOffer jobOffer)
+    {
+        jobOffer.HideStatus = HideStatus.Regular;
+        await dbContext.SaveChangesAsync();
+        await grid.RefreshDataAsync();
+    }
+
+    public async ValueTask DisposeAsync() => await dbContext.DisposeAsync();
 }

@@ -7,7 +7,14 @@
     <BodyTemplate>
         <div class="row">
             <div class="col-md-3">
-                <h4>Offer details</h4>
+                <h4>
+                    Offer details
+                    @if (_jobOffer.HideStatus == HideStatus.Starred)
+                    {
+                        <strong class="text-warning">*</strong>
+                    }
+                </h4>
+
                 <strong>Title:</strong> @_jobOffer.Title<br/>
                 <strong>Company Name:</strong>
                 <span>@(_jobOffer.CompanyName ?? "Not specified")</span><br/>
@@ -32,18 +39,24 @@
                         <InputTextArea id="offer-comments" @bind-Value="@_jobOffer.Comments" class="form-control"/>
                     </div>
 
+                    <strong>Actions:</strong>
                     <div class="mt-2">
-                        @if (_jobOffer.Hidden)
+                        @if (_jobOffer.HideStatus == HideStatus.Hidden)
                         {
-                            <button class="btn btn-primary" @onclick="ShowOffer">Show offer</button>
+                            <button class="btn btn-secondary" @onclick="RegularOffer">Show</button>
                         }
-                        else
+                        @if (_jobOffer.HideStatus == HideStatus.Regular)
                         {
-                            <button class="btn btn-primary" @onclick="HideOffer">Hide offer</button>
+                            <button class="btn btn-danger ms-1" @onclick="HideOffer">Hide</button>
+                            <button class="btn btn-warning ms-1" @onclick="StarOffer">Save as starred</button>
+                        }
+                        @if (_jobOffer.HideStatus == HideStatus.Starred)
+                        {
+                            <button class="btn btn-success ms-1" @onclick="RegularOffer">Save as regular</button>
                         }
 
                         <button class="btn btn-info ms-1" @onclick="EditOffer">Edit offer</button>
-                        <button class="btn btn-secondary ms-1" @onclick="CancelAsync">Cancel</button>
+                        <button class="btn btn-secondary ms-1" @onclick="CloseAsync">Close</button>
                     </div>
                 }
             </div>
@@ -91,7 +104,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-success" @onclick="SaveAsync">@(_isEdit ? "Update" : "Create")</button>
-                    <button type="button" class="btn btn-secondary" @onclick="CancelAsync">Cancel</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseAsync">Close</button>
                 </EditForm>
 
             </div>
@@ -177,7 +190,7 @@
         OnUpdate?.Invoke();
     }
 
-    private async Task CancelAsync()
+    private async Task CloseAsync()
     {
         if (_application != null && _context.Entry(_application).State != EntityState.Detached)
         {
@@ -189,16 +202,25 @@
 
     private async Task HideOffer()
     {
-        _jobOffer.Hidden = true;
+        _jobOffer.HideStatus = HideStatus.Hidden;
         _context.Update(_jobOffer);
         await _context.SaveChangesAsync();
         await _modal.HideAsync();
         OnUpdate?.Invoke();
     }
 
-    private async Task ShowOffer()
+    private async Task StarOffer()
     {
-        _jobOffer.Hidden = false;
+        _jobOffer.HideStatus = HideStatus.Starred;
+        _context.Update(_jobOffer);
+        await _context.SaveChangesAsync();
+        await _modal.HideAsync();
+        OnUpdate?.Invoke();
+    }
+
+    private async Task RegularOffer()
+    {
+        _jobOffer.HideStatus = HideStatus.Regular;
         _context.Update(_jobOffer);
         await _context.SaveChangesAsync();
         OnUpdate?.Invoke();

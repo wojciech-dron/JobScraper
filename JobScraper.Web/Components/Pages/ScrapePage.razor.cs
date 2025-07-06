@@ -20,11 +20,11 @@ public partial class ScrapePage
     private readonly IDbContextFactory<JobsDbContext> _dbFactory;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<ScrapePage> _logger;
-    private JobsDbContext dbContext;
+    private JobsDbContext dbContext = null!;
+    private FluentValidationValidator validator = null!;
 
     private bool isWorking = false;
     private string statusMessage = "Ready for scraping.";
-    private FluentValidationValidator validator;
     private ScraperConfig config = new();
 
     public ScrapePage(IDbContextFactory<JobsDbContext> dbFactory,

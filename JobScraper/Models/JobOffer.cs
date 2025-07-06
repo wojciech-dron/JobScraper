@@ -13,7 +13,7 @@ public class JobOffer : IUpdatable
     public string? Location { get; set; }
     public DateTime ScrapedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
-    public bool Hidden { get; set; }
+    public HideStatus HideStatus { get; set; }
     public List<string> OfferKeywords { get; set; } = [];
 
     public string? Description { get; set; }
@@ -41,6 +41,13 @@ public enum DetailsScrapeStatus
     ToScrape,
     Scraped,
     Failed,
+}
+
+public enum HideStatus
+{
+    Regular = 0,
+    Hidden = 1,
+    Starred = 2,
 }
 
 public class JobOfferModelBuilder : IEntityTypeConfiguration<JobOffer>
@@ -72,7 +79,7 @@ public class JobOfferModelBuilder : IEntityTypeConfiguration<JobOffer>
         builder.Property(j => j.SalaryCurrency).HasMaxLength(10);
         builder.PrimitiveCollection(j => j.OfferKeywords);
 
-        builder.HasIndex(j => j.Hidden);
+        builder.HasIndex(j => j.HideStatus);
         builder.HasIndex(j => j.ScrapedAt);
         builder.HasIndex(j => j.UpdatedAt);
         builder.HasIndex(j => j.Location);
