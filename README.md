@@ -1,8 +1,40 @@
 # Job Scraper with C# and Playwright
 
-https://github.com/wojciech-dron/JobScraper
+JobScraper - an application for managing job offers and applications for
+individual offers (like a better Excel)
+App is currently targeting polish users.
+It's written in C# using Playwright for web scraping.
 
-This project uses C# and Microsoft Playwright to scrape job data from Indeed and JustJoin.It (for now).
+Link for app: https://drive.google.com/drive/folders/1r7SKJV40hwNzg7KKmsiBF6JOrXXAzTmr
+
+## Main features:
+- portability, you can run it on a computer without installing any
+  additional programs and from any folder using a .bat file
+- fetching job offers from given links (pracuj.pl, rocketjobs.pl, olx.pl, and
+  programmer-focused sites: Indeed, Justoin.It, NoFluffJobs)
+- job links with filters
+- a page with job offers
+- manual adding/editing of job offers
+- detailed view and entering information about applications to a specific job
+- info about applying to a specific company (useful if there are multiple offers
+  from the same company)
+- a page with user applications (filtering, sorting, and rejecting)
+- configuration of sources
+
+## Notes:
+- there may be high resource usage because a browser is launched to fetch job
+  offers (it can be run in hidden mode - "ShowBrowserWhenScraping": false in
+  scraperSettings.json)
+- saved job offers and configuration are stored in the Data folder
+- to update application, extract new version and copy Data folder from the previous version and replace it with the new one
+- to delete all data, just delete the Data folder
+- updating the app is safe, it won't delete data from the previous version,
+  however, moving data from a newer version to an older one won't work
+
+Source code link: https://github.com/wojciech-dron/JobScraper
+
+Let me know what you think of the app, your experience and what could be improved - 
+I appreciate any feedback ;)
 
 
 ## Development setup
