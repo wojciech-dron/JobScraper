@@ -5,8 +5,6 @@ individual offers (like a better Excel)
 App is currently targeting polish users.
 It's written in C# using Playwright for web scraping.
 
-Link for app: https://drive.google.com/drive/folders/1r7SKJV40hwNzg7KKmsiBF6JOrXXAzTmr
-
 ## Main features:
 - portability, you can run it on a computer without installing any
   additional programs and from any folder using a .bat file
@@ -31,41 +29,77 @@ Link for app: https://drive.google.com/drive/folders/1r7SKJV40hwNzg7KKmsiBF6JOrX
 - updating the app is safe, it won't delete data from the previous version,
   however, moving data from a newer version to an older one won't work
 
-Source code link: https://github.com/wojciech-dron/JobScraper
-
 Let me know what you think of the app, your experience and what could be improved - 
 I appreciate any feedback ;)
 
 
-## Development setup
+## Quick start with docker
+To run the app using Docker, you can use the following command:
+```bash
+docker run -d --name jobscraper.web -p 12986:8080 -v jobscraper_data:/app/data combi71/jobscraper.web:0.2
+```
 
-This project requires .NET and the Microsoft Playwright CLI. If you don't have these installed, follow the instructions below.
+## Local development
 
-1. Install .NET 9 from the [.NET download page](https://dotnet.microsoft.com/download).
+### Prerequisites
 
-2. Install the Microsoft Playwright CLI by running the following command in your terminal:
+This project requires .NET and the Microsoft Playwright CLI. If you don't have
+these installed, follow the instructions below.
 
-   ```bash
-   dotnet tool install --global Microsoft.Playwright.CLI
-   ```
+1. Install .NET 9 from
+   the [.NET download page](https://dotnet.microsoft.com/download).
 
-3. After installing the Playwright CLI, run the following command to install the necessary browser binaries:
+2. Install the Microsoft Playwright CLI by running the following command in your
+   terminal:
 
-   ```bash
-   playwright install
-   ```
+```bash
+dotnet tool install --global Microsoft.Playwright.CLI
+```
 
-## Running the Project
+### Running the application
+Clone the repository and navigate to the project directory in your terminal.
+```bash
+git clone https://github.com/wojciech-dron/JobScraper.git
+cd JobScraper
+```
 
-1. Clone the repository and navigate to the project directory in your terminal.
+Run the following command to run project
+```bash
+cd JobScraper.Web
+dotnet run
+```
+   
+## Docker
 
-2. Run the following command to restore the necessary .NET packages:
+You can also build and run the project using Docker.
 
-   ```bash
-   dotnet restore
-   ```
+Clone the repository.
+```bash
+git clone https://github.com/wojciech-dron/JobScraper.git
+cd JobScraper
+```
 
-3. (Optional) Open the project in your favorite IDE.
+Navigate to the project directory in your terminal and run docker compose.
+```bash
+docker-compose up -d
+```
+
+OR
+
+You can also build and run the project using Docker.
+
+```bash
+docker build -t jobscraper.web -f Jobscraper.Web/Dockerfile .
+```
+
+Then run the following command to start the container.
+
+```bash
+docker run -d --name jobscraper.web -p 12986:8080 -v jobscraper_data:/app/data jobscraper.web
+```
+
+
+
 
 
 <span style="color: green">**Recommended:**</span> Be nice to people's servers by not lowering the `secondsToWait` variable too low. <font size="1">(keep yourself from being banned from the site)</font>

@@ -7,6 +7,7 @@ using JobScraper.Models;
 using JobScraper.Persistence;
 using JobScraper.Web.Components;
 using JobScraper.Web.Validators;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,12 +21,17 @@ builder.Services.AddQuickGridEntityFrameworkAdapter();
 builder.Services.AddBlazorBootstrap();
 builder.Services.AddValidatorsFromAssemblyContaining<JobOfferValidator>();
 
-
 builder.Logging.AddOtelLogging(builder.Configuration, "JobScraper.Web");
 
 builder.Services
     .AddSqlitePersistance()
     .AddScrapperServices(builder.Configuration);
+
+builder.WebHost.UseStaticWebAssets();
+
+builder.Services.AddDataProtection()
+    .SetApplicationName("JobScraper.Web")
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "Keys")));
 
 var app = builder.Build();
 
@@ -50,6 +56,8 @@ app.UseRequestLocalization(new RequestLocalizationOptions
 app.UseHttpsRedirection();
 
 app.UseAntiforgery();
+
+app.UseStaticFiles();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
