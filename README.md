@@ -33,10 +33,16 @@ Let me know what you think of the app, your experience and what could be improve
 I appreciate any feedback ;)
 
 
+## Demo
+
+[Configuration and scraping](https://drive.google.com/file/d/1D-sGQ3w9u8nb9_HW_olHNEMGFR9nUWQm/view)
+
+[Managing offers and applications (v0.0.1)](https://drive.google.com/file/d/1nu9P4w3vn8zJl3TTss1zsLBxoxjgEGqP/view)
+
 ## Quick start with docker
 To run the app using Docker, you can use the following command:
 ```bash
-docker run -d --name jobscraper.web -p 12986:8080 -v jobscraper_data:/app/data combi71/jobscraper.web:0.2
+docker run -d --name jobscraper.web -p 12986:8080 -v jobscraper_data:/home/app/data combi71/jobscraper.web:latest
 ```
 
 ## Local development
@@ -95,7 +101,7 @@ docker build -t jobscraper.web -f Jobscraper.Web/Dockerfile .
 Then run the following command to start the container.
 
 ```bash
-docker run -d --name jobscraper.web -p 12986:8080 -v jobscraper_data:/app/data jobscraper.web
+docker run -d --name jobscraper.web -p 12986:8080 -v jobscraper_data:/home/app/data jobscraper.web
 ```
 
 
