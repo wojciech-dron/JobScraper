@@ -16,7 +16,9 @@ public static class Setup
             appPath = Path.Combine(appPath, "bin", GetBuildConfig(), GetTargetFramework());
 
         configuration.AddJsonFile(Path.Combine(appPath, "scraperSettings.json"), optional: false, reloadOnChange: true);
-        configuration.AddJsonFile(Path.Combine(appPath, "scraperSettings.Development.json"), optional: true, reloadOnChange: true);
+        configuration.AddJsonFile(Path.Combine(appPath, $"scraperSettings.{environment.EnvironmentName}.json"), optional: true, reloadOnChange: true);
+
+        configuration.AddEnvironmentVariables();
 
         return configuration;
     }

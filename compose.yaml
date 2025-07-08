@@ -1,0 +1,15 @@
+﻿version: '3.8'
+
+services:
+  jobscraper.web:
+    image: jobscraper.web
+    build:
+      context: .
+      dockerfile: JobScraper.Web/Dockerfile
+    ports:
+      - "12986:8080"
+    volumes:
+      - data:/app/data
+
+volumes:
+  data:
