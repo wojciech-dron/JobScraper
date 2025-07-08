@@ -13,7 +13,7 @@ public class IndeedDetailsScraper
 
     public class Handler : DetailsScrapperBase<Command>
     {
-        public Handler(IOptions<ScraperConfig> config,
+        public Handler(IOptions<AppSettings> config,
             ILogger<Handler> logger,
             JobsDbContext dbContext)
             : base(config, logger, dbContext)

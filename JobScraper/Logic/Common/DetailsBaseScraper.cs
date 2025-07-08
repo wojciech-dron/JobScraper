@@ -10,7 +10,7 @@ namespace JobScraper.Logic.Common;
 public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IRequestHandler<TScrapeCommand, ScrapeResponse>
     where TScrapeCommand : ScrapeCommand
 {
-    public DetailsScrapperBase(IOptions<ScraperConfig> config,
+    public DetailsScrapperBase(IOptions<AppSettings> config,
         ILogger<DetailsScrapperBase<TScrapeCommand>> logger,
         JobsDbContext dbContext) : base(config, logger, dbContext)
     { }

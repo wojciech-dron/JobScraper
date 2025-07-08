@@ -31,7 +31,7 @@ builder.WebHost.UseStaticWebAssets();
 
 builder.Services.AddDataProtection()
     .SetApplicationName("JobScraper.Web")
-    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "Keys")));
+    .PersistKeysToFileSystem(new DirectoryInfo(builder.Configuration["SecuritySettings:PersistKeysDirectory"]!));
 
 var app = builder.Build();
 

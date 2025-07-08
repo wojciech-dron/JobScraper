@@ -16,6 +16,7 @@ namespace JobScraper.Logic.Common;
 
 public abstract class ScrapperBase : IDisposable
 {
+    protected readonly AppSettings AppSettings;
     protected readonly JobsDbContext DbContext;
     protected readonly ScraperConfig ScrapeConfig;
     protected readonly SourceConfig Source;
@@ -41,9 +42,10 @@ public abstract class ScrapperBase : IDisposable
         Policy<JobOffer>.Handle<Exception>()
             .WaitAndRetryAsync(1, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
-    public ScrapperBase(IOptions<ScraperConfig> config,
+    public ScrapperBase(IOptions<AppSettings> appSettings,
         ILogger<ScrapperBase> logger, JobsDbContext dbContext)
     {
+        AppSettings = appSettings.Value;
         DbContext = dbContext;
         Logger = logger;
         ScrapeConfig = DbContext.ScraperConfigs.First();
@@ -58,8 +60,12 @@ public abstract class ScrapperBase : IDisposable
     {
         Dispose();
 
-        _playwright = await new PlaywrightExtra(ScrapeConfig.BrowserType)
-            .Install()
+        _playwright = new PlaywrightExtra(ScrapeConfig.BrowserType);
+
+        if (!AppSettings.PreinstalledPlaywright)
+            _playwright.Install();
+
+        await _playwright
             .Use(new StealthExtraPlugin(new StealthHardwareConcurrencyOptions(1)))
             .Use(new AnonymizeUaExtraPlugin())
             .LaunchAsync(new()
@@ -102,7 +108,7 @@ public abstract class ScrapperBase : IDisposable
 
     private string PrepareDestination(string path)
     {
-        path = Path.Combine(ScrapeConfig.PageSavingDirectory, path);
+        path = Path.Combine(AppSettings.PageSavingDirectory, path);
 
         var directory = Path.GetDirectoryName(path);
         if (directory is not null)

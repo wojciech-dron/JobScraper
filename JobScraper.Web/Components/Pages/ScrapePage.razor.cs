@@ -12,6 +12,7 @@ using JobScraper.Models;
 using JobScraper.Persistence;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace JobScraper.Web.Components.Pages;
 
@@ -20,6 +21,7 @@ public partial class ScrapePage
     private readonly IDbContextFactory<JobsDbContext> _dbFactory;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<ScrapePage> _logger;
+    private readonly AppSettings appSettings;
     private JobsDbContext dbContext = null!;
     private FluentValidationValidator validator = null!;
 
@@ -29,10 +31,12 @@ public partial class ScrapePage
 
     public ScrapePage(IDbContextFactory<JobsDbContext> dbFactory,
         IServiceProvider serviceProvider,
+        IOptions<AppSettings> appSettings,
         ILogger<ScrapePage> logger)
     {
         _dbFactory = dbFactory;
         _serviceProvider = serviceProvider;
+        this.appSettings = appSettings.Value;
         _logger = logger;
     }
 

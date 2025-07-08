@@ -11,7 +11,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "solution items", "solution 
 		CZYTAJ-TO.md = CZYTAJ-TO.md
 		wersje.md = wersje.md
 		changelog.md = changelog.md
-		run-JobScraper.bat = run-JobScraper.bat
 		compose.yaml = compose.yaml
 	EndProjectSection
 EndProject
@@ -22,6 +21,12 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{3E16C414-2BB4-4448-A53E-EC091749FBA9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobScraper.Tests", "JobScraper.Tests\JobScraper.Tests.csproj", "{B5DCB7E3-5950-4071-B4D7-AE3FA17FBA64}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{E86CB860-9756-4E66-A4B3-65F04F712E73}"
+	ProjectSection(SolutionItems) = preProject
+		scripts\run-JobScraper.bat = scripts\run-JobScraper.bat
+		scripts\docker pub scripts.bat = scripts\docker pub scripts.bat
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,5 +56,6 @@ Global
 		{6E4E75E2-AD7A-4A9A-9D45-ECDFB8E7EEDF} = {65AF34A5-E855-4313-84FA-B9A5835E4266}
 		{2123DD54-F9BB-42C7-833C-4A917CF06716} = {65AF34A5-E855-4313-84FA-B9A5835E4266}
 		{B5DCB7E3-5950-4071-B4D7-AE3FA17FBA64} = {3E16C414-2BB4-4448-A53E-EC091749FBA9}
+		{E86CB860-9756-4E66-A4B3-65F04F712E73} = {6CBDD1E8-9032-43E6-9C25-43995CD61126}
 	EndGlobalSection
 EndGlobal

@@ -85,8 +85,8 @@
             <label class="mt-2" for="ShowBrowserWhenScraping">Star offers with my keywords:</label>
             <InputSelect id="StarMyKeywords" @bind-Value="@config.StarMyKeywords"
                          class="form-control">
-                <option value="true">Yes</option>
                 <option value="false">No</option>
+                <option value="true">Yes</option>
             </InputSelect>
         </div>
 
@@ -122,7 +122,7 @@
             <div class="mb-1">
                 <label for="BrowserType">Browser type:</label>
                 <InputSelect id="BrowserType" @bind-Value="@config.BrowserType" class="form-control">
-                    @foreach (var type in Enum.GetValues<BrowserTypeEnum>())
+                    @foreach (var type in appSettings.AllowedBrowsers)
                     {
                         <option value="@type">@type</option>
                     }
@@ -131,8 +131,8 @@
             <div class="mb-1">
                 <label for="ShowBrowserWhenScraping">Show browser when scraping:</label>
                 <InputSelect id="ShowBrowserWhenScraping" @bind-Value="@config.ShowBrowserWhenScraping" class="form-control">
-                    <option value="true">Yes</option>
                     <option value="false">No</option>
+                    <option value="true">Yes</option>
                 </InputSelect>
             </div>
         </div>

@@ -1,12 +1,16 @@
 ﻿using FluentValidation;
 using JobScraper.Models;
+using Microsoft.Extensions.Options;
 
 namespace JobScraper.Web.Validators;
 
 public class ScraperConfigValidator : AbstractValidator<ScraperConfig>
 {
-    public ScraperConfigValidator()
+    private readonly AppSettings _appSettings;
+    public ScraperConfigValidator(IOptions<AppSettings> appSettings)
     {
+        _appSettings = appSettings.Value;
+
         RuleForEach(x => x.Sources)
             .ChildRules(builder =>
             {
@@ -29,5 +33,9 @@ public class ScraperConfigValidator : AbstractValidator<ScraperConfig>
         RuleForEach(x => x.AvoidKeywords)
             .NotEmpty()
             .WithMessage("Avoid keyword must not be empty.");
+
+        RuleFor(x => x.BrowserType)
+            .Must(x => _appSettings.AllowedBrowsers.Contains(x))
+            .WithMessage("Browser type must be one of the allowed browsers.");
     }
 }

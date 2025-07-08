@@ -36,7 +36,7 @@ Console.WriteLine("Scrapper finished");
 public class Commands(IMediator mediator)
 {
     [PrimaryCommand]
-    public async Task ScrapeAll() => await mediator.Send(new ScrapePipeline.Request());
+    public async Task ScrapeAll() => await mediator.Send(new ScrapePipeline.Request(new()));
 
     public async Task IndeedList() => await mediator.Send(new IndeedListScraper.Command());
     public async Task IndeedDetails() => await mediator.Send(new IndeedDetailsScraper.Command());

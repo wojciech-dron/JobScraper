@@ -7,6 +7,10 @@
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <PlaywrightPlatform>all</PlaywrightPlatform>
+    </PropertyGroup>
+
     <ItemGroup>
       <PackageReference Include="Blazor.Bootstrap" Version="3.3.1" />
       <PackageReference Include="Blazored.FluentValidation" Version="2.2.0" />

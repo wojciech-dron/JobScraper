@@ -8,7 +8,6 @@ public class ScraperConfig
 {
     public int Id { get; set; }
 
-    public string PageSavingDirectory { get; set; } = @".\Data\jobs";
     public float WaitForListSeconds { get; set; } = 10;
     public float WaitForScrollSeconds { get; set; } = 4;
     public float WaitForDetailsSeconds { get; set; } = 5;
@@ -40,7 +39,6 @@ public class ScraperConfigModelBuilder : IEntityTypeConfiguration<ScraperConfig>
 
         builder.HasKey(x => x.Id);
 
-        builder.Ignore(x => x.PageSavingDirectory);
         builder.Property(x => x.WaitForListSeconds);
         builder.Property(x => x.WaitForScrollSeconds);
         builder.Property(x => x.WaitForDetailsSeconds);

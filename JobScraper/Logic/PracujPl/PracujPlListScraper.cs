@@ -16,7 +16,7 @@ public class PracujPlListScraper
 
     public class Handler : ListScraperBase<Command>
     {
-        public Handler(IOptions<ScraperConfig> config,
+        public Handler(IOptions<AppSettings> config,
             ILogger<Handler> logger,
             JobsDbContext dbContext)
             : base(config, logger, dbContext)
