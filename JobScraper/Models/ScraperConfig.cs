@@ -13,7 +13,7 @@ public class ScraperConfig
     public float WaitForDetailsSeconds { get; set; } = 5;
 
     public bool ShowBrowserWhenScraping { get; set; } = false;
-    public BrowserTypeEnum BrowserType { get; set; } = BrowserTypeEnum.Chromium;
+    public BrowserTypeEnum BrowserType { get; set; } = BrowserTypeEnum.Firefox;
 
     public bool StarMyKeywords { get; set; }
     public List<string> MyKeywords { get; set; } = [];

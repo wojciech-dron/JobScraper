@@ -10,6 +10,6 @@ public class AppSettings
     public bool PreinstalledPlaywright { get; init; } = false;
 
     public BrowserTypeEnum[] AllowedBrowsers => PreinstalledPlaywright
-        ? [BrowserTypeEnum.Chromium] // preinstalled in Dockerfile
+        ? [BrowserTypeEnum.Firefox] // preinstalled in Dockerfile
         : Enum.GetValues<BrowserTypeEnum>();
 }
