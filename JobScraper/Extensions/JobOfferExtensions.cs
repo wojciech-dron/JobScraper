@@ -1,9 +1,22 @@
-﻿using JobScraper.Models;
+﻿using System.Text;
+using JobScraper.Models;
 
 namespace JobScraper.Extensions;
 
 public static class JobOfferKeywordExtensions
 {
+    public static string SetDefaultDescription(this JobOffer jobOffer)
+    {
+        var stringBuilder = new StringBuilder();
+
+        foreach (var keyword in jobOffer.OfferKeywords)
+        {
+            stringBuilder.AppendLine(keyword);
+        }
+
+        return stringBuilder.ToString();
+    }
+
     public static void ProcessKeywords(this JobOffer jobOffer, ScraperConfig config)
     {
         jobOffer.MyKeywords = config.MyKeywords

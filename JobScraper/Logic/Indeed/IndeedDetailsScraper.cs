@@ -76,6 +76,7 @@ public class IndeedDetailsScraper
 
             job.SalaryCurrency = "USD";
         }
+
         private async Task ScrapDescription(JobOffer jobOffer, IPage page)
         {
             var jobDescription = await page.EvaluateAsync<string>(

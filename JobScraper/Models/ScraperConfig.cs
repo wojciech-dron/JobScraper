@@ -9,7 +9,7 @@ public class ScraperConfig
     public int Id { get; set; }
 
     public float WaitForListSeconds { get; set; } = 10;
-    public float WaitForScrollSeconds { get; set; } = 4;
+    public float WaitForScrollSeconds { get; set; } = 5;
     public float WaitForDetailsSeconds { get; set; } = 5;
 
     public bool ShowBrowserWhenScraping { get; set; } = false;
