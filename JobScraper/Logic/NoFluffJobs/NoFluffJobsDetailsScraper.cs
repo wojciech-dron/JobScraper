@@ -59,8 +59,6 @@ public class NoFluffJobsDetailsScraper
             jobOffer.Description = data.Description;
             jobOffer.OfferKeywords.AddRange(data.Keywords);
             jobOffer.Company!.JjitUrl = BaseUrl + data.CompanyUrl;
-
-            jobOffer.ProcessKeywords(ScrapeConfig);
         }
     }
 }

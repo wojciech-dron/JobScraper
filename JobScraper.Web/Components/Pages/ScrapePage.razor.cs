@@ -1,7 +1,7 @@
 ﻿using Blazored.FluentValidation;
 using JobScraper.Common.Extensions;
-using JobScraper.Logic;
 using JobScraper.Logic.Common;
+using JobScraper.Logic.Functions;
 using JobScraper.Logic.Indeed;
 using JobScraper.Logic.Jjit;
 using JobScraper.Logic.NoFluffJobs;
@@ -11,6 +11,7 @@ using JobScraper.Logic.RocketJobs;
 using JobScraper.Models;
 using JobScraper.Persistence;
 using Mediator;
+using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -171,6 +172,37 @@ public partial class ScrapePage
     {
         StateHasChanged();
         await Task.Yield();
+    }
+
+    private async Task RefreshKeywordsOnOffers()
+    {
+        if (isWorking || !await validator.ValidateAsync())
+            return;
+
+        await SaveConfig();
+
+        isWorking = true;
+        statusMessage = "Refreshing offers in progress...";
+        await UpdatePageAsync();
+
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            var result = await mediator.Send(new RefreshKeywordsOnOffers.Command());
+
+            statusMessage = $"Refreshing offers finished successfully with {result.ChangeCount} updates.";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred during the refreshing offers");
+            statusMessage = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            isWorking = false;
+            await UpdatePageAsync();
+        }
     }
 }
 
