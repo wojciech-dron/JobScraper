@@ -82,8 +82,8 @@ public partial class NoFluffJobsListScraper
 
         private async Task<List<JobOffer>> ScrapeJobsFromList(IPage page)
         {
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "Logic", "NoFluffJobs", "no-fluff-jobs-list.js");
-            var result = await page.EvaluateAsync<string>(await File.ReadAllTextAsync(path));
+            var script = await ScrapeHelpers.GetJsScript("JobScraper.Logic.NoFluffJobs.no-fluff-jobs-list.js");
+            var result = await page.EvaluateAsync<string>(script);
             var scrapedOffers = JsonSerializer.Deserialize<JobData[]>(result)!;
 
             var jobs = new List<JobOffer>();

@@ -31,5 +31,12 @@
     <ItemGroup>
         <InternalsVisibleTo Include="JobScraper.Tests" />
     </ItemGroup>
+
+    <ItemGroup>
+      <None Remove="Logic\Jjit\jjit-list.js" />
+      <EmbeddedResource Include="Logic\Jjit\jjit-list.js" />
+      <None Remove="Logic\NoFluffJobs\no-fluff-jobs-list.js" />
+      <EmbeddedResource Include="Logic\NoFluffJobs\no-fluff-jobs-list.js" />
+    </ItemGroup>
     
 </Project>

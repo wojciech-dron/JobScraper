@@ -91,8 +91,8 @@ public class RocketJobsListScraper
 
         private async Task<List<JobOffer>> ScrapeJobsFromList(IPage page)
         {
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "Logic", "Jjit", "jjit-list.js"); // yes, jjit, same layout
-            var result = await page.EvaluateAsync<string>(await File.ReadAllTextAsync(path));
+            var script = await ScrapeHelpers.GetJsScript("JobScraper.Logic.Jjit.jjit-list.js"); // yes, jjit, same layout
+            var result = await page.EvaluateAsync<string>(script);
             var scrapedOffers = JsonSerializer.Deserialize<JobData[]>(result)!;
 
             var jobs = new List<JobOffer>();

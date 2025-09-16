@@ -44,7 +44,7 @@ public static class JobOfferKeywordExtensions
         if (jobOffer.OfferKeywords.Any(k => k.ToLower() == keyword.ToLower()))
             return true;
 
-        if (jobOffer.Description!.Contains(keyword, StringComparison.OrdinalIgnoreCase))
+        if (jobOffer.Description?.Contains(keyword, StringComparison.OrdinalIgnoreCase) ?? false)
             return true;
 
         return jobOffer.Location?.Contains(keyword, StringComparison.OrdinalIgnoreCase) == true;

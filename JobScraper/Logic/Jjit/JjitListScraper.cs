@@ -41,11 +41,11 @@ public class JjitListScraper
 
             var newJobs = await ScrapeJobsFromList(page);
             yield return newJobs;
+            var readOfferUrls = newJobs.Select(sc => sc.OfferUrl).ToHashSet();
 
             while (newJobs.Count > 0)
             {
                 pageNumber++;
-                var previousJobs = newJobs;
 
                 Logger.LogInformation("{DataOrigin} - scraping page {PageNumber}", DataOrigin, pageNumber);
 
@@ -59,8 +59,10 @@ public class JjitListScraper
 
                 var jobsFromPage = await ScrapeJobsFromList(page);
 
-                var previousOfferUrls = previousJobs.Select(sc => sc.OfferUrl).ToArray();
-                newJobs = jobsFromPage.Where(j => !previousOfferUrls.Contains(j.OfferUrl)).ToList();
+                foreach (var jobOffer in jobsFromPage)
+                    readOfferUrls.Add(jobOffer.OfferUrl);
+
+                newJobs = jobsFromPage.Where(j => !readOfferUrls.Contains(j.OfferUrl)).ToList();
 
                 yield return newJobs;
             }
@@ -91,8 +93,8 @@ public class JjitListScraper
 
         private async Task<List<JobOffer>> ScrapeJobsFromList(IPage page)
         {
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "Logic", "Jjit", "jjit-list.js");
-            var result = await page.EvaluateAsync<string>(await File.ReadAllTextAsync(path));
+            var script = await ScrapeHelpers.GetJsScript("JobScraper.Logic.Jjit.jjit-list.js");
+            var result = await page.EvaluateAsync<string>(script);
             var scrapedOffers = JsonSerializer.Deserialize<JobData[]>(result)!;
 
             var jobs = new List<JobOffer>();
@@ -115,10 +117,9 @@ public class JjitListScraper
                 jobs.Add(jobOffer);
             }
 
-            Logger.LogInformation("{DataOrigin} scraping completed. Total jobs: {JobsCount}", DataOrigin, jobs.Count);
-
             return jobs;
         }
+
 
         // 20 000 - 26 000 PLN/month
         // 100 - 130 PLN/h
