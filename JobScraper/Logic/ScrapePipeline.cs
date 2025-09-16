@@ -50,7 +50,7 @@ public class ScrapePipeline
                 _ => throw new NotImplementedException($"List scraping not implemented for {origin}")
 
             });
-            await Task.WhenAll(listCommands.Select(c => _mediator.SendWithRetry(c, cancellationToken)));
+            await Task.WhenAll(listCommands.Select(c => _mediator.SendWithRetry(c, cancellationToken, _logger)));
 
             // details
             _logger.LogInformation("Scraping details for origins: {EnabledOrigins}", string.Join(", ", enabledOrigins));
@@ -67,7 +67,7 @@ public class ScrapePipeline
             });
             await Task.WhenAll(detailsCommands
                 .Where(c => c is not null)
-                .Select(c => _mediator.SendWithRetry(c!, cancellationToken)
+                .Select(c => _mediator.SendWithRetry(c!, cancellationToken, _logger)
             ));
 
 

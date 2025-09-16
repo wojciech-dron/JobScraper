@@ -122,7 +122,6 @@ public partial class ScrapePage
                 _                      => throw new ArgumentOutOfRangeException($"List scraping not implemented for {source}")
             }).ToArray();
 
-
         var offersCount = 0;
         for (int idx = 0; idx < listCommands.Length; idx++)
         {
@@ -130,7 +129,7 @@ public partial class ScrapePage
             statusMessage = $"Scraping list pages of source: {idx + 1}/{listCommands.Length}";
             await UpdatePageAsync();
 
-            var result = await mediator.SendWithRetry(command);
+            var result = await mediator.SendWithRetry(command, logger: _logger);
             offersCount += result.ScrapedOffersCount;
         }
 
@@ -161,7 +160,7 @@ public partial class ScrapePage
             statusMessage = $"Scraping details pages of source: {idx + 1}/{detailsCommands.Length}";
             await UpdatePageAsync();
 
-            var result = await mediator.SendWithRetry(command);
+            var result = await mediator.SendWithRetry(command, logger: _logger);
             offersCount += result.ScrapedOffersCount;
         }
 

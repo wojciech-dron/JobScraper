@@ -1,7 +1,6 @@
 {
   "AppSettings":{
     "PageSavingDirectory": "..\\Data\\jobs",
-    "InstallPlaywrightOnScrape": true
   },
   "SecuritySettings": {
     "PersistKeysDirectory": "..\\Data\\keys"

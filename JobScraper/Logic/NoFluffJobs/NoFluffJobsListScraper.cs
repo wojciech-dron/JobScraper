@@ -50,11 +50,22 @@ public partial class NoFluffJobsListScraper
 
                 Logger.LogInformation("{DataOrigin} - scraping page {PageNumber}", DataOrigin, pageNumber);
 
-                var nextButton = await page.QuerySelectorAsync("button[nfjloadmore]");
-                if (nextButton is null)
+                var nextButton = await page.EvaluateAsync<bool>(
+                    """
+                    () => {
+                        const button = document.querySelector('button[nfjloadmore]');
+                        if (!button) {
+                            return false;
+                        }
+                       
+                        button.click();
+                        return true;
+                    }
+                    """);
+
+                if (!nextButton)
                     break;
 
-                await nextButton.ClickAsync();
                 await page.WaitForTimeoutAsync(ScrapeConfig.WaitForListSeconds * 1000);
 
                 await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
