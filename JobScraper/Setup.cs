@@ -1,4 +1,5 @@
-﻿using JobScraper.Models;
+﻿using JobScraper.Jobs;
+using JobScraper.Models;
 using Mediator;
 
 namespace JobScraper;
@@ -9,6 +10,8 @@ public static class Setup
         IConfiguration configuration)
     {
         services.Configure<AppSettings>(configuration.GetSection(AppSettings.SectionName));
+
+        services.AddJobs(configuration);
 
         services.AddMediator((MediatorOptions options) =>
         {
