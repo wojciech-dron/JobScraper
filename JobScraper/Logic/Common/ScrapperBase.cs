@@ -2,12 +2,6 @@
 using JobScraper.Persistence;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
-using PlaywrightExtraSharp;
-using PlaywrightExtraSharp.Models;
-using PlaywrightExtraSharp.Plugins.AnonymizeUa;
-using PlaywrightExtraSharp.Plugins.ExtraStealth;
-using PlaywrightExtraSharp.Plugins.ExtraStealth.Evasions;
-using PlaywrightExtraSharp.Plugins.Recaptcha;
 using Polly;
 using Polly.Retry;
 // ReSharper disable VirtualMemberCallInConstructor
@@ -21,7 +15,8 @@ public abstract class ScrapperBase : IDisposable
     protected readonly ScraperConfig ScrapeConfig;
     protected readonly SourceConfig Source;
     protected readonly ILogger<ScrapperBase> Logger;
-    private PlaywrightExtra? _playwright;
+    private IPlaywright? _playwright;
+    private IBrowser? _browser;
 
     protected abstract DataOrigin DataOrigin { get; }
 
@@ -60,23 +55,40 @@ public abstract class ScrapperBase : IDisposable
     {
         Dispose();
 
-        _playwright = new PlaywrightExtra(ScrapeConfig.BrowserType);
+        _playwright = await Playwright.CreateAsync();
 
         if (!AppSettings.PreinstalledPlaywright)
-            _playwright.Install();
+            Install();
 
-        await _playwright
-            .Use(new StealthExtraPlugin(new StealthHardwareConcurrencyOptions(1)))
-            .Use(new AnonymizeUaExtraPlugin())
-            .LaunchAsync(new()
-            {
-                Headless = !ScrapeConfig.ShowBrowserWhenScraping
-            });
-
-        return await _playwright.NewPageAsync(new()
+        var browserType = ScrapeConfig.BrowserType switch
         {
-            // UserAgent = UserAgentStrings[Random.Shared.Next() % UserAgentStrings.Length]
+            BrowserTypeEnum.Chromium => _playwright.Chromium,
+            BrowserTypeEnum.Firefox  => _playwright.Firefox,
+            BrowserTypeEnum.Webkit   => _playwright.Webkit,
+            _                        => throw new ArgumentOutOfRangeException(nameof(ScrapeConfig.BrowserType))
+        };
+
+        _browser = await browserType.LaunchAsync(new BrowserTypeLaunchOptions
+        {
+            Headless = !ScrapeConfig.ShowBrowserWhenScraping
         });
+
+        return await _browser.NewPageAsync(new()
+        {
+            UserAgent = UserAgentStrings[Random.Shared.Next() % UserAgentStrings.Length]
+        });
+    }
+
+    public void Install()
+    {
+        var num = Microsoft.Playwright.Program.Main([
+            "install",
+            "--with-deps",
+            ScrapeConfig.BrowserType.ToString().ToLower()
+        ]);
+
+        if (num != 0)
+            throw new Exception($"Playwright exited with code {num}");
     }
 
     protected async Task SavePage(JobOffer jobOffer, IPage page)
@@ -153,9 +165,16 @@ public abstract class ScrapperBase : IDisposable
 
     public void Dispose()
     {
-        if (_playwright != null)
+        if (_playwright is not null)
+        {
             _playwright.Dispose();
+            _playwright = null;
+        }
 
-        _playwright = null;
+        if (_browser is not null)
+        {
+            _browser.DisposeAsync().GetAwaiter().GetResult();
+            _browser = null;
+        }
     }
 }

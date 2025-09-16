@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using PlaywrightExtraSharp.Models;
 
 namespace JobScraper.Models;
 
@@ -22,6 +21,13 @@ public class ScraperConfig
 
     public DataOrigin[] GetEnabledOrigins() => Sources.Select(x => x.DataOrigin).ToArray();
     public bool IsEnabled(DataOrigin origin) => Sources.Any(x => x.DataOrigin == origin);
+}
+
+public enum BrowserTypeEnum
+{
+    Chromium,
+    Webkit,
+    Firefox
 }
 
 public class SourceConfig
