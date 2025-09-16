@@ -11,6 +11,9 @@ public class ScraperConfig
     public float WaitForScrollSeconds { get; set; } = 5;
     public float WaitForDetailsSeconds { get; set; } = 5;
 
+    public bool SaveScreenshots { get; set; } = false;
+    public bool SavePages { get; set; } = false;
+
     public bool ShowBrowserWhenScraping { get; set; } = false;
     public BrowserTypeEnum BrowserType { get; set; } = BrowserTypeEnum.Firefox;
 

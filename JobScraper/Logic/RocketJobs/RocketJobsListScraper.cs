@@ -54,8 +54,8 @@ public class RocketJobsListScraper
                 await page.EvaluateAsync($"window.scrollTo(0, {scrollHeight});");
                 await page.WaitForTimeoutAsync(ScrapeConfig.WaitForScrollSeconds * 1000);
 
-                await SaveScreenshot(page, $"rocketJobs/list/{fetchDate}/{pageNumber}.png");
-                await SavePage(page, $"rocketJobs/list/{fetchDate}/{pageNumber}.html");
+                await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
+                await SavePage(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.html");
 
                 var jobsFromPage = await ScrapeJobsFromList(page);
 

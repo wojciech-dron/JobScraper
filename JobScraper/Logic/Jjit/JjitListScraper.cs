@@ -54,8 +54,8 @@ public class JjitListScraper
                 await page.EvaluateAsync($"window.scrollTo(0, {scrollHeight});");
                 await page.WaitForTimeoutAsync(ScrapeConfig.WaitForScrollSeconds * 1000);
 
-                await SaveScreenshot(page, $"jjit/list/{fetchDate}/{pageNumber}.png");
-                await SavePage(page, $"jjit/list/{fetchDate}/{pageNumber}.html");
+                await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
+                await SavePage(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.html");
 
                 var jobsFromPage = await ScrapeJobsFromList(page);
 
@@ -136,7 +136,8 @@ public class JjitListScraper
                 return;
 
             var period = SalaryPeriod.Month;
-            if (rawSalary.Contains("h")) period = SalaryPeriod.Hour;
+            if (rawSalary.EndsWith("/h"))
+                period = SalaryPeriod.Hour;
 
             job.SalaryMinMonth = int.Parse(minMaxMatch.Groups[1].Value).ApplyMonthPeriod(period);
             job.SalaryMaxMonth = int.Parse(minMaxMatch.Groups[2].Value).ApplyMonthPeriod(period);

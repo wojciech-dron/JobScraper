@@ -91,27 +91,41 @@ public abstract class ScrapperBase : IDisposable
             throw new Exception($"Playwright exited with code {num}");
     }
 
-    protected async Task SavePage(JobOffer jobOffer, IPage page)
-    {
-        jobOffer.HtmlPath = $"{DataOrigin}/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.html";
-        await SavePage(page, jobOffer.HtmlPath);
-    }
+
     protected async Task SaveScreenshot(JobOffer jobOffer, IPage page)
     {
+        if (!ScrapeConfig.SaveScreenshots)
+            return;
+
         jobOffer.ScreenShotPath = $"{DataOrigin}/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.png";
         await SaveScreenshot(page, jobOffer.ScreenShotPath);
     }
 
     protected async Task SaveScreenshot(IPage page, string path)
     {
+        if (!ScrapeConfig.SaveScreenshots)
+            return;
+
         path = PrepareDestination(path);
 
         var screenshot = await page.ScreenshotAsync(new() { FullPage = true });
         await File.WriteAllBytesAsync(path, screenshot);
     }
 
+    protected async Task SavePage(JobOffer jobOffer, IPage page)
+    {
+        if (!ScrapeConfig.SavePages)
+            return;
+
+        jobOffer.HtmlPath = $"{DataOrigin}/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.html";
+        await SavePage(page, jobOffer.HtmlPath);
+    }
+
     protected async Task SavePage(IPage page, string path)
     {
+        if (!ScrapeConfig.SavePages)
+            return;
+
         path = PrepareDestination(path);
 
         var htmlContent = await page.ContentAsync();

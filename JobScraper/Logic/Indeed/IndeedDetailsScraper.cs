@@ -25,22 +25,19 @@ public class IndeedDetailsScraper
         {
             Logger.LogInformation("Scraping job details for {OfferUrl}", jobOffer.OfferUrl);
 
-            var indeedPage = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: ScrapeConfig.WaitForDetailsSeconds);
-            await indeedPage.WaitForTimeoutAsync(ScrapeConfig.WaitForDetailsSeconds * 1000); // Wait for the page to load
+            var page = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: ScrapeConfig.WaitForDetailsSeconds);
+            await page.WaitForTimeoutAsync(ScrapeConfig.WaitForDetailsSeconds * 1000); // Wait for the page to load
 
-            jobOffer.ScreenShotPath = $"indeed/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.png";
-            await SaveScreenshot(indeedPage, jobOffer.ScreenShotPath);
-
-            jobOffer.HtmlPath = $"indeed/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.html";
-            await SavePage(indeedPage, jobOffer.HtmlPath);
+            await SaveScreenshot(jobOffer, page);
+            await SavePage(jobOffer, page);
 
             jobOffer.PublishedAt = DateTime.UtcNow;
 
             await Task.WhenAll(
-                ScrapApplyUrl(jobOffer, indeedPage),
-                ScrapDescription(jobOffer, indeedPage),
-                ScrapCompany(jobOffer.Company!, indeedPage),
-                ScrapeSalary(jobOffer, indeedPage)
+                ScrapApplyUrl(jobOffer, page),
+                ScrapDescription(jobOffer, page),
+                ScrapCompany(jobOffer.Company!, page),
+                ScrapeSalary(jobOffer, page)
             );
 
             return jobOffer;
