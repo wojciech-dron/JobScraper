@@ -11,9 +11,11 @@ using JobScraper.Logic.RocketJobs;
 using JobScraper.Models;
 using JobScraper.Persistence;
 using Mediator;
-using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using TickerQ.EntityFrameworkCore.Entities;
+using TickerQ.Utilities.Interfaces.Managers;
+using TickerQ.Utilities.Models.Ticker;
 
 namespace JobScraper.Web.Components.Pages;
 
@@ -21,6 +23,7 @@ public partial class ScrapePage
 {
     private readonly IDbContextFactory<JobsDbContext> _dbFactory;
     private readonly IServiceProvider _serviceProvider;
+    private readonly ICronTickerManager<CronTicker> _cronTickerManager;
     private readonly ILogger<ScrapePage> _logger;
     private readonly AppSettings appSettings;
     private JobsDbContext dbContext = null!;
@@ -29,14 +32,17 @@ public partial class ScrapePage
     private bool isWorking = false;
     private string statusMessage = "Ready for scraping.";
     private ScraperConfig config = new();
+    private CronTickerEntity? scrapeJobTicker;
 
     public ScrapePage(IDbContextFactory<JobsDbContext> dbFactory,
         IServiceProvider serviceProvider,
+        ICronTickerManager<CronTicker> cronTickerManager,
         IOptions<AppSettings> appSettings,
         ILogger<ScrapePage> logger)
     {
         _dbFactory = dbFactory;
         _serviceProvider = serviceProvider;
+        _cronTickerManager = cronTickerManager;
         this.appSettings = appSettings.Value;
         _logger = logger;
     }
@@ -45,6 +51,15 @@ public partial class ScrapePage
     {
         dbContext = await _dbFactory.CreateDbContextAsync();
         config = await dbContext.ScraperConfigs.FirstOrDefaultAsync() ?? new ScraperConfig();
+
+        scrapeJobTicker = await dbContext.Set<CronTickerEntity>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Function == "ScrapeJobs");
+
+        if (scrapeJobTicker is null)
+            return;
+
+        config.ScrapeCron = scrapeJobTicker.Expression;
     }
 
     private async Task SaveConfig()
@@ -203,6 +218,44 @@ public partial class ScrapePage
             isWorking = false;
             await UpdatePageAsync();
         }
+    }
+
+    private async Task ScheduleScraping()
+    {
+        if (string.IsNullOrEmpty(config.ScrapeCron))
+        {
+            statusMessage = "Please configure the cron expression before scheduling;";
+            return;
+        }
+
+        if (isWorking || !await validator.ValidateAsync())
+            return;
+
+        await SaveConfig();
+
+        isWorking = true;
+
+        if (scrapeJobTicker is not null)
+        {
+            await _cronTickerManager.DeleteAsync(scrapeJobTicker.Id);
+            scrapeJobTicker = null;
+        }
+
+        await _cronTickerManager.AddAsync(new CronTicker
+        {
+            Expression = config.ScrapeCron,
+            Function = "ScrapeJobs",
+            Description = "Scheduled in ScrapePage",
+            Retries = 1,
+            RetryIntervals = [20] // set in seconds
+        });
+
+        scrapeJobTicker = await dbContext.Set<CronTickerEntity>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Function == "ScrapeJobs");
+
+        statusMessage = "Scraping scheduled correctly.";
+        isWorking = false;
     }
 }
 

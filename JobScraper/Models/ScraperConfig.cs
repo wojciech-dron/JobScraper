@@ -22,6 +22,8 @@ public class ScraperConfig
     public List<string> AvoidKeywords { get; set; } = [];
     public List<SourceConfig> Sources { get; set; } = [];
 
+    public string ScrapeCron { get; set; } = "0 15 * * *"; // default: every day at 15:00
+
     public DataOrigin[] GetEnabledOrigins() => Sources.Where(x => !x.Disabled).Select(x => x.DataOrigin).ToArray();
     public bool IsEnabled(DataOrigin origin) => Sources.Any(x => x.DataOrigin == origin && !x.Disabled);
 }
@@ -56,6 +58,8 @@ public class ScraperConfigModelBuilder : IEntityTypeConfiguration<ScraperConfig>
         builder.Property(x => x.BrowserType).HasConversion<string>();
         builder.PrimitiveCollection(x => x.MyKeywords);
         builder.PrimitiveCollection(x => x.AvoidKeywords);
+
+        builder.Property(x => x.ScrapeCron).HasMaxLength(256);
 
         builder.OwnsMany(x => x.Sources, b => b.ToJson("SourcesJson"));
     }

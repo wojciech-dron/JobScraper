@@ -157,6 +157,22 @@
                 </InputSelect>
             </div>
         </div>
+
+        @if (OperatingSystem.IsLinux()) // for docker
+        {
+            <div class="col-md-6 mb-5">
+                <h4>Scheduled scraping</h4>
+                <div class="mb-1">
+                    <label for="BrowserType">Scrape cron:</label>
+                    <InputText id="ScrapeCron" @bind-Value="@config.ScrapeCron" class="form-control" />
+                </div>
+                <div class="mb-1">
+                    <button class="btn btn-success mb-3" @onclick="ScheduleScraping" disabled="@isWorking">
+                        @(scrapeJobTicker is null ? "Schedule scraping" : "Update schedule scraping")
+                    </button>
+                </div>
+            </div>
+        }
     </div>
     <ValidationSummary/>
 
@@ -186,7 +202,7 @@
         </div>
         <p>Do not leave this page.</p>
     }
-    <p>@statusMessage</p>
+    <h1 style="color: #00ff91">@statusMessage</h1>
 </div>
 
 @code

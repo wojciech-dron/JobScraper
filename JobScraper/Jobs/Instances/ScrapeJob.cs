@@ -11,7 +11,6 @@ using JobScraper.Persistence;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using TickerQ.Utilities.Base;
-using TickerQ.Utilities.Models;
 
 namespace JobScraper.Jobs.Instances;
 
@@ -31,7 +30,7 @@ public class ScrapeJob
     }
 
     [TickerFunction("ScrapeJobs")]
-    public async Task ScrapeJobs(TickerFunctionContext<string> tickerContext, CancellationToken cancellationToken)
+    public async Task ScrapeJobs(CancellationToken cancellationToken)
     {
         var config = await _dbContext.ScraperConfigs.FirstOrDefaultAsync(cancellationToken);
         if (config is null)
@@ -50,7 +49,6 @@ public class ScrapeJob
     }
 
     // TODO: Unify this methods here and in ScrapePage.razor.cs
-
     private async Task<int> ScrapeLists(IEnumerable<SourceConfig> sources)
     {
         var listCommands = sources
