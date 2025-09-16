@@ -10,7 +10,7 @@ using JobScraper.Logic.PracujPl;
 using JobScraper.Logic.RocketJobs;
 using JobScraper.Models;
 using JobScraper.Persistence;
-using MediatR;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -119,7 +119,7 @@ public partial class ScrapePage
                 DataOrigin.PracujPl    => new PracujPlListScraper.Command { Source = source },
                 DataOrigin.RocketJobs  => new RocketJobsListScraper.Command { Source = source },
                 DataOrigin.Olx         => new OlxListScraper.Command { Source = source },
-                _                      => throw new NotImplementedException($"List scraping not implemented for {source}")
+                _                      => throw new ArgumentOutOfRangeException($"List scraping not implemented for {source}")
             }).ToArray();
 
 

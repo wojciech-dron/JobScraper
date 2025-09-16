@@ -1,4 +1,5 @@
 ﻿using JobScraper.Models;
+using Mediator;
 
 namespace JobScraper;
 
@@ -9,6 +10,17 @@ public static class Setup
     {
         services.Configure<AppSettings>(configuration.GetSection(AppSettings.SectionName));
 
-        return services.AddMediatR(c => c.RegisterServicesFromAssemblyContaining(typeof(Setup)));
+        services.AddMediator((MediatorOptions options) =>
+        {
+            options.Namespace = "JobScraper.MediatorHandlers";
+            options.ServiceLifetime = ServiceLifetime.Scoped;
+            options.GenerateTypesAsInternal = true;
+            options.NotificationPublisherType = typeof(ForeachAwaitPublisher);
+            options.Assemblies = [typeof(Setup)];
+            options.PipelineBehaviors = [];
+            options.StreamPipelineBehaviors = [];
+        });
+
+        return services;
     }
 }

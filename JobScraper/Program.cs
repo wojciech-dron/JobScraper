@@ -9,7 +9,7 @@ using JobScraper.Logic.Olx;
 using JobScraper.Logic.PracujPl;
 using JobScraper.Logic.RocketJobs;
 using JobScraper.Persistence;
-using MediatR;
+using Mediator;
 
 var builder = CoconaApp.CreateBuilder(args);
 

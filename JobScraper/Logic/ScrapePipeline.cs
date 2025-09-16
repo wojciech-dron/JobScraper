@@ -1,5 +1,4 @@
-﻿using Cocona;
-using JobScraper.Common.Extensions;
+﻿using JobScraper.Common.Extensions;
 using JobScraper.Logic.Common;
 using JobScraper.Logic.Indeed;
 using JobScraper.Logic.Jjit;
@@ -8,7 +7,7 @@ using JobScraper.Logic.Olx;
 using JobScraper.Logic.PracujPl;
 using JobScraper.Logic.RocketJobs;
 using JobScraper.Models;
-using MediatR;
+using Mediator;
 using Microsoft.Extensions.Options;
 
 namespace JobScraper.Logic;
@@ -32,7 +31,7 @@ public class ScrapePipeline
             _logger = logger;
         }
 
-        public async Task Handle(Request request, CancellationToken cancellationToken = default)
+        public async ValueTask<Unit> Handle(Request request, CancellationToken cancellationToken = default)
         {
             var config = request.Config;
             var enabledOrigins = config.GetEnabledOrigins();
@@ -73,6 +72,8 @@ public class ScrapePipeline
 
 
             _logger.LogInformation("Scraping completed successfully");
+
+            return await Unit.ValueTask;
         }
     }
 }
