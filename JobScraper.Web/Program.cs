@@ -8,6 +8,7 @@ using JobScraper.Persistence;
 using JobScraper.Web.Components;
 using JobScraper.Web.Validators;
 using Microsoft.AspNetCore.DataProtection;
+using NReco.Logging.File;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,7 +22,9 @@ builder.Services.AddQuickGridEntityFrameworkAdapter();
 builder.Services.AddBlazorBootstrap();
 builder.Services.AddValidatorsFromAssemblyContaining<JobOfferValidator>();
 
-builder.Logging.AddOtelLogging(builder.Configuration, "JobScraper.Web");
+builder.Logging
+    .AddFile(builder.Configuration.GetSection("Logging:File"))
+    .AddOtelLogging(builder.Configuration, "JobScraper.Web");
 
 builder.Services
     .AddSqlitePersistance()
