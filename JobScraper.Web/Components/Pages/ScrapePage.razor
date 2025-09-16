@@ -15,7 +15,10 @@
         {
             <div class="form-group col-md-2">
                 <label for="DataOrigin">Origin:</label>
-                <InputSelect id="DataOrigin" @bind-Value="@source.DataOrigin" class="form-control">
+                <InputSelect id="DataOrigin"
+                             @bind-Value="@source.DataOrigin"
+                             class="form-control"
+                             disabled="@source.Disabled">
                     @foreach (var value in DataOriginHelpers.Scrapable)
                     {
                         <option value="@value">@value</option>
@@ -40,10 +43,25 @@
                     class="form-control"
                     placeholder="Enter full search url"
                     @bind-Value="@source.SearchUrl"
-                    @bind-Value:after="() => TrySetOrigin(source)"/>
+                    @bind-Value:after="() => TrySetOrigin(source)"
+                    disabled="@source.Disabled"/>
             </div>
 
-            <div class="form-group col-md-2 d-flex flex-column">
+            <div class="form-group col-md-1 d-flex flex-column">
+                <label>Activity:</label>
+                @if (source.Disabled)
+                {
+                    <button class="btn btn-success"
+                            @onclick="() => source.Disabled = false">Enable</button>
+                }
+                else
+                {
+                    <button class="btn btn-warning"
+                            @onclick="() => source.Disabled = true">Disable</button>
+                }
+            </div>
+
+            <div class="form-group col-md-1 d-flex flex-column">
                 <label>Actions:</label>
                 <button class="btn btn-danger"
                         @onclick="() => config.Sources.Remove(source)">Remove</button>

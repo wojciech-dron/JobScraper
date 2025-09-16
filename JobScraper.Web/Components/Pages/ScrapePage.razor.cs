@@ -85,14 +85,15 @@ public partial class ScrapePage
         {
             using var scope = _serviceProvider.CreateScope();
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-            var sources = config.Sources;
+            var sources = config.Sources.Where(x => !x.Disabled).ToArray();
 
             var newOffersCount = await ScrapeLists(sources, mediator);
 
             await ScrapeDetails(sources, mediator);
 
             // Add new offers count
-            statusMessage = $"Scrape finished successfully for number of sources: {sources.Count}. New offers: {newOffersCount}";
+            statusMessage = $"Scrape finished successfully for number of sources: {sources.Length}. " +
+                $"New offers: {newOffersCount}";
         }
         catch (Exception ex)
         {
@@ -106,18 +107,20 @@ public partial class ScrapePage
         }
     }
 
-    private async Task<int> ScrapeLists(List<SourceConfig> sources, IMediator mediator)
+    private async Task<int> ScrapeLists(IEnumerable<SourceConfig> sources, IMediator mediator)
     {
-        var listCommands = sources.Select<SourceConfig, ScrapeCommand>(source => source.DataOrigin switch
-        {
-            DataOrigin.Indeed      => new IndeedListScraper.Command { Source = source },
-            DataOrigin.JustJoinIt  => new JjitListScraper.Command { Source = source },
-            DataOrigin.NoFluffJobs => new NoFluffJobsListScraper.Command { Source = source },
-            DataOrigin.PracujPl    => new PracujPlListScraper.Command { Source = source },
-            DataOrigin.RocketJobs  => new RocketJobsListScraper.Command { Source = source },
-            DataOrigin.Olx         => new OlxListScraper.Command { Source = source },
-            _                      => throw new NotImplementedException($"List scraping not implemented for {source}")
-        }).ToArray();
+        var listCommands = sources
+            .Where(s => !s.Disabled)
+            .Select<SourceConfig, ScrapeCommand>(source => source.DataOrigin switch
+            {
+                DataOrigin.Indeed      => new IndeedListScraper.Command { Source = source },
+                DataOrigin.JustJoinIt  => new JjitListScraper.Command { Source = source },
+                DataOrigin.NoFluffJobs => new NoFluffJobsListScraper.Command { Source = source },
+                DataOrigin.PracujPl    => new PracujPlListScraper.Command { Source = source },
+                DataOrigin.RocketJobs  => new RocketJobsListScraper.Command { Source = source },
+                DataOrigin.Olx         => new OlxListScraper.Command { Source = source },
+                _                      => throw new NotImplementedException($"List scraping not implemented for {source}")
+            }).ToArray();
 
 
         var offersCount = 0;
@@ -134,9 +137,11 @@ public partial class ScrapePage
         return offersCount;
     }
 
-    private async Task<int> ScrapeDetails(List<SourceConfig> sources, IMediator mediator)
+    private async Task<int> ScrapeDetails(IEnumerable<SourceConfig> sources, IMediator mediator)
     {
-        var detailsCommands = sources.Select<SourceConfig, ScrapeCommand?>(source => source.DataOrigin switch
+        var detailsCommands = sources
+            .Where(s => !s.Disabled)
+            .Select<SourceConfig, ScrapeCommand?>(source => source.DataOrigin switch
             {
                 DataOrigin.Indeed      => new IndeedDetailsScraper.Command { Source = source },
                 DataOrigin.JustJoinIt  => new JjitDetailsScraper.Command { Source = source },

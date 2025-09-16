@@ -19,8 +19,8 @@ public class ScraperConfig
     public List<string> AvoidKeywords { get; set; } = [];
     public List<SourceConfig> Sources { get; set; } = [];
 
-    public DataOrigin[] GetEnabledOrigins() => Sources.Select(x => x.DataOrigin).ToArray();
-    public bool IsEnabled(DataOrigin origin) => Sources.Any(x => x.DataOrigin == origin);
+    public DataOrigin[] GetEnabledOrigins() => Sources.Where(x => !x.Disabled).Select(x => x.DataOrigin).ToArray();
+    public bool IsEnabled(DataOrigin origin) => Sources.Any(x => x.DataOrigin == origin && !x.Disabled);
 }
 
 public enum BrowserTypeEnum
@@ -35,6 +35,7 @@ public class SourceConfig
     // ReSharper disable once EntityFramework.ModelValidation.UnlimitedStringLength
     public string SearchUrl { get; set; } = "";
     public DataOrigin DataOrigin { get; set; } = DataOrigin.PracujPl;
+    public bool Disabled { get; set; } = false;
 }
 
 public class ScraperConfigModelBuilder : IEntityTypeConfiguration<ScraperConfig>
