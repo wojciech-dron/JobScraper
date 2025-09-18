@@ -104,8 +104,18 @@ Then run the following command to start the container.
 docker run -d --name jobscraper.web -p 12986:8080 -v jobscraper_data:/home/app/data jobscraper.web
 ```
 
+## Troubleshooting
 
+### Docker file access/permissions issues
 
+If you encounter issues with file access or permissions when running the application with Docker, particularly related to the volume mount for data persistence, try setting appropriate permissions on the host directory.
+
+For example, if using the named volume `jobscraper_data`, ensure the directory has proper permissions:
+```bash
+chmod -R 755 jobscraper_data
+```
+
+This ensures that the Docker container can read and write to the data directory properly.
 
 
 <span style="color: green">**Recommended:**</span> Be nice to people's servers by not lowering the `secondsToWait` variable too low. <font size="1">(keep yourself from being banned from the site)</font>

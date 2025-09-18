@@ -47,8 +47,8 @@ public class IndeedListScraper
                 await nextButton.ClickAsync();
                 await page.WaitForTimeoutAsync(ScrapeConfig.WaitForListSeconds * 1000);
 
-                await SaveScreenshot(page, $"jjit/list/{fetchDate}/{pageNumber}.png");
-                await SavePage(page, $"jjit/list/{fetchDate}/{pageNumber}.html");
+                await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
+                await SavePage(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.html");
             }
 
             Logger.LogInformation("Indeed scraping complete");

@@ -1,7 +1,7 @@
 ﻿using JobScraper.Extensions;
 using JobScraper.Models;
 using JobScraper.Persistence;
-using MediatR;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -17,7 +17,7 @@ public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IReque
 
     public abstract Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer);
 
-    public virtual async Task<ScrapeResponse> Handle(TScrapeCommand scrape, CancellationToken cancellationToken = default)
+    public virtual async ValueTask<ScrapeResponse> Handle(TScrapeCommand scrape, CancellationToken cancellationToken = default)
     {
         if (!IsEnabled)
         {

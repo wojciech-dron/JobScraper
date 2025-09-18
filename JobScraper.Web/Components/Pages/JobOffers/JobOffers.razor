@@ -250,7 +250,8 @@
         .ApplyHideStatusFilter(HideStatusFilter)
         .WhereIf(SalaryMinFilter.HasValue, jo => jo.SalaryMinMonth >= SalaryMinFilter)
         .WhereIf(SalaryMaxFilter.HasValue, jo => jo.SalaryMaxMonth <= SalaryMaxFilter)
-        .OrderByDescending(jo => jo.HideStatus);
+        .OrderByDescending(jo => jo.HideStatus)
+        .ThenByDescending(jo => jo.SalaryMaxMonth);
 
     protected override async Task OnInitializedAsync()
     {

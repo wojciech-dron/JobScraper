@@ -1,8 +1,10 @@
 ﻿@page "/scrape"
 @rendermode InteractiveServer
+@using BlazorBootstrap
 @using JobScraper.Models
-@using PlaywrightExtraSharp.Models
 @using Blazored.FluentValidation
+
+<Toasts class="p-3" Messages="messages" AutoHide="true" Delay="10000" Placement="ToastsPlacement.TopRight"/>
 
 <h2>Scraping</h2>
 
@@ -16,7 +18,10 @@
         {
             <div class="form-group col-md-2">
                 <label for="DataOrigin">Origin:</label>
-                <InputSelect id="DataOrigin" @bind-Value="@source.DataOrigin" class="form-control">
+                <InputSelect id="DataOrigin"
+                             @bind-Value="@source.DataOrigin"
+                             class="form-control"
+                             disabled="@source.Disabled">
                     @foreach (var value in DataOriginHelpers.Scrapable)
                     {
                         <option value="@value">@value</option>
@@ -41,10 +46,25 @@
                     class="form-control"
                     placeholder="Enter full search url"
                     @bind-Value="@source.SearchUrl"
-                    @bind-Value:after="() => TrySetOrigin(source)"/>
+                    @bind-Value:after="() => TrySetOrigin(source)"
+                    disabled="@source.Disabled"/>
             </div>
 
-            <div class="form-group col-md-2 d-flex flex-column">
+            <div class="form-group col-md-1 d-flex flex-column">
+                <label>Activity:</label>
+                @if (source.Disabled)
+                {
+                    <button class="btn btn-primary"
+                            @onclick="() => source.Disabled = false">Enable</button>
+                }
+                else
+                {
+                    <button class="btn btn-secondary"
+                            @onclick="() => source.Disabled = true">Disable</button>
+                }
+            </div>
+
+            <div class="form-group col-md-1 d-flex flex-column">
                 <label>Actions:</label>
                 <button class="btn btn-danger"
                         @onclick="() => config.Sources.Remove(source)">Remove</button>
@@ -88,6 +108,10 @@
                 <option value="false">No</option>
                 <option value="true">Yes</option>
             </InputSelect>
+            <button class="btn btn-primary mt-2"
+                    @onclick="RefreshKeywordsOnOffers">
+                Refresh keywords on saved offers
+            </button>
         </div>
 
         <div class="col-md-6 d-flex flex-column mb-5">
@@ -136,6 +160,33 @@
                 </InputSelect>
             </div>
         </div>
+
+
+            <div class="col-md-6 d-flex flex-column mb-5">
+                <h4>Advanced</h4>
+                @if (showAdvanced)
+                {
+                    <div class="mb-1">
+                        <label for="BrowserType">Scrape cron (beta):</label>
+                        <InputText id="ScrapeCron" @bind-Value="@config.ScrapeCron" class="form-control" />
+                    </div>
+                    <div class="mb-1">
+                        <button class="btn btn-success mb-3" @onclick="ScheduleScraping" disabled="@isWorking">
+                            @(scrapeJobTicker is null ? "Schedule scraping" : "Update schedule scraping")
+                        </button>
+                        <a href="/tickerq-dashboard">
+                            <button class="btn btn-info mb-3">Go to dashboard</button>
+                        </a>
+                        <button class="btn btn-secondary mb-3" @onclick="() => showAdvanced = false">
+                            Hide advanced
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <button class="btn btn-secondary mb-3" @onclick="() => showAdvanced = true">Show advanced</button>
+                }
+            </div>
     </div>
     <ValidationSummary/>
 
@@ -163,9 +214,12 @@
         <div class="spinner-border" role="status">
             <span class="sr-only"></span>
         </div>
-        <p>Do not leave this page.</p>
+        <h5>Do not leave this page. Scraping in progress...</h5>
     }
-    <p>@statusMessage</p>
+    else
+    {
+        <h5>Ready to scrape</h5>
+    }
 </div>
 
 @code
@@ -174,6 +228,17 @@
         "that drastically increase scraping time.";
 
     private const string keywordsInfo = "Configured keywords will be highlighted in the Job offer list";
+
+    private bool showAdvanced;
+
+    List<ToastMessage> messages = [];
+
+    private void ShowNotification(string message, ToastType toastType = ToastType.Success) =>
+        messages.Insert(0, new ToastMessage
+        {
+            Type = toastType,
+            Message = message,
+        });
 
     private void TrySetOrigin(SourceConfig source)
     {

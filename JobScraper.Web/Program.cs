@@ -3,11 +3,14 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using JobScraper;
 using JobScraper.Common;
+using JobScraper.Jobs;
 using JobScraper.Models;
 using JobScraper.Persistence;
 using JobScraper.Web.Components;
 using JobScraper.Web.Validators;
 using Microsoft.AspNetCore.DataProtection;
+using NReco.Logging.File;
+using TickerQ.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,11 +24,15 @@ builder.Services.AddQuickGridEntityFrameworkAdapter();
 builder.Services.AddBlazorBootstrap();
 builder.Services.AddValidatorsFromAssemblyContaining<JobOfferValidator>();
 
-builder.Logging.AddOtelLogging(builder.Configuration, "JobScraper.Web");
+builder.Logging
+    .AddFile(builder.Configuration.GetSection("Logging:File"))
+    .AddOtelLogging(builder.Configuration, "JobScraper.Web");
 
 builder.Services
     .AddSqlitePersistance()
     .AddScrapperServices(builder.Configuration);
+
+builder.Services.AddJobs(builder.Configuration);
 
 builder.WebHost.UseStaticWebAssets();
 
@@ -60,6 +67,9 @@ app.UseAntiforgery();
 app.UseStaticFiles();
 
 app.MapStaticAssets();
+
+app.UseJobs();
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

@@ -1,6 +1,4 @@
-﻿using PlaywrightExtraSharp.Models;
-
-namespace JobScraper.Models;
+﻿namespace JobScraper.Models;
 
 public class AppSettings
 {

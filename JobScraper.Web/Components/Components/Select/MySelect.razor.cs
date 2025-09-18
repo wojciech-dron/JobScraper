@@ -38,7 +38,7 @@ public partial class MySelect<TItem> : ComponentBase
     /// Function to convert an item to a string for display in the dropdown.
     /// </summary>
     [Parameter]
-    public Func<TItem?, string?> StringSelector { get; set; } = item => item?.ToString() ?? string.Empty;
+    public Func<TItem?, string> StringSelector { get; set; } = item => item?.ToString() ?? string.Empty;
 
     /// <summary>
     /// The default text to display when no options are selected.

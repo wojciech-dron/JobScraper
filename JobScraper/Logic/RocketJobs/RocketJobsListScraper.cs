@@ -1,4 +1,6 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Text.Json;
+using System.Text.RegularExpressions;
+using JobScraper.Extensions;
 using JobScraper.Logic.Common;
 using JobScraper.Models;
 using JobScraper.Persistence;
@@ -7,11 +9,11 @@ using Microsoft.Playwright;
 
 namespace JobScraper.Logic.RocketJobs;
 
-public partial class RocketJobsListScraper
+public class RocketJobsListScraper
 {
     public record Command : ScrapeCommand;
 
-    public partial class Handler : ListScraperBase<Command>
+    public class Handler : ListScraperBase<Command>
     {
         public Handler(IOptions<AppSettings> config,
             ILogger<Handler> logger,
@@ -27,15 +29,15 @@ public partial class RocketJobsListScraper
             Logger.LogInformation("{DataOrigin} scraping for url {SearchUrl}", DataOrigin, searchUrl);
 
             var page = await LoadUntilAsync(searchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds,
-                successCondition: async p => (await p.QuerySelectorAllAsync(".offer-card")).Count > 4);
+                successCondition: async p => (await p.QuerySelectorAllAsync("li")).Count > 6);
 
             await AcceptCookies(page);
 
             var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
             var pageNumber = 0;
 
-            await SaveScreenshot(page, $"RocketJobs/list/{fetchDate}/{pageNumber}.png");
-            await SavePage(page, $"RocketJobs/list/{fetchDate}/{pageNumber}.html");
+            await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
+            await SavePage(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.html");
 
             var newJobs = await ScrapeJobsFromList(page);
             yield return newJobs;
@@ -52,8 +54,8 @@ public partial class RocketJobsListScraper
                 await page.EvaluateAsync($"window.scrollTo(0, {scrollHeight});");
                 await page.WaitForTimeoutAsync(ScrapeConfig.WaitForScrollSeconds * 1000);
 
-                await SaveScreenshot(page, $"RocketJobs/list/{fetchDate}/{pageNumber}.png");
-                await SavePage(page, $"RocketJobs/list/{fetchDate}/{pageNumber}.html");
+                await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
+                await SavePage(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.html");
 
                 var jobsFromPage = await ScrapeJobsFromList(page);
 
@@ -77,44 +79,40 @@ public partial class RocketJobsListScraper
 
             await page.WaitForTimeoutAsync(1 * 1000);
         }
+
+        record JobData(
+            string Title,
+            string Url,
+            string CompanyName,
+            string Location,
+            string Salary,
+            List<string> OfferKeywords
+        );
+
         private async Task<List<JobOffer>> ScrapeJobsFromList(IPage page)
         {
+            var script = await ScrapeHelpers.GetJsScript("JobScraper.Logic.Jjit.jjit-list.js"); // yes, jjit, same layout
+            var result = await page.EvaluateAsync<string>(script);
+            var scrapedOffers = JsonSerializer.Deserialize<JobData[]>(result)!;
+
             var jobs = new List<JobOffer>();
-
-            var jobElements = await page.QuerySelectorAllAsync(".offer-card");
-            var jobsText = await Task.WhenAll(jobElements.Select(async j => await j.InnerTextAsync()));
-
-            // Use EvaluateFunctionAsync to get the href attribute of the <a> element
-            var urls = await page.EvaluateAsync<string[]>(@"
-            Array.from(document.querySelectorAll('.offer-card'))
-                .map(element => element.getAttribute('href'));
-            ");
-
-            for (var i = 0; i < jobsText.Length; i++)
+            foreach (var data in scrapedOffers)
             {
-                var job = new JobOffer();
-                // "Senior .NET Developer  20 000 - 24 000 PLN  New  Qodeca  Warszawa  , +9  Locations  Fully remote  C#  Microsoft Azure"
-                var phrases = jobsText[i].Split(['\n'], StringSplitOptions.RemoveEmptyEntries).ToList();
-                if (phrases.Count < 5)
-                    continue;
-
-                job.OfferUrl = BaseUrl + urls.ElementAtOrDefault(i) ?? "";
-                job.Title = phrases[0];
-                job.Origin = DataOrigin;
-                ScrapSalary(job, phrases[1]);
-                job.CompanyName = phrases[2];
-                job.Location = phrases[3];
-                if (phrases[4].Contains(", +"))
+                var jobOffer = new JobOffer
                 {
-                    job.Location += $"{phrases[4]} {phrases[5]}";
-                    phrases.RemoveAt(4);
-                    phrases.RemoveAt(5);
-                }
+                    Title = data.Title,
+                    OfferUrl = BaseUrl + data.Url,
+                    CompanyName = data.CompanyName,
+                    Location = data.Location,
+                    OfferKeywords = data.OfferKeywords,
+                    Origin = DataOrigin,
+                    DetailsScrapeStatus = DetailsScrapeStatus.ToScrape,
+                };
 
-                job.OfferKeywords = phrases[4..^1];
-                job.AgeInfo = phrases.Last();
+                SetSalary(jobOffer, data.Salary);
+                jobOffer.SetDefaultDescription();
 
-                jobs.Add(job);
+                jobs.Add(jobOffer);
             }
 
             Logger.LogInformation("{DataOrigin} scraping completed. Total jobs: {JobsCount}", DataOrigin, jobs.Count);
@@ -122,27 +120,26 @@ public partial class RocketJobsListScraper
             return jobs;
         }
 
-        private static void ScrapSalary(JobOffer job, string rawSalary)
+        // 20 000 - 26 000 PLN/month
+        // 100 - 130 PLN/h
+        private static void SetSalary(JobOffer job, string rawSalary)
         {
             if (string.IsNullOrEmpty(rawSalary))
                 return;
 
             rawSalary = rawSalary.Replace(" ", "");
 
-            var minMaxMatch = MinMaxRegex().Match(rawSalary);
-            var currencyMatch = CurrencyRegex().Match(rawSalary);
+            var minMaxMatch = Regex.Match(rawSalary, @"(\d+)-(\d+)");
+            var currencyMatch = Regex.Match(rawSalary, @"[A-Z]{3}");
             if (!minMaxMatch.Success || !currencyMatch.Success)
                 return;
 
-            job.SalaryMinMonth = int.Parse(minMaxMatch.Groups[1].Value);
-            job.SalaryMaxMonth = int.Parse(minMaxMatch.Groups[2].Value);
+            var period = SalaryPeriod.Month;
+            if (rawSalary.Contains("h")) period = SalaryPeriod.Hour;
+
+            job.SalaryMinMonth = int.Parse(minMaxMatch.Groups[1].Value).ApplyMonthPeriod(period);
+            job.SalaryMaxMonth = int.Parse(minMaxMatch.Groups[2].Value).ApplyMonthPeriod(period);
             job.SalaryCurrency = currencyMatch.Value;
         }
-
-        [GeneratedRegex(@"(\d+)-(\d+)")]
-        private static partial Regex MinMaxRegex();
-
-        [GeneratedRegex(@"[A-Z]{3}")]
-        private static partial Regex CurrencyRegex();
     }
 }

@@ -1,7 +1,8 @@
-﻿using Blazored.FluentValidation;
+﻿using BlazorBootstrap;
+using Blazored.FluentValidation;
 using JobScraper.Common.Extensions;
-using JobScraper.Logic;
 using JobScraper.Logic.Common;
+using JobScraper.Logic.Functions;
 using JobScraper.Logic.Indeed;
 using JobScraper.Logic.Jjit;
 using JobScraper.Logic.NoFluffJobs;
@@ -10,9 +11,12 @@ using JobScraper.Logic.PracujPl;
 using JobScraper.Logic.RocketJobs;
 using JobScraper.Models;
 using JobScraper.Persistence;
-using MediatR;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using TickerQ.EntityFrameworkCore.Entities;
+using TickerQ.Utilities.Interfaces.Managers;
+using TickerQ.Utilities.Models.Ticker;
 
 namespace JobScraper.Web.Components.Pages;
 
@@ -20,22 +24,25 @@ public partial class ScrapePage
 {
     private readonly IDbContextFactory<JobsDbContext> _dbFactory;
     private readonly IServiceProvider _serviceProvider;
+    private readonly ICronTickerManager<CronTicker> _cronTickerManager;
     private readonly ILogger<ScrapePage> _logger;
     private readonly AppSettings appSettings;
     private JobsDbContext dbContext = null!;
     private FluentValidationValidator validator = null!;
 
     private bool isWorking = false;
-    private string statusMessage = "Ready for scraping.";
     private ScraperConfig config = new();
+    private CronTickerEntity? scrapeJobTicker;
 
     public ScrapePage(IDbContextFactory<JobsDbContext> dbFactory,
         IServiceProvider serviceProvider,
+        ICronTickerManager<CronTicker> cronTickerManager,
         IOptions<AppSettings> appSettings,
         ILogger<ScrapePage> logger)
     {
         _dbFactory = dbFactory;
         _serviceProvider = serviceProvider;
+        _cronTickerManager = cronTickerManager;
         this.appSettings = appSettings.Value;
         _logger = logger;
     }
@@ -44,6 +51,15 @@ public partial class ScrapePage
     {
         dbContext = await _dbFactory.CreateDbContextAsync();
         config = await dbContext.ScraperConfigs.FirstOrDefaultAsync() ?? new ScraperConfig();
+
+        scrapeJobTicker = await dbContext.Set<CronTickerEntity>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Function == "ScrapeJobs");
+
+        if (scrapeJobTicker is null)
+            return;
+
+        config.ScrapeCron = scrapeJobTicker.Expression;
     }
 
     private async Task SaveConfig()
@@ -52,7 +68,7 @@ public partial class ScrapePage
             return;
 
         isWorking = true;
-        statusMessage = "Saving configuration...";
+        ShowNotification("Saving configuration...");
         await UpdatePageAsync();
 
         if (config.Id == 0)
@@ -67,7 +83,7 @@ public partial class ScrapePage
         await dbContext.SaveChangesAsync();
 
         isWorking = false;
-        statusMessage = "Configuration saved successfully.";
+        ShowNotification("Configuration saved successfully.");
     }
 
     private async Task StartScraping()
@@ -78,26 +94,29 @@ public partial class ScrapePage
         await SaveConfig();
 
         isWorking = true;
-        statusMessage = "Scraping in progress...";
+        ShowNotification("Scraping in progress...");
         await UpdatePageAsync();
 
         try
         {
             using var scope = _serviceProvider.CreateScope();
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-            var sources = config.Sources;
+            var sources = config.Sources.Where(x => !x.Disabled).ToArray();
 
             var newOffersCount = await ScrapeLists(sources, mediator);
-
-            await ScrapeDetails(sources, mediator);
+            var offerDetailsScrapedCount = await ScrapeDetails(sources, mediator);
 
             // Add new offers count
-            statusMessage = $"Scrape finished successfully for number of sources: {sources.Count}. New offers: {newOffersCount}";
+            var message = $"Scrape finished successfully for number of sources: {sources.Length}. New offers: {newOffersCount}. ";
+            if (offerDetailsScrapedCount > 0)
+                message += $"Offer details scraped: {offerDetailsScrapedCount}";
+
+            ShowNotification(message);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An error occurred during the scraping process");
-            statusMessage = $"Error: {ex.Message}";
+            ShowNotification($"Error: {ex.Message}", ToastType.Danger);
         }
         finally
         {
@@ -106,37 +125,40 @@ public partial class ScrapePage
         }
     }
 
-    private async Task<int> ScrapeLists(List<SourceConfig> sources, IMediator mediator)
+    private async Task<int> ScrapeLists(IEnumerable<SourceConfig> sources, IMediator mediator)
     {
-        var listCommands = sources.Select<SourceConfig, ScrapeCommand>(source => source.DataOrigin switch
-        {
-            DataOrigin.Indeed      => new IndeedListScraper.Command { Source = source },
-            DataOrigin.JustJoinIt  => new JjitListScraper.Command { Source = source },
-            DataOrigin.NoFluffJobs => new NoFluffJobsListScraper.Command { Source = source },
-            DataOrigin.PracujPl    => new PracujPlListScraper.Command { Source = source },
-            DataOrigin.RocketJobs  => new RocketJobsListScraper.Command { Source = source },
-            DataOrigin.Olx         => new OlxListScraper.Command { Source = source },
-            _                      => throw new NotImplementedException($"List scraping not implemented for {source}")
-        }).ToArray();
-
+        var listCommands = sources
+            .Where(s => !s.Disabled)
+            .Select<SourceConfig, ScrapeCommand>(source => source.DataOrigin switch
+            {
+                DataOrigin.Indeed      => new IndeedListScraper.Command { Source = source },
+                DataOrigin.JustJoinIt  => new JjitListScraper.Command { Source = source },
+                DataOrigin.NoFluffJobs => new NoFluffJobsListScraper.Command { Source = source },
+                DataOrigin.PracujPl    => new PracujPlListScraper.Command { Source = source },
+                DataOrigin.RocketJobs  => new RocketJobsListScraper.Command { Source = source },
+                DataOrigin.Olx         => new OlxListScraper.Command { Source = source },
+                _                      => throw new ArgumentOutOfRangeException($"List scraping not implemented for {source}")
+            }).ToArray();
 
         var offersCount = 0;
         for (int idx = 0; idx < listCommands.Length; idx++)
         {
             var command = listCommands[idx];
-            statusMessage = $"Scraping list pages of source: {idx + 1}/{listCommands.Length}";
+            ShowNotification($"Scraping list pages of source: {idx + 1}/{listCommands.Length}");
             await UpdatePageAsync();
 
-            var result = await mediator.SendWithRetry(command);
+            var result = await mediator.SendWithRetry(command, logger: _logger);
             offersCount += result.ScrapedOffersCount;
         }
 
         return offersCount;
     }
 
-    private async Task<int> ScrapeDetails(List<SourceConfig> sources, IMediator mediator)
+    private async Task<int> ScrapeDetails(IEnumerable<SourceConfig> sources, IMediator mediator)
     {
-        var detailsCommands = sources.Select<SourceConfig, ScrapeCommand?>(source => source.DataOrigin switch
+        var detailsCommands = sources
+            .Where(s => !s.Disabled)
+            .Select<SourceConfig, ScrapeCommand?>(source => source.DataOrigin switch
             {
                 DataOrigin.Indeed      => new IndeedDetailsScraper.Command { Source = source },
                 DataOrigin.JustJoinIt  => new JjitDetailsScraper.Command { Source = source },
@@ -144,8 +166,7 @@ public partial class ScrapePage
                 DataOrigin.RocketJobs  => new RocketJobsDetailsScraper.Command { Source = source },
                 DataOrigin.PracujPl    => null,
                 DataOrigin.Olx         => null,
-
-                _ => throw new NotImplementedException($"List scraping not implemented for {source}")
+                _ => throw new ArgumentOutOfRangeException($"List scraping not implemented for {source}")
             }).Where(c => c is not null)
             .ToArray();
 
@@ -153,10 +174,10 @@ public partial class ScrapePage
         for (int idx = 0; idx < detailsCommands.Length; idx++)
         {
             var command = detailsCommands[idx]!;
-            statusMessage = $"Scraping details pages of source: {idx + 1}/{detailsCommands.Length}";
+            ShowNotification($"Scraping details pages of source: {idx + 1}/{detailsCommands.Length}");
             await UpdatePageAsync();
 
-            var result = await mediator.SendWithRetry(command);
+            var result = await mediator.SendWithRetry(command, logger: _logger);
             offersCount += result.ScrapedOffersCount;
         }
 
@@ -167,6 +188,75 @@ public partial class ScrapePage
     {
         StateHasChanged();
         await Task.Yield();
+    }
+
+    private async Task RefreshKeywordsOnOffers()
+    {
+        if (isWorking || !await validator.ValidateAsync())
+            return;
+
+        await SaveConfig();
+
+        isWorking = true;
+        ShowNotification("Refreshing offers in progress...");
+        await UpdatePageAsync();
+
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+            var result = await mediator.Send(new RefreshKeywordsOnOffers.Command());
+
+            ShowNotification($"Refreshing offers finished successfully with {result.ChangeCount} updates.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred during the refreshing offers");
+            ShowNotification($"Error: {ex.Message}");
+        }
+        finally
+        {
+            isWorking = false;
+            await UpdatePageAsync();
+        }
+    }
+
+    private async Task ScheduleScraping()
+    {
+        if (string.IsNullOrEmpty(config.ScrapeCron))
+        {
+            ShowNotification("Please configure the cron expression before scheduling;", ToastType.Warning);
+            return;
+        }
+
+        if (isWorking || !await validator.ValidateAsync())
+            return;
+
+        await SaveConfig();
+
+        isWorking = true;
+
+        if (scrapeJobTicker is not null)
+        {
+            await _cronTickerManager.DeleteAsync(scrapeJobTicker.Id);
+            scrapeJobTicker = null;
+        }
+
+        await _cronTickerManager.AddAsync(new CronTicker
+        {
+            Expression = config.ScrapeCron,
+            Function = "ScrapeJobs",
+            Description = "Scheduled in ScrapePage",
+            Retries = 1,
+            RetryIntervals = [20] // set in seconds
+        });
+
+        scrapeJobTicker = await dbContext.Set<CronTickerEntity>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Function == "ScrapeJobs");
+
+        ShowNotification("Scraping scheduled correctly.");
+        isWorking = false;
     }
 }
 
