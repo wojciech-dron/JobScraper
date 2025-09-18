@@ -1,3 +1,18 @@
+## v0.3
+- Fixed Just join it, RocketJobs and NoFluffJobs to new layout
+- Added toasts
+- Minor UI/UX improvements
+- Added scheduling in ScrapePage
+- Added TickerQ and ScrapeJob
+- Added Refresh keywords on saved offers button
+- Added docker volume troubleshooting section to README.md
+- Added file logging
+- Minor scrape improvements
+- Added source disabling feature
+
+## v0.2.2
+- Added docker support
+
 ## v0.2
 - Added job bookmarking
 - Improved keyword functionality
