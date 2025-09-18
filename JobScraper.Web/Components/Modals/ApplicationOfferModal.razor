@@ -30,17 +30,17 @@
                 <strong>My Keywords:</strong> @(string.Join(", ", _jobOffer.MyKeywords))<br/>
                 <strong>Salary:</strong> @($"{_jobOffer.SalaryMinMonth} - {_jobOffer.SalaryMaxMonth} {_jobOffer.SalaryCurrency}")<br/>
 
-                @if (ShowHideButton)
-                {
-                    <div class="form-group pt-3 pb-1">
-                        <label for="comments">
-                            <b>Offer comments:</b> (updates on show/hide or create/update application record)
-                        </label>
-                        <InputTextArea id="offer-comments" @bind-Value="@_jobOffer.Comments" class="form-control"/>
-                    </div>
+                <div class="form-group pt-3 pb-1">
+                    <label for="comments">
+                        <b>Offer comments:</b> (updates on show/hide or create/update application record)
+                    </label>
+                    <InputTextArea id="offer-comments" @bind-Value="@_jobOffer.Comments" class="form-control"/>
+                </div>
 
-                    <strong>Actions:</strong>
-                    <div class="mt-2">
+                <strong>Actions:</strong>
+                <div class="mt-2">
+                    @if (ShowHideButton)
+                    {
                         @if (_jobOffer.HideStatus == HideStatus.Hidden)
                         {
                             <button class="btn btn-secondary" @onclick="RegularOffer">Show</button>
@@ -54,11 +54,12 @@
                         {
                             <button class="btn btn-success ms-1" @onclick="RegularOffer">Save as regular</button>
                         }
-
-                        <button class="btn btn-info ms-1" @onclick="EditOffer">Edit offer</button>
-                        <button class="btn btn-secondary ms-1" @onclick="CloseAsync">Close</button>
-                    </div>
-                }
+                    }
+                    <a href="/edit-offer/@Uri.EscapeDataString(_jobOffer.OfferUrl)">
+                        <button class="btn btn-info ms-1">Edit offer</button>
+                    </a>
+                    <button class="btn btn-secondary ms-1" @onclick="CloseAsync">Close</button>
+                </div>
             </div>
 
             <div class="col-md-3">
@@ -76,6 +77,11 @@
                     <div class="form-group">
                         <label for="sentCv">Sent CV:</label>
                         <InputText id="sentCv" @bind-Value="@_application.SentCv" class="form-control"/>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sentCv">Apply Url:</label>
+                        <InputText id="sentCv" @bind-Value="@_jobOffer.ApplyUrl" class="form-control"/>
                     </div>
 
                     <div class="form-group">

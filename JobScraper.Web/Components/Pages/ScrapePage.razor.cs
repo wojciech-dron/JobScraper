@@ -104,12 +104,13 @@ public partial class ScrapePage
             var sources = config.Sources.Where(x => !x.Disabled).ToArray();
 
             var newOffersCount = await ScrapeLists(sources, mediator);
-
-            await ScrapeDetails(sources, mediator);
+            var offerDetailsScrapedCount = await ScrapeDetails(sources, mediator);
 
             // Add new offers count
-            statusMessage = $"Scrape finished successfully for number of sources: {sources.Length}. " +
-                $"New offers: {newOffersCount}";
+            statusMessage = $"Scrape finished successfully for number of sources: {sources.Length}. New offers: {newOffersCount}. ";
+
+            if (offerDetailsScrapedCount > 0)
+                statusMessage += $"Offer details scraped: {offerDetailsScrapedCount}";
         }
         catch (Exception ex)
         {
@@ -164,8 +165,7 @@ public partial class ScrapePage
                 DataOrigin.RocketJobs  => new RocketJobsDetailsScraper.Command { Source = source },
                 DataOrigin.PracujPl    => null,
                 DataOrigin.Olx         => null,
-
-                _ => throw new NotImplementedException($"List scraping not implemented for {source}")
+                _ => throw new ArgumentOutOfRangeException($"List scraping not implemented for {source}")
             }).Where(c => c is not null)
             .ToArray();
 

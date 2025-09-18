@@ -23,7 +23,7 @@ public static class JobOfferKeywordExtensions
             .Where(keyword => ContainKeyword(jobOffer, keyword))
             .ToList();
 
-        if (config.StarMyKeywords && jobOffer.MyKeywords.Count > 0)
+        if (ShouldStar(jobOffer, config))
             jobOffer.HideStatus = HideStatus.Starred;
 
         var avoidKeywords = config.AvoidKeywords
@@ -32,8 +32,19 @@ public static class JobOfferKeywordExtensions
 
         jobOffer.MyKeywords.AddRange(avoidKeywords);
 
-        if (avoidKeywords.Count > 0)
+        if (avoidKeywords.Count > 0 && jobOffer.HideStatus is not HideStatus.Starred)
             jobOffer.HideStatus = HideStatus.Hidden;
+    }
+
+    private static bool ShouldStar(JobOffer jobOffer, ScraperConfig config)
+    {
+        if (!config.StarMyKeywords)
+            return false;
+
+        if (jobOffer.HideStatus is HideStatus.Hidden)
+            return false;
+
+        return jobOffer.MyKeywords.Count > 0;
     }
 
     private static bool ContainKeyword(JobOffer jobOffer, string keyword)

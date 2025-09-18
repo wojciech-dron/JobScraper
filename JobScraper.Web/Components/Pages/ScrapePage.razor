@@ -51,12 +51,12 @@
                 <label>Activity:</label>
                 @if (source.Disabled)
                 {
-                    <button class="btn btn-success"
+                    <button class="btn btn-primary"
                             @onclick="() => source.Disabled = false">Enable</button>
                 }
                 else
                 {
-                    <button class="btn btn-warning"
+                    <button class="btn btn-secondary"
                             @onclick="() => source.Disabled = true">Disable</button>
                 }
             </div>
@@ -158,21 +158,32 @@
             </div>
         </div>
 
-        @if (OperatingSystem.IsLinux()) // for docker
-        {
-            <div class="col-md-6 mb-5">
-                <h4>Scheduled scraping</h4>
-                <div class="mb-1">
-                    <label for="BrowserType">Scrape cron:</label>
-                    <InputText id="ScrapeCron" @bind-Value="@config.ScrapeCron" class="form-control" />
-                </div>
-                <div class="mb-1">
-                    <button class="btn btn-success mb-3" @onclick="ScheduleScraping" disabled="@isWorking">
-                        @(scrapeJobTicker is null ? "Schedule scraping" : "Update schedule scraping")
-                    </button>
-                </div>
+
+            <div class="col-md-6 d-flex flex-column mb-5">
+                <h4>Advanced</h4>
+                @if (showAdvanced)
+                {
+                    <div class="mb-1">
+                        <label for="BrowserType">Scrape cron (beta):</label>
+                        <InputText id="ScrapeCron" @bind-Value="@config.ScrapeCron" class="form-control" />
+                    </div>
+                    <div class="mb-1">
+                        <button class="btn btn-success mb-3" @onclick="ScheduleScraping" disabled="@isWorking">
+                            @(scrapeJobTicker is null ? "Schedule scraping" : "Update schedule scraping")
+                        </button>
+                        <a href="/tickerq-dashboard">
+                            <button class="btn btn-info mb-3">Go to dashboard</button>
+                        </a>
+                        <button class="btn btn-secondary mb-3" @onclick="() => showAdvanced = false">
+                            Hide advanced
+                        </button>
+                    </div>
+                }
+                else
+                {
+                    <button class="btn btn-secondary mb-3" @onclick="() => showAdvanced = true">Show advanced</button>
+                }
             </div>
-        }
     </div>
     <ValidationSummary/>
 
@@ -211,6 +222,8 @@
         "that drastically increase scraping time.";
 
     private const string keywordsInfo = "Configured keywords will be highlighted in the Job offer list";
+
+    private bool showAdvanced;
 
     private void TrySetOrigin(SourceConfig source)
     {

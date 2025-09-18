@@ -82,7 +82,7 @@
     </PropertyColumn>
     <PropertyColumn Property="@(p => p.ExpectedMonthSalary)" Title="ExpectedSalary" Sortable="true"/>
     <PropertyColumn Property="@(p => p.Comments)" Sortable="true"/>
-    <PropertyColumn Property="@(p => p.AppliedAt)" Format="yyyy-MM-dd" Sortable="true"/>
+    <PropertyColumn Property="@(p => p.AppliedAt)" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
     <PropertyColumn Property="@(p => p.RespondedAt)" Format="yyyy-MM-dd" Sortable="true"/>
     <PropertyColumn class="col-1" Property="@(p => p.JobOffer.Origin)" Sortable="true">
         <HeaderTemplate>
