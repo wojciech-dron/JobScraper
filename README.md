@@ -42,8 +42,10 @@ I appreciate any feedback ;)
 ## Quick start with docker
 To run the app using Docker, you can use the following command:
 ```bash
-docker run -d --name jobscraper.web -p 12986:8080 -v jobscraper_data:/home/app/data combi71/jobscraper.web:latest
+docker run -d --name job-scraper -p 12986:8080 -v jobscraper_data:/home/app/data combi71/jobscraper.web:latest
 ```
+
+Sorry for its size, probably preinstalled playwright with browser.
 
 ## Local development
 
