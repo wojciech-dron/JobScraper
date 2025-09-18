@@ -1,7 +1,10 @@
 ﻿@page "/scrape"
 @rendermode InteractiveServer
+@using BlazorBootstrap
 @using JobScraper.Models
 @using Blazored.FluentValidation
+
+<Toasts class="p-3" Messages="messages" AutoHide="true" Delay="10000" Placement="ToastsPlacement.TopRight"/>
 
 <h2>Scraping</h2>
 
@@ -211,9 +214,12 @@
         <div class="spinner-border" role="status">
             <span class="sr-only"></span>
         </div>
-        <p>Do not leave this page.</p>
+        <h5>Do not leave this page. Scraping in progress...</h5>
     }
-    <h1 style="color: #00ff91">@statusMessage</h1>
+    else
+    {
+        <h5>Ready to scrape</h5>
+    }
 </div>
 
 @code
@@ -224,6 +230,15 @@
     private const string keywordsInfo = "Configured keywords will be highlighted in the Job offer list";
 
     private bool showAdvanced;
+
+    List<ToastMessage> messages = [];
+
+    private void ShowNotification(string message, ToastType toastType = ToastType.Success) =>
+        messages.Insert(0, new ToastMessage
+        {
+            Type = toastType,
+            Message = message,
+        });
 
     private void TrySetOrigin(SourceConfig source)
     {

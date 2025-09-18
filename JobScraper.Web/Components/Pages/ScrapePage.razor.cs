@@ -1,4 +1,5 @@
-﻿using Blazored.FluentValidation;
+﻿using BlazorBootstrap;
+using Blazored.FluentValidation;
 using JobScraper.Common.Extensions;
 using JobScraper.Logic.Common;
 using JobScraper.Logic.Functions;
@@ -30,7 +31,6 @@ public partial class ScrapePage
     private FluentValidationValidator validator = null!;
 
     private bool isWorking = false;
-    private string statusMessage = "Ready for scraping.";
     private ScraperConfig config = new();
     private CronTickerEntity? scrapeJobTicker;
 
@@ -68,7 +68,7 @@ public partial class ScrapePage
             return;
 
         isWorking = true;
-        statusMessage = "Saving configuration...";
+        ShowNotification("Saving configuration...");
         await UpdatePageAsync();
 
         if (config.Id == 0)
@@ -83,7 +83,7 @@ public partial class ScrapePage
         await dbContext.SaveChangesAsync();
 
         isWorking = false;
-        statusMessage = "Configuration saved successfully.";
+        ShowNotification("Configuration saved successfully.");
     }
 
     private async Task StartScraping()
@@ -94,7 +94,7 @@ public partial class ScrapePage
         await SaveConfig();
 
         isWorking = true;
-        statusMessage = "Scraping in progress...";
+        ShowNotification("Scraping in progress...");
         await UpdatePageAsync();
 
         try
@@ -107,15 +107,16 @@ public partial class ScrapePage
             var offerDetailsScrapedCount = await ScrapeDetails(sources, mediator);
 
             // Add new offers count
-            statusMessage = $"Scrape finished successfully for number of sources: {sources.Length}. New offers: {newOffersCount}. ";
-
+            var message = $"Scrape finished successfully for number of sources: {sources.Length}. New offers: {newOffersCount}. ";
             if (offerDetailsScrapedCount > 0)
-                statusMessage += $"Offer details scraped: {offerDetailsScrapedCount}";
+                message += $"Offer details scraped: {offerDetailsScrapedCount}";
+
+            ShowNotification(message);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An error occurred during the scraping process");
-            statusMessage = $"Error: {ex.Message}";
+            ShowNotification($"Error: {ex.Message}", ToastType.Danger);
         }
         finally
         {
@@ -143,7 +144,7 @@ public partial class ScrapePage
         for (int idx = 0; idx < listCommands.Length; idx++)
         {
             var command = listCommands[idx];
-            statusMessage = $"Scraping list pages of source: {idx + 1}/{listCommands.Length}";
+            ShowNotification($"Scraping list pages of source: {idx + 1}/{listCommands.Length}");
             await UpdatePageAsync();
 
             var result = await mediator.SendWithRetry(command, logger: _logger);
@@ -173,7 +174,7 @@ public partial class ScrapePage
         for (int idx = 0; idx < detailsCommands.Length; idx++)
         {
             var command = detailsCommands[idx]!;
-            statusMessage = $"Scraping details pages of source: {idx + 1}/{detailsCommands.Length}";
+            ShowNotification($"Scraping details pages of source: {idx + 1}/{detailsCommands.Length}");
             await UpdatePageAsync();
 
             var result = await mediator.SendWithRetry(command, logger: _logger);
@@ -197,7 +198,7 @@ public partial class ScrapePage
         await SaveConfig();
 
         isWorking = true;
-        statusMessage = "Refreshing offers in progress...";
+        ShowNotification("Refreshing offers in progress...");
         await UpdatePageAsync();
 
         try
@@ -206,12 +207,12 @@ public partial class ScrapePage
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
             var result = await mediator.Send(new RefreshKeywordsOnOffers.Command());
 
-            statusMessage = $"Refreshing offers finished successfully with {result.ChangeCount} updates.";
+            ShowNotification($"Refreshing offers finished successfully with {result.ChangeCount} updates.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An error occurred during the refreshing offers");
-            statusMessage = $"Error: {ex.Message}";
+            ShowNotification($"Error: {ex.Message}");
         }
         finally
         {
@@ -224,7 +225,7 @@ public partial class ScrapePage
     {
         if (string.IsNullOrEmpty(config.ScrapeCron))
         {
-            statusMessage = "Please configure the cron expression before scheduling;";
+            ShowNotification("Please configure the cron expression before scheduling;", ToastType.Warning);
             return;
         }
 
@@ -254,7 +255,7 @@ public partial class ScrapePage
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Function == "ScrapeJobs");
 
-        statusMessage = "Scraping scheduled correctly.";
+        ShowNotification("Scraping scheduled correctly.");
         isWorking = false;
     }
 }
