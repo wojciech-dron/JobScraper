@@ -1,9 +1,11 @@
 ﻿@page "/scrape"
-@rendermode InteractiveServer
 @using BlazorBootstrap
 @using JobScraper.Models
 @using Blazored.FluentValidation
+@using Microsoft.EntityFrameworkCore
 
+<NavigationLock ConfirmExternalNavigation="@PreventNavigation"
+                OnBeforeInternalNavigation="OnBeforeInternalNavigation" />
 <Toasts class="p-3" Messages="messages" AutoHide="true" Delay="10000" Placement="ToastsPlacement.TopRight"/>
 
 <h2>Scraping</h2>
@@ -246,5 +248,17 @@
     {
         var dataOrigin = DataOriginHelpers.GetDataOriginByUrl(source.SearchUrl);
         source.DataOrigin = dataOrigin ?? source.DataOrigin;
+    }
+
+    private bool PreventNavigation => isWorking || dbContext.Entry(config).State == EntityState.Modified;
+
+    private async Task OnBeforeInternalNavigation(LocationChangingContext ctx)
+    {
+        if (!PreventNavigation)
+            return;
+
+        var confirm = await _js.InvokeAsync<bool>("confirm", "Do you want to leave and loose your changes?");
+        if (!confirm)
+            ctx.PreventNavigation();
     }
 }

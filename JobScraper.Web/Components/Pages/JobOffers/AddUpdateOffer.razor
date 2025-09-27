@@ -1,11 +1,13 @@
 ﻿@page "/add-offer"
 @page "/edit-offer/{OfferUrl}"
-@rendermode InteractiveServer
 @using JobScraper.Models
 @using JobScraper.Persistence
 @using Microsoft.EntityFrameworkCore
 @using Blazored.FluentValidation
 @using JobScraper.Web.Validators
+
+<NavigationLock ConfirmExternalNavigation="@PreventNavigation"
+                OnBeforeInternalNavigation="OnBeforeInternalNavigation"/>
 
 <PageTitle>@(isEdit ? "Edit Job Offer" : "Add Job Offer")</PageTitle>
 
@@ -125,7 +127,7 @@
 
 @inject IDbContextFactory<JobsDbContext> DbContextFactory
 @inject NavigationManager NavigationManager
-@inject JobOfferValidator JobOfferValidator
+@inject IJSRuntime Js
 
 @code {
     [Parameter]
@@ -133,7 +135,7 @@
 
     private bool isEdit => !string.IsNullOrEmpty(OfferUrl);
     private bool limitEdit => isEdit && jobOffer.Origin != DataOrigin.Manual; // limit scraped update
-    private JobsDbContext _context = null!;
+    private JobsDbContext _dbContext = null!;
 
     private JobOffer jobOffer = new()
     {
@@ -148,12 +150,12 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _context = await DbContextFactory.CreateDbContextAsync();
+        _dbContext = await DbContextFactory.CreateDbContextAsync();
 
         if (!isEdit)
             return;
 
-        var existingOffer = await _context.JobOffers
+        var existingOffer = await _dbContext.JobOffers
             .Include(j => j.Company)
             .FirstOrDefaultAsync(j => j.OfferUrl == OfferUrl);
 
@@ -172,9 +174,9 @@
         jobOffer.Company = await ResolveCompany(jobOffer.CompanyName!);
 
         if (!isEdit)
-            await _context.AddAsync(jobOffer);
+            await _dbContext.AddAsync(jobOffer);
 
-        await _context.SaveChangesAsync();
+        await _dbContext.SaveChangesAsync();
 
         // Navigate back to the job offers list
         NavigationManager.NavigateTo("/");
@@ -182,7 +184,7 @@
 
     private async Task<Company> ResolveCompany(string companyName)
     {
-        var company = await _context.Companies.FindAsync(companyName);
+        var company = await _dbContext.Companies.FindAsync(companyName);
         if (company is not null)
             return company;
 
@@ -191,7 +193,7 @@
             Name = companyName
         };
 
-        await _context.Companies.AddAsync(company);
+        await _dbContext.Companies.AddAsync(company);
 
         return company;
     }
@@ -206,5 +208,18 @@
             .Select(k => k.Trim())
             .Where(k => !string.IsNullOrWhiteSpace(k))
             .ToList();
+    }
+
+
+    private bool PreventNavigation => !isEdit || _dbContext.Entry(jobOffer).State is EntityState.Modified;
+
+    private async Task OnBeforeInternalNavigation(LocationChangingContext ctx)
+    {
+        if (!PreventNavigation)
+            return;
+
+        var confirm = await Js.InvokeAsync<bool>("confirm", "Do you want to leave and loose your changes?");
+        if (!confirm)
+            ctx.PreventNavigation();
     }
 }

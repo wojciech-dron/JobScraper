@@ -14,6 +14,7 @@ using JobScraper.Persistence;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.JSInterop;
 using TickerQ.EntityFrameworkCore.Entities;
 using TickerQ.Utilities.Interfaces.Managers;
 using TickerQ.Utilities.Models.Ticker;
@@ -24,6 +25,7 @@ public partial class ScrapePage
 {
     private readonly IDbContextFactory<JobsDbContext> _dbFactory;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IJSRuntime _js;
     private readonly ICronTickerManager<CronTicker> _cronTickerManager;
     private readonly ILogger<ScrapePage> _logger;
     private readonly AppSettings appSettings;
@@ -36,12 +38,14 @@ public partial class ScrapePage
 
     public ScrapePage(IDbContextFactory<JobsDbContext> dbFactory,
         IServiceProvider serviceProvider,
+        IJSRuntime js,
         ICronTickerManager<CronTicker> cronTickerManager,
         IOptions<AppSettings> appSettings,
         ILogger<ScrapePage> logger)
     {
         _dbFactory = dbFactory;
         _serviceProvider = serviceProvider;
+        _js = js;
         _cronTickerManager = cronTickerManager;
         this.appSettings = appSettings.Value;
         _logger = logger;

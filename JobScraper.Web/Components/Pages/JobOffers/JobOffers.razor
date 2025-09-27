@@ -1,5 +1,4 @@
 ﻿@page "/"
-@rendermode InteractiveServer
 @using System.Web
 @using JobScraper.Common.Extensions
 @using JobScraper.Models
@@ -214,7 +213,6 @@
 <ApplicationOfferModal @ref="_applicationOfferModal" ShowHideButton OnUpdate="@(() => grid.RefreshDataAsync())"/>
 
 @inject IDbContextFactory<JobsDbContext> DbFactory
-@inject NavigationManager NavigationManager
 
 @code {
     QuickGrid<JobOffer> grid = null!;
