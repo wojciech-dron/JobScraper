@@ -1,3 +1,8 @@
+## v0.3.1
+- Refresh keywords fix
+- Navigation lock on scraping/editing
+- Minor UI/UX improvements
+
 ## v0.3
 - Fixed Just join it, RocketJobs and NoFluffJobs to new layout
 - Added toasts
