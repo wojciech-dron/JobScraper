@@ -68,7 +68,6 @@ public partial class ScrapePage
             return;
 
         isWorking = true;
-        ShowNotification("Saving configuration...");
         await UpdatePageAsync();
 
         if (config.Id == 0)
@@ -83,7 +82,7 @@ public partial class ScrapePage
         await dbContext.SaveChangesAsync();
 
         isWorking = false;
-        ShowNotification("Configuration saved successfully.");
+        ShowNotification("Configuration saved successfully."); // Disabled notification as requested
     }
 
     private async Task StartScraping()

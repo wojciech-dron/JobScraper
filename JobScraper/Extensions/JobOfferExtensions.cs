@@ -3,7 +3,7 @@ using JobScraper.Models;
 
 namespace JobScraper.Extensions;
 
-public static class JobOfferKeywordExtensions
+public static class JobOfferExtensions
 {
     public static string SetDefaultDescription(this JobOffer jobOffer)
     {
@@ -32,7 +32,7 @@ public static class JobOfferKeywordExtensions
 
         jobOffer.MyKeywords.AddRange(avoidKeywords);
 
-        if (avoidKeywords.Count > 0 && jobOffer.HideStatus is not HideStatus.Starred)
+        if (ShouldHide(jobOffer, avoidKeywords))
             jobOffer.HideStatus = HideStatus.Hidden;
     }
 
@@ -41,10 +41,21 @@ public static class JobOfferKeywordExtensions
         if (!config.StarMyKeywords)
             return false;
 
-        if (jobOffer.HideStatus is HideStatus.Hidden)
+        if (jobOffer.HideStatus is not HideStatus.Regular)
             return false;
 
         return jobOffer.MyKeywords.Count > 0;
+    }
+
+    private static bool ShouldHide(JobOffer jobOffer, List<string> avoidKeywords)
+    {
+        if (jobOffer.HideStatus is not HideStatus.Regular)
+            return false;
+
+        if (avoidKeywords.Count == 0)
+            return false;
+
+        return true;
     }
 
     private static bool ContainKeyword(JobOffer jobOffer, string keyword)
