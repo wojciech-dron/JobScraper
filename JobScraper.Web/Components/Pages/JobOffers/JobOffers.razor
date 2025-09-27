@@ -258,7 +258,7 @@
         dbContext = await DbFactory.CreateDbContextAsync();
         var scraperConfig = await dbContext.ScraperConfigs.FirstOrDefaultAsync();
 
-        myKeywordsOptions = scraperConfig?.MyKeywords ?? [];
+        myKeywordsOptions = [..scraperConfig?.MyKeywords ?? [], ..scraperConfig?.AvoidKeywords ?? []];
         currencyOptions = await dbContext.JobOffers
             .Select(jo => jo.SalaryCurrency!)
             .Where(c => !string.IsNullOrEmpty(c))
