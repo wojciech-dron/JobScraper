@@ -4,24 +4,13 @@ using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 using Polly;
 using Polly.Retry;
+
 // ReSharper disable VirtualMemberCallInConstructor
 
 namespace JobScraper.Logic.Common;
 
 public abstract class ScrapperBase : IDisposable
 {
-    protected readonly AppSettings AppSettings;
-    protected readonly JobsDbContext DbContext;
-    protected readonly ScraperConfig ScrapeConfig;
-    protected readonly SourceConfig Source;
-    protected readonly ILogger<ScrapperBase> Logger;
-    private IPlaywright? _playwright;
-    private IBrowser? _browser;
-
-    protected abstract DataOrigin DataOrigin { get; }
-
-    public bool IsEnabled { get; }
-    public string BaseUrl { get; }
 
     private static readonly string[] UserAgentStrings =
     [
@@ -36,21 +25,52 @@ public abstract class ScrapperBase : IDisposable
     public static readonly AsyncRetryPolicy<JobOffer> RetryPolicy =
         Policy<JobOffer>.Handle<Exception>()
             .WaitAndRetryAsync(1, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
+    protected readonly AppSettings AppSettings;
+    protected readonly JobsDbContext DbContext;
+    protected readonly ILogger<ScrapperBase> Logger;
+    protected readonly ScraperConfig ScrapeConfig;
+    protected readonly SourceConfig Source;
+    private IBrowser? _browser;
+    private IPlaywright? _playwright;
+
+    protected abstract DataOrigin DataOrigin { get; }
+
+    public bool IsEnabled { get; }
+    public string BaseUrl { get; }
 
     public ScrapperBase(IOptions<AppSettings> appSettings,
-        ILogger<ScrapperBase> logger, JobsDbContext dbContext)
+        ILogger<ScrapperBase> logger,
+        JobsDbContext dbContext)
     {
         AppSettings = appSettings.Value;
         DbContext = dbContext;
         Logger = logger;
         ScrapeConfig = DbContext.ScraperConfigs.First();
-        Source = ScrapeConfig.Sources.FirstOrDefault(x => x.DataOrigin == DataOrigin) ?? new();
+        Source = ScrapeConfig.Sources.FirstOrDefault(x => x.DataOrigin == DataOrigin) ?? new SourceConfig();
         IsEnabled = ScrapeConfig.IsEnabled(DataOrigin);
 
         var uri = new Uri(Source.SearchUrl);
         BaseUrl = $"{uri.Scheme}://{uri.Host}";
     }
 
+
+#pragma warning disable CA1862, CA2012, CA1816
+    public void Dispose()
+    {
+        if (_playwright is not null)
+        {
+            _playwright.Dispose();
+            _playwright = null;
+        }
+
+        if (_browser is not null)
+        {
+            _browser.DisposeAsync().GetAwaiter().GetResult();
+            _browser = null;
+        }
+    }
+
+#pragma warning restore CA1862, CA2012, CA1816
     public async Task<IPage> NewPageAsync()
     {
         Dispose();
@@ -65,26 +85,26 @@ public abstract class ScrapperBase : IDisposable
             BrowserTypeEnum.Chromium => _playwright.Chromium,
             BrowserTypeEnum.Firefox  => _playwright.Firefox,
             BrowserTypeEnum.Webkit   => _playwright.Webkit,
-            _                        => throw new ArgumentOutOfRangeException(nameof(ScrapeConfig.BrowserType))
+            _                        => throw new ArgumentOutOfRangeException(nameof(ScrapeConfig.BrowserType)),
         };
 
         _browser = await browserType.LaunchAsync(new BrowserTypeLaunchOptions
         {
-            Headless = !ScrapeConfig.ShowBrowserWhenScraping
+            Headless = !ScrapeConfig.ShowBrowserWhenScraping,
         });
 
-        return await _browser.NewPageAsync(new()
+        return await _browser.NewPageAsync(new BrowserNewPageOptions
         {
-            UserAgent = UserAgentStrings[Random.Shared.Next() % UserAgentStrings.Length]
+            UserAgent = UserAgentStrings[Random.Shared.Next() % UserAgentStrings.Length],
         });
     }
 
     public void Install()
     {
-        var num = Microsoft.Playwright.Program.Main([
+        var num = Program.Main([
             "install",
             "--with-deps",
-            ScrapeConfig.BrowserType.ToString().ToLower()
+            ScrapeConfig.BrowserType.ToString().ToLower(),
         ]);
 
         if (num != 0)
@@ -108,7 +128,10 @@ public abstract class ScrapperBase : IDisposable
 
         path = PrepareDestination(path);
 
-        var screenshot = await page.ScreenshotAsync(new() { FullPage = true });
+        var screenshot = await page.ScreenshotAsync(new PageScreenshotOptions
+        {
+            FullPage = true,
+        });
         await File.WriteAllBytesAsync(path, screenshot);
     }
 
@@ -160,10 +183,12 @@ public abstract class ScrapperBase : IDisposable
 
             if (retryAttempts > 0)
             {
-                await page.Mouse.MoveAsync(200, 200, options: new MouseMoveOptions()
-                {
-                    Steps = 5,
-                });
+                await page.Mouse.MoveAsync(200,
+                    200,
+                    new MouseMoveOptions
+                    {
+                        Steps = 5,
+                    });
                 await SavePage(page, Path.Combine($"{DataOrigin}", "error", $"{DateTime.Now:hh_mm}.html"));
             }
 
@@ -174,21 +199,5 @@ public abstract class ScrapperBase : IDisposable
             throw new ApplicationException("Retry attempts exceeded");
 
         return page;
-    }
-
-
-    public void Dispose()
-    {
-        if (_playwright is not null)
-        {
-            _playwright.Dispose();
-            _playwright = null;
-        }
-
-        if (_browser is not null)
-        {
-            _browser.DisposeAsync().GetAwaiter().GetResult();
-            _browser = null;
-        }
     }
 }

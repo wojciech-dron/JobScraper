@@ -1,7 +1,7 @@
 ﻿using JobScraper.Models;
-using JobScraper.Persistence.Interceptors;
 using Microsoft.EntityFrameworkCore;
 using TickerQ.EntityFrameworkCore.Configurations;
+using TickerQ.Utilities.Entities;
 
 namespace JobScraper.Persistence;
 
@@ -14,7 +14,7 @@ public class JobsDbContext : DbContext
 
     public JobsDbContext(DbContextOptions<JobsDbContext> options) : base(options)
     { }
-    
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new JobOfferModelBuilder());
@@ -22,9 +22,8 @@ public class JobsDbContext : DbContext
         modelBuilder.ApplyConfiguration(new ApplicationModelBuilder());
         modelBuilder.ApplyConfiguration(new ScraperConfigModelBuilder());
 
-        modelBuilder.ApplyConfiguration(new TimeTickerConfigurations(schema: "jobs"));
-        modelBuilder.ApplyConfiguration(new CronTickerConfigurations(schema: "jobs"));
-        modelBuilder.ApplyConfiguration(new CronTickerOccurrenceConfigurations(schema: "jobs"));
-
+        modelBuilder.ApplyConfiguration(new TimeTickerConfigurations<TimeTickerEntity>(schema: "jobs"));
+        modelBuilder.ApplyConfiguration(new CronTickerConfigurations<CronTickerEntity>(schema: "jobs"));
+        modelBuilder.ApplyConfiguration(new CronTickerOccurrenceConfigurations<CronTickerEntity>(schema: "jobs"));
     }
 }

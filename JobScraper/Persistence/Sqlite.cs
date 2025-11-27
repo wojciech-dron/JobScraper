@@ -14,8 +14,7 @@ public static class Sqlite
                 .GetRequiredService<IConfiguration>()
                 .GetConnectionString("DefaultConnection")!;
 
-            if (string.IsNullOrEmpty(connectionString))
-                throw new ArgumentNullException(nameof(connectionString));
+            ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
 
             options
                 .UseSqlite(connectionString)

@@ -10,9 +10,7 @@ public static class JobOfferExtensions
         var stringBuilder = new StringBuilder();
 
         foreach (var keyword in jobOffer.OfferKeywords)
-        {
             stringBuilder.AppendLine(keyword);
-        }
 
         return stringBuilder.ToString();
     }
@@ -63,6 +61,7 @@ public static class JobOfferExtensions
         if (jobOffer.Title!.Contains(keyword, StringComparison.OrdinalIgnoreCase))
             return true;
 
+#pragma warning disable CA1862
         if (jobOffer.OfferKeywords.Any(k => k.ToLower() == keyword.ToLower()))
             return true;
 

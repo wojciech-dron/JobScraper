@@ -1,0 +1,14 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>Minimum</AnalysisMode>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <NoWarn>CS1591</NoWarn>  <!-- Missing XML comment -->
+  </PropertyGroup>
+</Project>

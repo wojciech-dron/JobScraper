@@ -1,5 +1,4 @@
-﻿using System.Globalization;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using JobScraper.Logic.Common;
 using JobScraper.Models;
@@ -15,19 +14,18 @@ public class OlxListScraper
 
     public class Handler : ListScraperBase<Command>
     {
+
+        protected override DataOrigin DataOrigin => DataOrigin.Olx;
         public Handler(IOptions<AppSettings> config,
             ILogger<Handler> logger,
             JobsDbContext dbContext)
             : base(config, logger, dbContext)
         { }
 
-        protected override DataOrigin DataOrigin => DataOrigin.Olx;
-
         public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs(SourceConfig sourceConfig)
         {
             var searchUrl = sourceConfig.SearchUrl;
-            if (string.IsNullOrEmpty(searchUrl))
-                throw new ArgumentException("SearchUrl is null or empty", nameof(searchUrl));
+            ArgumentException.ThrowIfNullOrWhiteSpace(searchUrl, nameof(searchUrl));
 
             Logger.LogInformation("{DataOrigin} scraping for url {SearchUrl}", DataOrigin, searchUrl);
 
@@ -77,34 +75,26 @@ public class OlxListScraper
             Logger.LogInformation("{DataOrigin} - scrapping complete", DataOrigin);
         }
 
-        record JobData(
-            string Title,
-            string Url,
-            string? CompanyName,
-            Stack<string> FirstRowData,
-            List<string> SecondRowData
-        );
-
         private async Task<List<JobOffer>> ScrapeJobsFromList(IPage page)
         {
             var result = await page.EvaluateAsync<string>(
                 """
                 () => {
                     const offersContainers = document.querySelectorAll('div.jobs-ad-card');
-                    
-                    const results = Array.from(offersContainers).map(offer => {        
+
+                    const results = Array.from(offersContainers).map(offer => {
                         const titleContainer = [...offer.querySelectorAll('div > div > a')].at(-1);
                         const firstRow = offer.querySelector('div:nth-child(2) > div > div');
                         const secondRow = offer.querySelector('div:nth-child(2) > div > div:nth-child(2)');
-                
-                        const data = {        
+
+                        const data = {
                             Title: titleContainer?.textContent,
                             Url: titleContainer?.getAttribute('href')?.trim(),
                             CompanyName: titleContainer.parentNode.querySelector('p')?.textContent?.trim(),
                             FirstRowData: [...firstRow.querySelectorAll('div > div > p')].map(p => p.textContent?.trim()).reverse(),
                             SecondRowData: [...secondRow.querySelectorAll('button')].map(p => p.textContent?.trim()),
                         };
-                        
+
                         return data;
                     });
                     console.log(results);
@@ -147,16 +137,22 @@ public class OlxListScraper
             return jobs;
         }
 
-        private string GetDescription(JobOffer jobOffer)
+        private static string GetDescription(JobOffer jobOffer)
         {
             var stringBuilder = new StringBuilder();
 
             foreach (var keyword in jobOffer.OfferKeywords)
-            {
                 stringBuilder.AppendLine(keyword);
-            }
 
             return stringBuilder.ToString();
         }
+
+        private record JobData(
+            string Title,
+            string Url,
+            string? CompanyName,
+            Stack<string> FirstRowData,
+            List<string> SecondRowData
+        );
     }
 }

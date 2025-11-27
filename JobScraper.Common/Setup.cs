@@ -42,7 +42,7 @@ public static class Setup
                 .GetCustomAttributes(typeof(TargetFrameworkAttribute), false)
                 .FirstOrDefault() is TargetFrameworkAttribute targetFrameworkAttribute)
         {
-            return "net" + targetFrameworkAttribute.FrameworkName[^3..];
+            return "net" + targetFrameworkAttribute.FrameworkName.Split("=v").Last();
         }
 
         throw new InvalidOperationException("Target framework attribute not found.");

@@ -1,6 +1,7 @@
 ﻿using JobScraper.Persistence;
 using TickerQ.Dashboard.DependencyInjection;
 using TickerQ.DependencyInjection;
+using TickerQ.EntityFrameworkCore.Customizer;
 using TickerQ.EntityFrameworkCore.DependencyInjection;
 using TickerQ.Utilities.Enums;
 
@@ -12,19 +13,25 @@ public static class Setup
         IConfiguration configuration)
     {
         // services.AddScoped<JobsExceptionHandler>();
-        services.AddTickerQ(opt =>
+        services.AddTickerQ(options =>
         {
-            opt.SetExceptionHandler<JobsExceptionHandler>();
-
-            opt.AddOperationalStore<JobsDbContext>(efOpt =>
+            options.SetExceptionHandler<JobsExceptionHandler>();
+            options.ConfigureScheduler(scheduler =>
             {
-                efOpt.UseModelCustomizerForMigrations();
-                efOpt.CancelMissedTickersOnAppStart();
+                scheduler.MaxConcurrency = 10;                         // Maximum concurrent worker threads
+                scheduler.NodeIdentifier = "production-server-01";     // Unique node identifier
+                scheduler.IdleWorkerTimeOut = TimeSpan.FromMinutes(1); // Idle worker timeout
+                scheduler.SchedulerTimeZone = TimeZoneInfo.Utc;        // Timezone for scheduling
             });
 
-            opt.AddDashboard(dbopt =>
+            options.AddOperationalStore(efOptions =>
             {
-                dbopt.BasePath = "/tickerq-dashboard";
+                efOptions.UseApplicationDbContext<JobsDbContext>(ConfigurationType.UseModelCustomizer);
+            });
+
+            options.AddDashboard(dbopt =>
+            {
+                dbopt.SetBasePath("/tickerq-dashboard");
             });
         });
 
@@ -33,8 +40,7 @@ public static class Setup
 
     public static IApplicationBuilder UseJobs(this IApplicationBuilder app)
     {
-        app.UseTickerQ(qStartMode: TickerQStartMode.Immediate);
-
+        app.UseTickerQ(TickerQStartMode.Immediate);
         return app;
     }
 }

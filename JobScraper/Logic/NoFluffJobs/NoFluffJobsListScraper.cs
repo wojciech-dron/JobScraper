@@ -15,19 +15,18 @@ public partial class NoFluffJobsListScraper
 
     public partial class Handler : ListScraperBase<Command>
     {
+
+        protected override DataOrigin DataOrigin => DataOrigin.NoFluffJobs;
         public Handler(IOptions<AppSettings> config,
             ILogger<Handler> logger,
             JobsDbContext dbContext)
             : base(config, logger, dbContext)
         { }
 
-        protected override DataOrigin DataOrigin => DataOrigin.NoFluffJobs;
-
         public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs(SourceConfig sourceConfig)
         {
             var searchUrl = sourceConfig.SearchUrl;
-            if (string.IsNullOrEmpty(searchUrl))
-                throw new ArgumentException("SearchUrl is null or empty", nameof(searchUrl));
+            ArgumentException.ThrowIfNullOrWhiteSpace(searchUrl, nameof(searchUrl));
 
             Logger.LogInformation("{DataOrigin} scraping for url {SearchUrl}", DataOrigin, searchUrl);
 
@@ -57,7 +56,7 @@ public partial class NoFluffJobsListScraper
                         if (!button) {
                             return false;
                         }
-                       
+
                         button.click();
                         return true;
                     }
@@ -81,15 +80,6 @@ public partial class NoFluffJobsListScraper
 
             Logger.LogInformation("{DataOrigin} - scrapping complete", DataOrigin);
         }
-
-        record JobData(
-            string Title,
-            string Url,
-            string CompanyName,
-            string Location,
-            string Salary,
-            List<string> OfferKeywords
-        );
 
         private async Task<List<JobOffer>> ScrapeJobsFromList(IPage page)
         {
@@ -135,5 +125,14 @@ public partial class NoFluffJobsListScraper
 
         [GeneratedRegex(@"^(\d+)–(\d+)([A-Z]+)$")]
         private static partial Regex SalaryRegex();
+
+        private record JobData(
+            string Title,
+            string Url,
+            string CompanyName,
+            string Location,
+            string Salary,
+            List<string> OfferKeywords
+        );
     }
 }

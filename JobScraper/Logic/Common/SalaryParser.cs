@@ -72,7 +72,7 @@ public partial class SalaryParser
         input = input.Replace(" ", "");
 
         // First, check if there's a range with '–' character
-        if (input.Contains("–"))
+        if (input.Contains('-'))
         {
             var parts = input.Split('–');
             if (parts.Length >= 2)

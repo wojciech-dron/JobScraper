@@ -15,20 +15,21 @@ public class RocketJobsListScraper
 
     public class Handler : ListScraperBase<Command>
     {
+
+        protected override DataOrigin DataOrigin => DataOrigin.RocketJobs;
         public Handler(IOptions<AppSettings> config,
             ILogger<Handler> logger,
             JobsDbContext dbContext)
             : base(config, logger, dbContext)
         { }
 
-        protected override DataOrigin DataOrigin => DataOrigin.RocketJobs;
-
         public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs(SourceConfig sourceConfig)
         {
             var searchUrl = sourceConfig.SearchUrl;
             Logger.LogInformation("{DataOrigin} scraping for url {SearchUrl}", DataOrigin, searchUrl);
 
-            var page = await LoadUntilAsync(searchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds,
+            var page = await LoadUntilAsync(searchUrl,
+                waitSeconds: ScrapeConfig.WaitForListSeconds,
                 successCondition: async p => (await p.QuerySelectorAllAsync("li")).Count > 6);
 
             await AcceptCookies(page);
@@ -80,15 +81,6 @@ public class RocketJobsListScraper
             await page.WaitForTimeoutAsync(1 * 1000);
         }
 
-        record JobData(
-            string Title,
-            string Url,
-            string CompanyName,
-            string Location,
-            string Salary,
-            List<string> OfferKeywords
-        );
-
         private async Task<List<JobOffer>> ScrapeJobsFromList(IPage page)
         {
             var script = await ScrapeHelpers.GetJsScript("JobScraper.Logic.Jjit.jjit-list.js"); // yes, jjit, same layout
@@ -135,11 +127,20 @@ public class RocketJobsListScraper
                 return;
 
             var period = SalaryPeriod.Month;
-            if (rawSalary.Contains("h")) period = SalaryPeriod.Hour;
+            if (rawSalary.Contains('h')) period = SalaryPeriod.Hour;
 
             job.SalaryMinMonth = int.Parse(minMaxMatch.Groups[1].Value).ApplyMonthPeriod(period);
             job.SalaryMaxMonth = int.Parse(minMaxMatch.Groups[2].Value).ApplyMonthPeriod(period);
             job.SalaryCurrency = currencyMatch.Value;
         }
+
+        private record JobData(
+            string Title,
+            string Url,
+            string CompanyName,
+            string Location,
+            string Salary,
+            List<string> OfferKeywords
+        );
     }
 }

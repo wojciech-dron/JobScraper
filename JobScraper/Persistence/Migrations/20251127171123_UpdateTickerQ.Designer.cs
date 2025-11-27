@@ -3,6 +3,7 @@ using System;
 using JobScraper.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace JobScraper.Migrations
 {
     [DbContext(typeof(JobsDbContext))]
-    partial class JobsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251127171123_UpdateTickerQ")]
+    partial class UpdateTickerQ
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.0");

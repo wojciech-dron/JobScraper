@@ -15,31 +15,30 @@ using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
-using TickerQ.EntityFrameworkCore.Entities;
+using TickerQ.Utilities.Entities;
 using TickerQ.Utilities.Interfaces.Managers;
-using TickerQ.Utilities.Models.Ticker;
 
 namespace JobScraper.Web.Components.Pages;
 
 public partial class ScrapePage
 {
+    private readonly ICronTickerManager<CronTickerEntity> _cronTickerManager;
     private readonly IDbContextFactory<JobsDbContext> _dbFactory;
-    private readonly IServiceProvider _serviceProvider;
     private readonly IJSRuntime _js;
-    private readonly ICronTickerManager<CronTicker> _cronTickerManager;
     private readonly ILogger<ScrapePage> _logger;
+    private readonly IServiceProvider _serviceProvider;
     private readonly AppSettings appSettings;
-    private JobsDbContext dbContext = null!;
-    private FluentValidationValidator validator = null!;
-
-    private bool isWorking = false;
     private ScraperConfig config = new();
+    private JobsDbContext dbContext = null!;
+
+    private bool isWorking;
     private CronTickerEntity? scrapeJobTicker;
+    private FluentValidationValidator validator = null!;
 
     public ScrapePage(IDbContextFactory<JobsDbContext> dbFactory,
         IServiceProvider serviceProvider,
         IJSRuntime js,
-        ICronTickerManager<CronTicker> cronTickerManager,
+        ICronTickerManager<CronTickerEntity> cronTickerManager,
         IOptions<AppSettings> appSettings,
         ILogger<ScrapePage> logger)
     {
@@ -75,13 +74,9 @@ public partial class ScrapePage
         await UpdatePageAsync();
 
         if (config.Id == 0)
-        {
             dbContext.Add(config);
-        }
         else
-        {
             dbContext.Update(config);
-        }
 
         await dbContext.SaveChangesAsync();
 
@@ -134,17 +129,35 @@ public partial class ScrapePage
             .Where(s => !s.Disabled)
             .Select<SourceConfig, ScrapeCommand>(source => source.DataOrigin switch
             {
-                DataOrigin.Indeed      => new IndeedListScraper.Command { Source = source },
-                DataOrigin.JustJoinIt  => new JjitListScraper.Command { Source = source },
-                DataOrigin.NoFluffJobs => new NoFluffJobsListScraper.Command { Source = source },
-                DataOrigin.PracujPl    => new PracujPlListScraper.Command { Source = source },
-                DataOrigin.RocketJobs  => new RocketJobsListScraper.Command { Source = source },
-                DataOrigin.Olx         => new OlxListScraper.Command { Source = source },
-                _                      => throw new ArgumentOutOfRangeException($"List scraping not implemented for {source}")
+                DataOrigin.Indeed => new IndeedListScraper.Command
+                {
+                    Source = source,
+                },
+                DataOrigin.JustJoinIt => new JjitListScraper.Command
+                {
+                    Source = source,
+                },
+                DataOrigin.NoFluffJobs => new NoFluffJobsListScraper.Command
+                {
+                    Source = source,
+                },
+                DataOrigin.PracujPl => new PracujPlListScraper.Command
+                {
+                    Source = source,
+                },
+                DataOrigin.RocketJobs => new RocketJobsListScraper.Command
+                {
+                    Source = source,
+                },
+                DataOrigin.Olx => new OlxListScraper.Command
+                {
+                    Source = source,
+                },
+                _ => throw new ArgumentOutOfRangeException($"List scraping not implemented for {source}"),
             }).ToArray();
 
         var offersCount = 0;
-        for (int idx = 0; idx < listCommands.Length; idx++)
+        for (var idx = 0; idx < listCommands.Length; idx++)
         {
             var command = listCommands[idx];
             ShowNotification($"Scraping list pages of source: {idx + 1}/{listCommands.Length}");
@@ -163,18 +176,30 @@ public partial class ScrapePage
             .Where(s => !s.Disabled)
             .Select<SourceConfig, ScrapeCommand?>(source => source.DataOrigin switch
             {
-                DataOrigin.Indeed      => new IndeedDetailsScraper.Command { Source = source },
-                DataOrigin.JustJoinIt  => new JjitDetailsScraper.Command { Source = source },
-                DataOrigin.NoFluffJobs => new NoFluffJobsDetailsScraper.Command { Source = source },
-                DataOrigin.RocketJobs  => new RocketJobsDetailsScraper.Command { Source = source },
-                DataOrigin.PracujPl    => null,
-                DataOrigin.Olx         => null,
-                _ => throw new ArgumentOutOfRangeException($"List scraping not implemented for {source}")
+                DataOrigin.Indeed => new IndeedDetailsScraper.Command
+                {
+                    Source = source,
+                },
+                DataOrigin.JustJoinIt => new JjitDetailsScraper.Command
+                {
+                    Source = source,
+                },
+                DataOrigin.NoFluffJobs => new NoFluffJobsDetailsScraper.Command
+                {
+                    Source = source,
+                },
+                DataOrigin.RocketJobs => new RocketJobsDetailsScraper.Command
+                {
+                    Source = source,
+                },
+                DataOrigin.PracujPl => null,
+                DataOrigin.Olx      => null,
+                _                   => throw new ArgumentOutOfRangeException($"List scraping not implemented for {source}"),
             }).Where(c => c is not null)
             .ToArray();
 
         var offersCount = 0;
-        for (int idx = 0; idx < detailsCommands.Length; idx++)
+        for (var idx = 0; idx < detailsCommands.Length; idx++)
         {
             var command = detailsCommands[idx]!;
             ShowNotification($"Scraping details pages of source: {idx + 1}/{detailsCommands.Length}");
@@ -245,13 +270,13 @@ public partial class ScrapePage
             scrapeJobTicker = null;
         }
 
-        await _cronTickerManager.AddAsync(new CronTicker
+        await _cronTickerManager.AddAsync(new CronTickerEntity
         {
             Expression = config.ScrapeCron,
             Function = "ScrapeJobs",
             Description = "Scheduled in ScrapePage",
             Retries = 1,
-            RetryIntervals = [20] // set in seconds
+            RetryIntervals = [20], // set in seconds
         });
 
         scrapeJobTicker = await dbContext.Set<CronTickerEntity>()
@@ -262,4 +287,3 @@ public partial class ScrapePage
         isWorking = false;
     }
 }
-

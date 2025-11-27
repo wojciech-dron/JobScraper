@@ -14,10 +14,7 @@ public class RefreshKeywordsOnOffers
     public class Handler : IRequestHandler<Command, Result>
     {
         private readonly JobsDbContext _dbContext;
-        public Handler(JobsDbContext dbContext)
-        {
-            _dbContext = dbContext;
-        }
+        public Handler(JobsDbContext dbContext) => _dbContext = dbContext;
 
         public async ValueTask<Result> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -36,7 +33,7 @@ public class RefreshKeywordsOnOffers
                     .Take(batchSize)
                     .ToListAsync(cancellationToken);
 
-                if (!offers.Any())
+                if (offers.Count == 0)
                     break;
 
                 foreach (var offer in offers)

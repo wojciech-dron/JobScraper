@@ -13,13 +13,13 @@ public class IndeedDetailsScraper
 
     public class Handler : DetailsScrapperBase<Command>
     {
+
+        protected override DataOrigin DataOrigin => DataOrigin.Indeed;
         public Handler(IOptions<AppSettings> config,
             ILogger<Handler> logger,
             JobsDbContext dbContext)
             : base(config, logger, dbContext)
         { }
-
-        protected override DataOrigin DataOrigin => DataOrigin.Indeed;
 
         public override async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
         {
@@ -74,7 +74,7 @@ public class IndeedDetailsScraper
             job.SalaryCurrency = "USD";
         }
 
-        private async Task ScrapDescription(JobOffer jobOffer, IPage page)
+        private static async Task ScrapDescription(JobOffer jobOffer, IPage page)
         {
             var jobDescription = await page.EvaluateAsync<string>(
                 "document.querySelector('#jobDescriptionText')?.innerText ?? ''");
@@ -91,18 +91,14 @@ public class IndeedDetailsScraper
             var indeedApplyElement = await page.QuerySelectorAsync(
                 "span[data-indeed-apply-joburl], button[href*='https://www.indeed.com/applystart?jk=']");
             if (indeedApplyElement != null)
-            {
                 jobOffer.ApplyUrl = await indeedApplyElement.GetAttributeAsync("data-indeed-apply-joburl");
-            }
 
             var externalApplyElement = await page.QuerySelectorAsync("button[aria-haspopup='dialog']");
             if (externalApplyElement is not null)
-            {
                 jobOffer.ApplyUrl = await externalApplyElement.GetAttributeAsync("href");
-            }
         }
 
-        private async Task ScrapCompany(Company company, IPage page)
+        private static async Task ScrapCompany(Company company, IPage page)
         {
             var url = await page.EvaluateAsync<string?>(
                 "document.querySelector('div[data-company-name] > span > a')?.getAttribute('href')");
@@ -111,4 +107,3 @@ public class IndeedDetailsScraper
         }
     }
 }
-

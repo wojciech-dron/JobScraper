@@ -1,0 +1,24 @@
+<Solution>
+  <Folder Name="/solution items/">
+    <File Path=".editorconfig" />
+    <File Path=".gitignore" />
+    <File Path="changelog.md" />
+    <File Path="compose.yaml" />
+    <File Path="CZYTAJ-TO.md" />
+    <File Path="Directory.Build.props" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/solution items/scripts/">
+    <File Path="scripts/docker pub scripts.bat" />
+    <File Path="scripts/run-JobScraper.bat" />
+    <File Path="scripts\ef-core.ps1" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="JobScraper.Common/JobScraper.Common.csproj" />
+    <Project Path="JobScraper.Web/JobScraper.Web.csproj" />
+    <Project Path="JobScraper/JobScraper.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="JobScraper.Tests/JobScraper.Tests.csproj" />
+  </Folder>
+</Solution>
