@@ -163,7 +163,7 @@ public partial class ScrapePage
             ShowNotification($"Scraping list pages of source: {idx + 1}/{listCommands.Length}");
             await UpdatePageAsync();
 
-            var result = await mediator.SendWithRetry(command, logger: _logger);
+            var result = await mediator.Send(command);
             offersCount += result.ScrapedOffersCount;
         }
 

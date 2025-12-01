@@ -15,20 +15,21 @@ public class JjitListScraper
 
     public class Handler : ListScraperBase<Command>
     {
+
+        protected override DataOrigin DataOrigin => DataOrigin.JustJoinIt;
         public Handler(IOptions<AppSettings> config,
             ILogger<Handler> logger,
             JobsDbContext dbContext)
             : base(config, logger, dbContext)
         { }
 
-        protected override DataOrigin DataOrigin => DataOrigin.JustJoinIt;
-
         public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs(SourceConfig sourceConfig)
         {
             var searchUrl = sourceConfig.SearchUrl;
             Logger.LogInformation("{DataOrigin} scraping for url {SearchUrl}", DataOrigin, searchUrl);
 
-            var page = await LoadUntilAsync(searchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds,
+            var page = await LoadUntilAsync(searchUrl,
+                waitSeconds: ScrapeConfig.WaitForListSeconds,
                 successCondition: async p => (await p.QuerySelectorAllAsync("li")).Count > 6);
 
             await AcceptCookies(page);
@@ -41,6 +42,7 @@ public class JjitListScraper
 
             var newJobs = await ScrapeJobsFromList(page);
             yield return newJobs;
+
             var readOfferUrls = newJobs.Select(sc => sc.OfferUrl).ToHashSet();
 
             while (newJobs.Count > 0)
@@ -50,7 +52,7 @@ public class JjitListScraper
                 Logger.LogInformation("{DataOrigin} - scraping page {PageNumber}", DataOrigin, pageNumber);
 
                 // scroll down
-                var scrollHeight = pageNumber * 1200;
+                var scrollHeight = pageNumber * 1800;
                 await page.EvaluateAsync($"window.scrollTo(0, {scrollHeight});");
                 await page.WaitForTimeoutAsync(ScrapeConfig.WaitForScrollSeconds * 1000);
 
@@ -59,10 +61,10 @@ public class JjitListScraper
 
                 var jobsFromPage = await ScrapeJobsFromList(page);
 
-                foreach (var jobOffer in jobsFromPage)
-                    readOfferUrls.Add(jobOffer.OfferUrl);
-
                 newJobs = jobsFromPage.Where(j => !readOfferUrls.Contains(j.OfferUrl)).ToList();
+
+                foreach (var jobOffer in newJobs)
+                    readOfferUrls.Add(jobOffer.OfferUrl);
 
                 yield return newJobs;
             }
@@ -81,15 +83,6 @@ public class JjitListScraper
 
             await page.WaitForTimeoutAsync(1 * 1000);
         }
-
-        record JobData(
-            string Title,
-            string Url,
-            string CompanyName,
-            string Location,
-            string Salary,
-            List<string> OfferKeywords
-        );
 
         private async Task<List<JobOffer>> ScrapeJobsFromList(IPage page)
         {
@@ -143,5 +136,14 @@ public class JjitListScraper
             job.SalaryMaxMonth = int.Parse(minMaxMatch.Groups[2].Value).ApplyMonthPeriod(period);
             job.SalaryCurrency = currencyMatch.Value;
         }
+
+        private record JobData(
+            string Title,
+            string Url,
+            string CompanyName,
+            string Location,
+            string Salary,
+            List<string> OfferKeywords
+        );
     }
 }
