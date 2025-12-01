@@ -9,6 +9,6 @@
     <AnalysisMode>Minimum</AnalysisMode>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
 
-    <NoWarn>CS1591</NoWarn>  <!-- Missing XML comment -->
+    <NoWarn>CS1591,CA1861</NoWarn>  <!-- Missing XML comment -->
   </PropertyGroup>
 </Project>

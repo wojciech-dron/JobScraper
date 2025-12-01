@@ -8,9 +8,9 @@ public static class MediatrExtensions
 {
     public static async Task<TResponse> SendWithRetry<TResponse>(this IMediator mediator,
         IRequest<TResponse> request,
-        CancellationToken cancellationToken = default,
         ILogger? logger = null,
-        int retryAttempts = 1)
+        int retryAttempts = 1,
+        CancellationToken cancellationToken = default)
         where TResponse : new()
     {
         var retryPolicy = Policy.Handle<Exception>()

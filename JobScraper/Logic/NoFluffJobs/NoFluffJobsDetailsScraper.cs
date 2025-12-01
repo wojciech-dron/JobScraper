@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using JobScraper.Extensions;
 using JobScraper.Logic.Common;
 using JobScraper.Models;
 using JobScraper.Persistence;
@@ -14,13 +13,13 @@ public class NoFluffJobsDetailsScraper
 
     public class Handler : DetailsScrapperBase<Command>
     {
+
+        protected override DataOrigin DataOrigin => DataOrigin.NoFluffJobs;
         public Handler(IOptions<AppSettings> config,
             ILogger<Handler> logger,
             JobsDbContext dbContext)
             : base(config, logger, dbContext)
         { }
-
-        protected override DataOrigin DataOrigin => DataOrigin.NoFluffJobs;
 
         public override async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
         {
@@ -36,8 +35,6 @@ public class NoFluffJobsDetailsScraper
             return jobOffer;
         }
 
-        record JobData(string Description, string CompanyUrl, List<string> Keywords);
-
         private async Task ScrapeDescription(JobOffer jobOffer, IPage page)
         {
             var result = await page.EvaluateAsync<string>(
@@ -49,17 +46,40 @@ public class NoFluffJobsDetailsScraper
                         CompanyUrl: document.querySelector('#postingCompanyUrl').getAttribute('href')
                     }
                     console.log(result)
-                    
+
                     return JSON.stringify(result)
                 }
                 """);
 
             var data = JsonSerializer.Deserialize<JobData>(result)!;
 
+            jobOffer.SalaryMinMonth ??= await GetSalaryMinEstimate(page, 20000);
+
             jobOffer.Description = data.Description;
             jobOffer.OfferKeywords.AddRange(data.Keywords);
             jobOffer.Company!.JjitUrl = BaseUrl + data.CompanyUrl;
         }
+
+        /// <param name="salaryValue"> Must be dividable by 2000 </param>
+        private static async Task<int?> GetSalaryMinEstimate(IPage page, int salaryValue) => await page.EvaluateAsync<int?>(
+            """
+            (async (checkValue) => {
+                let salaryComponent = document.querySelector('common-salary-match-inspect');
+
+                // click the salary estimate, using the argument
+                salaryComponent?.querySelector(`li.value-${checkValue} > label`)?.click();
+
+                let delayMs = 200;
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+
+                let isSuccess = salaryComponent?.querySelector('.tw-text-\\[\\#008000\\]');
+
+                return isSuccess ? checkValue : null;
+            })(checkValue);
+            """,
+            salaryValue
+        );
+
+        private record JobData(string Description, string CompanyUrl, List<string> Keywords);
     }
 }
-

@@ -112,8 +112,9 @@ public partial class NoFluffJobsListScraper
 
         private static void SetSalary(JobOffer jobOffer, string salary)
         {
+            // Example: 19 000  – 24 000  PLN
             // Example: 18000–24000PLN
-            var match = SalaryRegex().Match(salary.Replace(" ", ""));
+            var match = SalaryRegex().Match(salary.Replace(" ", "").Replace(" ", ""));
 
             if (!match.Success)
                 return;
