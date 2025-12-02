@@ -21,13 +21,18 @@ RUN apt-get update -yq \
     && apt-get install -yq powershell \
     && rm -rf /var/lib/apt/lists/*  # Cleanup to reduce image size
 
+# Set the permissions for the directories created by root for app user
+RUN chmod -R 777 /home/app
+
 # Switch back to the application user
 USER $APP_UID
 
-# Build stage
+
+# Build stage (TODO: add restore stage without breaking blazor deps)
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+COPY ["Directory.Build.props", "."]
 COPY ["JobScraper.Web/JobScraper.Web.csproj", "JobScraper.Web/"]
 COPY ["JobScraper/JobScraper.csproj", "JobScraper/"]
 COPY ["JobScraper.Common/JobScraper.Common.csproj", "JobScraper.Common/"]
@@ -39,24 +44,24 @@ RUN dotnet build "JobScraper.Web.csproj" -c $BUILD_CONFIGURATION -o /app/build
 # Publish stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "JobScraper.Web.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "JobScraper.Web.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false --no-restore
 
 # Final image
 FROM base AS final
 WORKDIR /home/app
-COPY --from=publish /app/publish .
 
-# Install Playwright chrome
+# Copy published app with chown
+COPY --chown=$APP_UID:$APP_UID --from=publish /app/publish .
+
+# Install system dependencies
 USER root
-RUN pwsh -c "./playwright.ps1 install --with-deps firefox"
+RUN pwsh -c "./playwright.ps1 install-deps"
 
-# Haha that's a tricky one, took 4 hours to figure that playwright with root installs browser on a root/.cache folder
-RUN mv /root/.cache /home/app
-
-# Set the permissions for the directories created by root for app user
-RUN chmod -R 777 /home/app
-
+# Install browsers as non-root so cache goes under /home/app (no copy/chmod needed)
 USER $APP_UID
+ENV HOME=/home/app \
+    PLAYWRIGHT_BROWSERS_PATH=/home/app/.cache/ms-playwright
+RUN pwsh -c "./playwright.ps1 install firefox"
 
 # Create data directory and volume for data
 RUN mkdir -p /home/app/data
