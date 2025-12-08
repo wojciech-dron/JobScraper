@@ -60,8 +60,8 @@ public class NoFluffJobsDetailsScraper
             jobOffer.Company!.JjitUrl = BaseUrl + data.CompanyUrl;
         }
 
-        /// <param name="salaryValue"> Must be dividable by 2000 </param>
-        private static async Task<int?> GetSalaryMinEstimate(IPage page, int salaryValue) => await page.EvaluateAsync<int?>(
+        /// <param name="checkValue"> Must be dividable by 2000 </param>
+        private static async Task<int?> GetSalaryMinEstimate(IPage page, int checkValue) => await page.EvaluateAsync<int?>(
             """
             (async (checkValue) => {
                 let salaryComponent = document.querySelector('common-salary-match-inspect');
@@ -74,10 +74,11 @@ public class NoFluffJobsDetailsScraper
 
                 let isSuccess = salaryComponent?.querySelector('.tw-text-\\[\\#008000\\]');
 
+                console.log(isSuccess);
                 return isSuccess ? checkValue : null;
-            })(checkValue);
+            });
             """,
-            salaryValue
+            checkValue
         );
 
         private record JobData(string Description, string CompanyUrl, List<string> Keywords);
