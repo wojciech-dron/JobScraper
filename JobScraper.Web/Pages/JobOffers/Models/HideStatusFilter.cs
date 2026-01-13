@@ -1,6 +1,6 @@
 ﻿using JobScraper.Models;
 
-namespace JobScraper.Web.Components.Pages.JobOffers.Models;
+namespace JobScraper.Web.Pages.JobOffers.Models;
 
 public enum HideStatusFilter
 {
