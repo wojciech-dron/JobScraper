@@ -23,7 +23,7 @@
             </HeaderTemplate>
         </PropertyColumn>
         <PropertyColumn Property="@(c => c.ScrapedAt)" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
-        <PropertyColumn Property="@(c => c.JobOffersCount)" Sortable="true">
+        <TemplateColumn SortBy="@(GridSort<CompanyListDto>.ByDescending(p => p.JobOffersCount))" Title="JobOffersCount">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -39,9 +39,11 @@
                            type="number"
                            class="form-control form-control-sm"/>
                 </div>
-
             </HeaderTemplate>
-        </PropertyColumn>
+            <ChildContent>
+                <a href="?company=@(context.Name)">@context.JobOffersCount</a>
+            </ChildContent>
+        </TemplateColumn>
         <PropertyColumn Property="@(c => c.JjitUrl)"/>
         <PropertyColumn Property="@(c => c.NoFluffJobsUrl)"/>
     </QuickGrid>
@@ -81,7 +83,7 @@
     IQueryable<CompanyListDto> companies => context.Companies
         .WhereIf(!string.IsNullOrEmpty(NameFilter), a => a.Name!.ToLower().Contains(NameFilter!.ToLower()))
         .WhereIf(MinOfferCountFilter.HasValue, a => a.JobOffers.Count >= MinOfferCountFilter)
-        .WhereIf(MaxOfferCountFilter.HasValue, a => a.JobOffers.Count >= MaxOfferCountFilter)
+        .WhereIf(MaxOfferCountFilter.HasValue, a => a.JobOffers.Count <= MaxOfferCountFilter)
         .OrderBy(c => c.ScrapedAt)
         .SelectFacet<CompanyListDto>();
 
