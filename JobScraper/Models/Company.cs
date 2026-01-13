@@ -7,7 +7,7 @@ public class Company
 {
     public required string Name { get; set; }
     public string? Description { get; set; }
-    public DateTimeOffset ScrapedAt { get; set; } = DateTimeOffset.Now;
+    public DateTime ScrapedAt { get; set; } = DateTime.UtcNow;
     public string? IndeedUrl { get; set; }
     public string? JjitUrl { get; set; }
     public string? NoFluffJobsUrl { get; set; }

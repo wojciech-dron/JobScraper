@@ -15,7 +15,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0"/>
-    <PackageReference Include="Microsoft.Playwright" Version="1.56.0"/>
+    <PackageReference Include="Microsoft.Playwright" Version="1.57.0"/>
     <PackageReference Include="TickerQ" Version="10.0.0"/>
     <PackageReference Include="TickerQ.Dashboard" Version="10.0.0"/>
     <PackageReference Include="TickerQ.EntityFrameworkCore" Version="10.0.0"/>
