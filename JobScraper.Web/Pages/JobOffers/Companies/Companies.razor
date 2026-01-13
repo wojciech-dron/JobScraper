@@ -1,0 +1,92 @@
+﻿@page "/companies"
+@using Facet.Extensions
+@using JobScraper.Common.Extensions
+@using JobScraper.Persistence
+@using JobScraper.Web.Extensions
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.EntityFrameworkCore
+<PageTitle>Companies</PageTitle>
+
+<h1>Companies</h1>
+
+<div id="table-container" class="overflow-auto h-100">
+    <QuickGrid @ref="@grid" Items="companies" Pagination="@pagination" class="table text-center">
+        <PropertyColumn Property="@(c => c.Name)" Sortable="true">
+            <HeaderTemplate>
+                <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                    <div class="col-title-text">@context.Title</div>
+                    <div class="sort-indicator" aria-hidden="true"></div>
+                </button>
+                <input placeholder="Filter..."
+                       @bind="NameFilter"
+                       class="form-control form-control-sm"/>
+            </HeaderTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="@(c => c.ScrapedAt)" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
+        <PropertyColumn Property="@(c => c.JobOffersCount)" Sortable="true">
+            <HeaderTemplate>
+                <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                    <div class="col-title-text">@context.Title</div>
+                    <div class="sort-indicator" aria-hidden="true"></div>
+                </button>
+                <div class="d-flex gap-2">
+                    <input placeholder="Min count..."
+                           @bind="MinOfferCountFilter"
+                           type="number"
+                           class="form-control form-control-sm"/>
+                    <input placeholder="Max count..."
+                           @bind="MaxOfferCountFilter"
+                           type="number"
+                           class="form-control form-control-sm"/>
+                </div>
+
+            </HeaderTemplate>
+        </PropertyColumn>
+        <PropertyColumn Property="@(c => c.JjitUrl)"/>
+        <PropertyColumn Property="@(c => c.NoFluffJobsUrl)"/>
+    </QuickGrid>
+</div>
+
+<div class="footer">
+    <Paginator State="@pagination">
+        <SummaryTemplate>
+            <div class="d-flex justify-content-between align-items-center w-auto">
+                <span class="pe-1">Page size:</span>
+                <select @bind="pagination.ItemsPerPage">
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                <span class="ps-5">Total: <strong>@pagination.TotalItemCount</strong></span>
+            </div>
+        </SummaryTemplate>
+    </Paginator>
+</div>
+
+
+@inject IDbContextFactory<JobsDbContext> DbFactory
+
+@code {
+    QuickGrid<CompanyListDto> grid = null!;
+    readonly PaginationState pagination = new()
+    {
+        ItemsPerPage = 100,
+    };
+    JobsDbContext context = null!;
+
+    public string? NameFilter { get; set; } = "";
+    public int? MinOfferCountFilter { get; set; }
+    public int? MaxOfferCountFilter { get; set; }
+
+    IQueryable<CompanyListDto> companies => context.Companies
+        .WhereIf(!string.IsNullOrEmpty(NameFilter), a => a.Name!.ToLower().Contains(NameFilter!.ToLower()))
+        .WhereIf(MinOfferCountFilter.HasValue, a => a.JobOffers.Count >= MinOfferCountFilter)
+        .WhereIf(MaxOfferCountFilter.HasValue, a => a.JobOffers.Count >= MaxOfferCountFilter)
+        .OrderBy(c => c.ScrapedAt)
+        .SelectFacet<CompanyListDto>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        context = await DbFactory.CreateDbContextAsync();
+    }
+}

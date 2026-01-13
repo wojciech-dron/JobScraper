@@ -57,7 +57,7 @@ public class NoFluffJobsDetailsScraper
 
             jobOffer.Description = data.Description;
             jobOffer.OfferKeywords.AddRange(data.Keywords);
-            jobOffer.Company!.JjitUrl = BaseUrl + data.CompanyUrl;
+            jobOffer.Company!.NoFluffJobsUrl = BaseUrl + data.CompanyUrl;
         }
 
         /// <param name="checkValue"> Must be dividable by 2000 </param>
