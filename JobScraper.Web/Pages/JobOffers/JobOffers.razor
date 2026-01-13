@@ -1,4 +1,5 @@
 ﻿@page "/"
+@using System.Web
 @using JobScraper.Common.Extensions
 @using JobScraper.Models
 @using JobScraper.Persistence
@@ -30,13 +31,11 @@
             <ChildContent>
                 @if (context.Application is null)
                 {
-                    <button class="btn btn-primary" @onclick="_ => _applicationOfferModal.ShowAsync(context)">Apply
-                    </button>
+                    <button class="btn btn-primary" @onclick="() => OpenApplyModal(context)">Apply</button>
                 }
                 else
                 {
-                    <button class="btn btn-secondary" @onclick="_ => _applicationOfferModal.ShowAsync(context)">Modify
-                    </button>
+                    <button class="btn btn-secondary" @onclick="() => OpenApplyModal(context)">Modify</button>
                 }
             </ChildContent>
         </TemplateColumn>
@@ -58,9 +57,12 @@
                         <button class="btn btn-secondary" @onclick="async _ => await RegularOffer(context)">Show
                         </button>
                     }
-                    @if (context.HideStatus == HideStatus.Regular)
+                    @if (context.HideStatus != HideStatus.Hidden)
                     {
                         <button class="btn btn-danger me-2" @onclick="async _ => await HideOffer(context)">Hide</button>
+                    }
+                    @if (context.HideStatus == HideStatus.Regular)
+                    {
                         <button class="btn btn-success" @onclick="async _ => await StarOffer(context)">Star</button>
                     }
                     @if (context.HideStatus == HideStatus.Starred)
@@ -217,7 +219,12 @@
     </Paginator>
 </div>
 
-<ApplicationOfferModal @ref="_applicationOfferModal" ShowHideButton OnUpdate="@(() => grid.RefreshDataAsync())"/>
+<ApplicationOfferModal
+    @ref="_applicationOfferModal"
+    ShowHideButton
+    OnUpdate="@(() => grid.RefreshDataAsync())"
+    OnHide="@(() => OnModalClose())"
+/>
 
 @inject IDbContextFactory<JobsDbContext> DbFactory
 @inject NavigationManager NavigationManager
@@ -284,12 +291,8 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && !string.IsNullOrWhiteSpace(OfferUrl))
-        {
-            var selectedOffer = await dbContext.JobOffers.FindAsync(OfferUrl);
-            if (selectedOffer is not null)
-                await _applicationOfferModal.ShowAsync(selectedOffer);
-        }
+        if (firstRender)
+            await ShowApplyModal(OfferUrl);
     }
 
     private async Task HideOffer(JobOffer jobOffer)
@@ -313,5 +316,34 @@
         await grid.RefreshDataAsync();
     }
 
-    public async ValueTask DisposeAsync() => await dbContext.DisposeAsync();
+
+    private async Task ShowApplyModal(string? offerUrl)
+    {
+        if (string.IsNullOrWhiteSpace(offerUrl))
+            return;
+
+        var selectedOffer = await dbContext.JobOffers.FindAsync(offerUrl);
+        if (selectedOffer is not null)
+            await _applicationOfferModal.ShowAsync(selectedOffer);
+    }
+
+    private async Task OpenApplyModal(JobOffer jobOffer)
+    {
+        await _applicationOfferModal.ShowAsync(jobOffer);
+
+        var offerUrl = HttpUtility.UrlEncode(jobOffer.OfferUrl);
+        NavigationManager.NavigateTo($"?offerUrl={offerUrl}");
+    }
+
+    private void OnModalClose()
+    {
+        var uriWithoutOffer = NavigationManager.GetUriWithQueryParameter("offerUrl", (string?)null);
+        NavigationManager.NavigateTo(uriWithoutOffer, replace: true);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await dbContext.DisposeAsync();
+    }
+
 }

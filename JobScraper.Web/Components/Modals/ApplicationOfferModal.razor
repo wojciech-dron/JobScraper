@@ -2,7 +2,6 @@
 @using JobScraper.Models
 @using JobScraper.Persistence
 @using Microsoft.EntityFrameworkCore
-
 <Modal @ref="_modal" Title="Offer application" Fullscreen="ModalFullscreen.Always">
     <BodyTemplate>
         <div class="row">
@@ -20,7 +19,8 @@
                 <span>@(_jobOffer.CompanyName ?? "Not specified")</span><br/>
                 @if (_alreadyAppliedToCompany)
                 {
-                    <span class="text text-danger">Already applied to this company.</span><br/>
+                    <span class="text text-danger">Already applied to this company.</span>
+                    <br/>
                 }
                 <strong>Company offers count:</strong> @_companyOffersCount<br/>
                 <strong>Location:</strong> @(_jobOffer.Location ?? "Not specified")<br/>
@@ -45,14 +45,20 @@
                         {
                             <button class="btn btn-secondary" @onclick="RegularOffer">Show</button>
                         }
-                        @if (_jobOffer.HideStatus == HideStatus.Regular)
+
+                        @if (_jobOffer.HideStatus != HideStatus.Hidden)
                         {
                             <button class="btn btn-danger ms-1" @onclick="HideOffer">Hide</button>
-                            <button class="btn btn-warning ms-1" @onclick="StarOffer">Save as starred</button>
                         }
+
+                        @if (_jobOffer.HideStatus == HideStatus.Regular)
+                        {
+                            <button class="btn btn-warning ms-1" @onclick="StarOffer">Mark as starred</button>
+                        }
+
                         @if (_jobOffer.HideStatus == HideStatus.Starred)
                         {
-                            <button class="btn btn-success ms-1" @onclick="RegularOffer">Save as regular</button>
+                            <button class="btn btn-success ms-1" @onclick="RegularOffer">Mark as regular</button>
                         }
                     }
                     <a href="/edit-offer/@Uri.EscapeDataString(_jobOffer.OfferUrl)">
@@ -92,7 +98,8 @@
                     <div class="form-group">
                         <label for="respondedAt">Status:</label>
                         <InputSelect id="status" @bind-Value="@_application.Status" class="form-control">
-                            @foreach (var value in Enum.GetValues<ApplyStatus>()) {
+                            @foreach (var value in Enum.GetValues<ApplyStatus>())
+                            {
                                 <option value="@value">@value</option>
                             }
                         </InputSelect>
@@ -109,7 +116,8 @@
                                      class="form-control"/>
                     </div>
 
-                    <button type="submit" class="btn btn-success" @onclick="SaveAsync">@(_isEdit ? "Update" : "Create")</button>
+                    <button type="submit" class="btn btn-success"
+                            @onclick="SaveAsync">@(_isEdit ? "Update" : "Create")</button>
                     <button type="button" class="btn btn-secondary" @onclick="CloseAsync">Close</button>
                 </EditForm>
 
@@ -140,8 +148,9 @@
 
 @inject IDbContextFactory<JobsDbContext> DbContextFactory
 @inject NavigationManager NavigationManager
+
 @code {
-    private bool _isEdit = false;
+    private bool _isEdit;
     private Modal _modal = default!;
     private JobsDbContext _context = null!;
     private JobOffer _jobOffer = null!;
@@ -152,6 +161,7 @@
 
     [Parameter] public bool ShowHideButton { get; set; }
     [Parameter] public Action? OnUpdate { get; set; }
+    [Parameter] public Action? OnHide { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -192,7 +202,7 @@
 
         await _context.SaveChangesAsync();
 
-        await _modal.HideAsync();
+        await Hide();
         OnUpdate?.Invoke();
     }
 
@@ -203,7 +213,7 @@
             _context.Entry(_application).State = EntityState.Detached;
         }
 
-        await _modal.HideAsync();
+        await Hide();
     }
 
     private async Task HideOffer()
@@ -211,7 +221,7 @@
         _jobOffer.HideStatus = HideStatus.Hidden;
         _context.Update(_jobOffer);
         await _context.SaveChangesAsync();
-        await _modal.HideAsync();
+        await Hide();
         OnUpdate?.Invoke();
     }
 
@@ -220,7 +230,6 @@
         _jobOffer.HideStatus = HideStatus.Starred;
         _context.Update(_jobOffer);
         await _context.SaveChangesAsync();
-        await _modal.HideAsync();
         OnUpdate?.Invoke();
     }
 
@@ -231,11 +240,17 @@
         await _context.SaveChangesAsync();
         OnUpdate?.Invoke();
     }
-    
+
     private async Task EditOffer()
     {
-        await _modal.HideAsync();
+        await Hide();
         NavigationManager.NavigateTo($"/edit-offer/{Uri.EscapeDataString(_jobOffer.OfferUrl)}");
+    }
+
+    private async Task Hide()
+    {
+        await _modal.HideAsync();
+        OnHide?.Invoke();
     }
 
     public async ValueTask DisposeAsync() => await _context.DisposeAsync();
