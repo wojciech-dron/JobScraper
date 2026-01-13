@@ -16,13 +16,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using TickerQ.Utilities.Entities;
-using TickerQ.Utilities.Interfaces.Managers;
 
 namespace JobScraper.Web.Pages;
 
 public partial class ScrapePage
 {
-    private readonly ICronTickerManager<CronTickerEntity> _cronTickerManager;
     private readonly IDbContextFactory<JobsDbContext> _dbFactory;
     private readonly IJSRuntime _js;
     private readonly ILogger<ScrapePage> _logger;
@@ -38,14 +36,12 @@ public partial class ScrapePage
     public ScrapePage(IDbContextFactory<JobsDbContext> dbFactory,
         IServiceProvider serviceProvider,
         IJSRuntime js,
-        ICronTickerManager<CronTickerEntity> cronTickerManager,
         IOptions<AppSettings> appSettings,
         ILogger<ScrapePage> logger)
     {
         _dbFactory = dbFactory;
         _serviceProvider = serviceProvider;
         _js = js;
-        _cronTickerManager = cronTickerManager;
         this.appSettings = appSettings.Value;
         _logger = logger;
     }
@@ -205,7 +201,7 @@ public partial class ScrapePage
             ShowNotification($"Scraping details pages of source: {idx + 1}/{detailsCommands.Length}");
             await UpdatePageAsync();
 
-            var result = await mediator.SendWithRetry(command, logger: _logger);
+            var result = await mediator.SendWithRetry(command, _logger);
             offersCount += result.ScrapedOffersCount;
         }
 
@@ -266,18 +262,21 @@ public partial class ScrapePage
 
         if (scrapeJobTicker is not null)
         {
-            await _cronTickerManager.DeleteAsync(scrapeJobTicker.Id);
+            dbContext.Remove(scrapeJobTicker);
             scrapeJobTicker = null;
         }
 
-        await _cronTickerManager.AddAsync(new CronTickerEntity
+        var cronTickerEntity = new CronTickerEntity
         {
             Expression = config.ScrapeCron,
             Function = "ScrapeJobs",
             Description = "Scheduled in ScrapePage",
             Retries = 1,
             RetryIntervals = [20], // set in seconds
-        });
+        };
+
+        await dbContext.AddAsync(cronTickerEntity);
+        await dbContext.SaveChangesAsync();
 
         scrapeJobTicker = await dbContext.Set<CronTickerEntity>()
             .AsNoTracking()
