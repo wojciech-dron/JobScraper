@@ -1,5 +1,4 @@
 ﻿@page "/"
-@using System.Web
 @using JobScraper.Common.Extensions
 @using JobScraper.Models
 @using JobScraper.Persistence
@@ -9,182 +8,190 @@
 @using JobScraper.Web.Pages.JobOffers.Models
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.EntityFrameworkCore
-@using Microsoft.Extensions.Options
 
 <PageTitle>Job offers</PageTitle>
 
 <h1>Job offers</h1>
 
 <div id="table-container" class="overflow-auto h-100">
-<QuickGrid @ref="@grid" Items="jobOffers" Pagination="@pagination" class="table small-padding-table">
-    <TemplateColumn SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Application == null))" Title="Apply">
-        <HeaderTemplate>
-            <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
-                <div class="col-title-text">@context.Title</div>
-                <div class="sort-indicator" aria-hidden="true"></div>
-            </button>
-            <MySelect
-                @bind-SelectedOption="@IsAppliedFilter"
-                Options="@BoolFilterHelper.Options"
-                StringSelector="@BoolFilterHelper.AppliedStringSelector"
-            />
-        </HeaderTemplate>
-        <ChildContent>
-            @if (context.Application is null) {
-                <button class="btn btn-primary" @onclick="_ => _applicationOfferModal.ShowAsync(context)">Apply</button>
-            }
-            else {
-                <button class="btn btn-secondary" @onclick="_ => _applicationOfferModal.ShowAsync(context)">Modify</button>
-            }
-        </ChildContent>
-    </TemplateColumn>
-    <TemplateColumn SortBy="@(GridSort<JobOffer>.ByAscending(p => p.HideStatus))" Title="Hide">
-        <HeaderTemplate>
-            <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
-                <div class="col-title-text">@context.Title</div>
-                <div class="sort-indicator" aria-hidden="true"></div>
-            </button>
-            <MySelect
-                @bind-SelectedOption="@HideStatusFilter"
-                Options="Enum.GetValues<HideStatusFilter>()"
-            />
-        </HeaderTemplate>
-        <ChildContent>
-            <div class="d-flex flex-row">
-                @if (context.HideStatus == HideStatus.Hidden)
+    <QuickGrid @ref="@grid" Items="jobOffers" Pagination="@pagination" class="table small-padding-table">
+        <TemplateColumn SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Application == null))" Title="Apply">
+            <HeaderTemplate>
+                <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                    <div class="col-title-text">@context.Title</div>
+                    <div class="sort-indicator" aria-hidden="true"></div>
+                </button>
+                <MySelect
+                    @bind-SelectedOption="@IsAppliedFilter"
+                    Options="@BoolFilterHelper.Options"
+                    StringSelector="@BoolFilterHelper.AppliedStringSelector"
+                />
+            </HeaderTemplate>
+            <ChildContent>
+                @if (context.Application is null)
                 {
-                    <button class="btn btn-secondary" @onclick="async _ => await RegularOffer(context)">Show</button>
+                    <button class="btn btn-primary" @onclick="_ => _applicationOfferModal.ShowAsync(context)">Apply
+                    </button>
                 }
-                @if (context.HideStatus == HideStatus.Regular)
+                else
                 {
-                    <button class="btn btn-danger me-2" @onclick="async _ => await HideOffer(context)">Hide</button>
-                    <button class="btn btn-success" @onclick="async _ => await StarOffer(context)">Star</button>
+                    <button class="btn btn-secondary" @onclick="_ => _applicationOfferModal.ShowAsync(context)">Modify
+                    </button>
                 }
+            </ChildContent>
+        </TemplateColumn>
+        <TemplateColumn SortBy="@(GridSort<JobOffer>.ByAscending(p => p.HideStatus))" Title="Hide">
+            <HeaderTemplate>
+                <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                    <div class="col-title-text">@context.Title</div>
+                    <div class="sort-indicator" aria-hidden="true"></div>
+                </button>
+                <MySelect
+                    @bind-SelectedOption="@HideStatusFilter"
+                    Options="Enum.GetValues<HideStatusFilter>()"
+                />
+            </HeaderTemplate>
+            <ChildContent>
+                <div class="d-flex flex-row">
+                    @if (context.HideStatus == HideStatus.Hidden)
+                    {
+                        <button class="btn btn-secondary" @onclick="async _ => await RegularOffer(context)">Show
+                        </button>
+                    }
+                    @if (context.HideStatus == HideStatus.Regular)
+                    {
+                        <button class="btn btn-danger me-2" @onclick="async _ => await HideOffer(context)">Hide</button>
+                        <button class="btn btn-success" @onclick="async _ => await StarOffer(context)">Star</button>
+                    }
+                    @if (context.HideStatus == HideStatus.Starred)
+                    {
+                        <button class="btn btn-secondary" @onclick="async _ => await RegularOffer(context)">Regular
+                        </button>
+                    }
+                </div>
+            </ChildContent>
+        </TemplateColumn>
+        <PropertyColumn class="col-2" Property="@(p => p.CompanyName)" Sortable="true" Title="Company">
+            <HeaderTemplate>
+                <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                    <div class="col-title-text">@context.Title</div>
+                    <div class="sort-indicator" aria-hidden="true"></div>
+                </button>
+                <input placeholder="Filter..."
+                       @bind="CompanyFilter"
+                       class="form-control form-control-sm"/>
+            </HeaderTemplate>
+        </PropertyColumn>
+        <TemplateColumn class="col-3 text-truncate" Title="Title"
+                        SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Title))">
+            <HeaderTemplate>
+                <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                    <div class="col-title-text">@context.Title</div>
+                    <div class="sort-indicator" aria-hidden="true"></div>
+                </button>
+                <input placeholder="Filter..."
+                       @bind="TitleFilter"
+                       class="form-control form-control-sm"/>
+            </HeaderTemplate>
+            <ChildContent>
                 @if (context.HideStatus == HideStatus.Starred)
                 {
-                    <button class="btn btn-secondary" @onclick="async _ => await RegularOffer(context)">Regular</button>
+                    <span class="text-warning" title="@context.Title">* @context.Title</span>
                 }
-            </div>
-        </ChildContent>
-    </TemplateColumn>
-    <PropertyColumn class="col-2" Property="@(p => p.CompanyName)" Sortable="true" Title="Company">
-        <HeaderTemplate>
-            <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
-                <div class="col-title-text">@context.Title</div>
-                <div class="sort-indicator" aria-hidden="true"></div>
-            </button>
-            <input placeholder="Filter..."
-                   @bind="CompanyFilter"
-                   class="form-control form-control-sm"/>
-        </HeaderTemplate>
-    </PropertyColumn>
-    <TemplateColumn class="col-3 text-truncate" Title="Title" SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Title))">
-        <HeaderTemplate>
-            <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
-                <div class="col-title-text">@context.Title</div>
-                <div class="sort-indicator" aria-hidden="true"></div>
-            </button>
-            <input placeholder="Filter..."
-                   @bind="TitleFilter"
-                   class="form-control form-control-sm"/>
-        </HeaderTemplate>
-        <ChildContent>
-            @if (context.HideStatus == HideStatus.Starred)
-            {
-                <span class="text-warning" title="@context.Title">* @context.Title</span>
-            }
-            else
-            {
-                <span title="@context.Title">@context.Title</span>
-            }
+                else
+                {
+                    <span title="@context.Title">@context.Title</span>
+                }
 
-        </ChildContent>
-    </TemplateColumn>
-    <PropertyColumn class="" Property="@(p => p.SalaryMinMonth)" Title="Min" Sortable="true">
-        <HeaderTemplate>
-            <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
-                <div class="col-title-text">@context.Title</div>
-                <div class="sort-indicator" aria-hidden="true"></div>
-            </button>
-            <input placeholder="Filter..."
-                   @bind="SalaryMinFilter"
-                   type="number"
-                   class="form-control form-control-sm"/>
-        </HeaderTemplate>
-    </PropertyColumn>
-    <PropertyColumn class="" Property="@(p => p.SalaryMaxMonth)" Title="Max" Sortable="true">
-        <HeaderTemplate>
-            <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
-                <div class="col-title-text">@context.Title</div>
-                <div class="sort-indicator" aria-hidden="true"></div>
-            </button>
-            <input placeholder="Filter..."
-                   @bind="SalaryMaxFilter"
-                   type="number"
-                   class="form-control form-control-sm"/>
-        </HeaderTemplate>
-    </PropertyColumn>
-    <PropertyColumn class="" Property="@(p => p.SalaryCurrency)" Title="Currency" Sortable="true">
-        <HeaderTemplate>
-            <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
-                <div class="col-title-text">@context.Title</div>
-                <div class="sort-indicator" aria-hidden="true"></div>
-            </button>
-            <MySelect
-                MultiSelect
-                Options="@currencyOptions"
-                @bind-SelectedOptions="@CurrencyFilter">
-            </MySelect>
-        </HeaderTemplate>
-    </PropertyColumn>
-    <PropertyColumn class="col-1" Property="@(p => p.Comments)" Sortable="true"/>
-    <TemplateColumn class="text-truncate" Title="Location" SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Location))">
-        <HeaderTemplate>
-            <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
-                <div class="col-title-text">@context.Title</div>
-                <div class="sort-indicator" aria-hidden="true"></div>
-            </button>
-            <input placeholder="Filter..."
-                   @bind="LocationFilter"
-                   class="form-control form-control-sm"/>
-        </HeaderTemplate>
-        <ChildContent>
-            <span title="@context.Location">@context.Location</span>
-        </ChildContent>
-    </TemplateColumn>
+            </ChildContent>
+        </TemplateColumn>
+        <PropertyColumn class="" Property="@(p => p.SalaryMinMonth)" Title="Min" Sortable="true">
+            <HeaderTemplate>
+                <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                    <div class="col-title-text">@context.Title</div>
+                    <div class="sort-indicator" aria-hidden="true"></div>
+                </button>
+                <input placeholder="Filter..."
+                       @bind="SalaryMinFilter"
+                       type="number"
+                       class="form-control form-control-sm"/>
+            </HeaderTemplate>
+        </PropertyColumn>
+        <PropertyColumn class="" Property="@(p => p.SalaryMaxMonth)" Title="Max" Sortable="true">
+            <HeaderTemplate>
+                <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                    <div class="col-title-text">@context.Title</div>
+                    <div class="sort-indicator" aria-hidden="true"></div>
+                </button>
+                <input placeholder="Filter..."
+                       @bind="SalaryMaxFilter"
+                       type="number"
+                       class="form-control form-control-sm"/>
+            </HeaderTemplate>
+        </PropertyColumn>
+        <PropertyColumn class="" Property="@(p => p.SalaryCurrency)" Title="Currency" Sortable="true">
+            <HeaderTemplate>
+                <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                    <div class="col-title-text">@context.Title</div>
+                    <div class="sort-indicator" aria-hidden="true"></div>
+                </button>
+                <MySelect
+                    MultiSelect
+                    Options="@currencyOptions"
+                    @bind-SelectedOptions="@CurrencyFilter">
+                </MySelect>
+            </HeaderTemplate>
+        </PropertyColumn>
+        <PropertyColumn class="col-1" Property="@(p => p.Comments)" Sortable="true"/>
+        <TemplateColumn class="text-truncate" Title="Location"
+                        SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Location))">
+            <HeaderTemplate>
+                <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                    <div class="col-title-text">@context.Title</div>
+                    <div class="sort-indicator" aria-hidden="true"></div>
+                </button>
+                <input placeholder="Filter..."
+                       @bind="LocationFilter"
+                       class="form-control form-control-sm"/>
+            </HeaderTemplate>
+            <ChildContent>
+                <span title="@context.Location">@context.Location</span>
+            </ChildContent>
+        </TemplateColumn>
 
-    <PropertyColumn class="col-1" Property="@(p => p.Origin)" Sortable="true">
-        <HeaderTemplate>
-            <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
-                <div class="col-title-text">@context.Title</div>
-                <div class="sort-indicator" aria-hidden="true"></div>
-            </button>
-            <MySelect
-                MultiSelect
-                @bind-SelectedOptions="@OriginFilter"
-                Options="@originOptions"
-            />
-        </HeaderTemplate>
-    </PropertyColumn>
-    <TemplateColumn class="col-1 text-nowrap" Title="My keywords">
-        <HeaderTemplate>
-            <button class="col-title mb-1" type="button">
-                <div class="col-title-text">@context.Title</div>
-                <div class="sort-indicator" aria-hidden="true"></div>
-            </button>
-            <MySelect
-                MultiSelect
-                @bind-SelectedOptions="@MyKeywordsFilter"
-                Options="@myKeywordsOptions"
-            />
-        </HeaderTemplate>
-        <ChildContent>
-            <span>@string.Join(", ", context.MyKeywords)</span>
-        </ChildContent>
-    </TemplateColumn>
-    <PropertyColumn class="col" Property="@(p => p.ScrapedAt)" Format="yyyy-MM-dd" Sortable="true"/>
-    <PropertyColumn class="col text-nowrap" Property="@(p => p.UpdatedAt)" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
-</QuickGrid>
+        <PropertyColumn class="col-1" Property="@(p => p.Origin)" Sortable="true">
+            <HeaderTemplate>
+                <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                    <div class="col-title-text">@context.Title</div>
+                    <div class="sort-indicator" aria-hidden="true"></div>
+                </button>
+                <MySelect
+                    MultiSelect
+                    @bind-SelectedOptions="@OriginFilter"
+                    Options="@originOptions"
+                />
+            </HeaderTemplate>
+        </PropertyColumn>
+        <TemplateColumn class="col-1 text-nowrap" Title="My keywords">
+            <HeaderTemplate>
+                <button class="col-title mb-1" type="button">
+                    <div class="col-title-text">@context.Title</div>
+                    <div class="sort-indicator" aria-hidden="true"></div>
+                </button>
+                <MySelect
+                    MultiSelect
+                    @bind-SelectedOptions="@MyKeywordsFilter"
+                    Options="@myKeywordsOptions"
+                />
+            </HeaderTemplate>
+            <ChildContent>
+                <span>@string.Join(", ", context.MyKeywords)</span>
+            </ChildContent>
+        </TemplateColumn>
+        <PropertyColumn class="col" Property="@(p => p.ScrapedAt)" Format="yyyy-MM-dd" Sortable="true"/>
+        <PropertyColumn class="col text-nowrap" Property="@(p => p.UpdatedAt)" Format="yyyy-MM-dd HH:mm"
+                        Sortable="true"/>
+    </QuickGrid>
 </div>
 
 @if (pagination.TotalItemCount is 0)
@@ -213,15 +220,19 @@
 <ApplicationOfferModal @ref="_applicationOfferModal" ShowHideButton OnUpdate="@(() => grid.RefreshDataAsync())"/>
 
 @inject IDbContextFactory<JobsDbContext> DbFactory
+@inject NavigationManager NavigationManager
 
 @code {
     QuickGrid<JobOffer> grid = null!;
     JobsDbContext dbContext = null!;
-    PaginationState pagination = new() { ItemsPerPage = 20 };
+    readonly PaginationState pagination = new()
+    {
+        ItemsPerPage = 20,
+    };
     ApplicationOfferModal _applicationOfferModal = null!;
     List<string> myKeywordsOptions = [];
     string[] currencyOptions = [];
-    string[] originOptions = Enum.GetValues<DataOrigin>().Select(x => x.ToString()).ToArray();
+    readonly string[] originOptions = Enum.GetValues<DataOrigin>().Select(x => x.ToString()).ToArray();
 
     public string? TitleFilter { get; set; } = "";
     public string? CompanyFilter { get; set; } = "";
@@ -233,6 +244,10 @@
     public string[]? CurrencyFilter { get; set; } = [];
     public string[]? OriginFilter { get; set; } = [];
     public string[]? MyKeywordsFilter { get; set; } = [];
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "offerUrl")]
+    public string? OfferUrl { get; set; }
 
     IQueryable<JobOffer> jobOffers => dbContext.JobOffers
         .Include(jo => jo.Company)
@@ -265,6 +280,16 @@
 
         // set default filters if query params are not set
         IsAppliedFilter ??= false;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !string.IsNullOrWhiteSpace(OfferUrl))
+        {
+            var selectedOffer = await dbContext.JobOffers.FindAsync(OfferUrl);
+            if (selectedOffer is not null)
+                await _applicationOfferModal.ShowAsync(selectedOffer);
+        }
     }
 
     private async Task HideOffer(JobOffer jobOffer)
