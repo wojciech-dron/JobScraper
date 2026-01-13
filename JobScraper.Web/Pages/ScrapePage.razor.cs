@@ -18,7 +18,7 @@ using Microsoft.JSInterop;
 using TickerQ.Utilities.Entities;
 using TickerQ.Utilities.Interfaces.Managers;
 
-namespace JobScraper.Web.Components.Pages;
+namespace JobScraper.Web.Pages;
 
 public partial class ScrapePage
 {
