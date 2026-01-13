@@ -242,7 +242,6 @@
     readonly string[] originOptions = Enum.GetValues<DataOrigin>().Select(x => x.ToString()).ToArray();
 
     public string? TitleFilter { get; set; } = "";
-    public string? CompanyFilter { get; set; } = "";
     public string? LocationFilter { get; set; } = "";
     public bool? IsAppliedFilter { get; set; } = false;
     public HideStatusFilter HideStatusFilter { get; set; } = HideStatusFilter.Visible;
@@ -251,6 +250,10 @@
     public string[]? CurrencyFilter { get; set; } = [];
     public string[]? OriginFilter { get; set; } = [];
     public string[]? MyKeywordsFilter { get; set; } = [];
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "company")]
+    public string? CompanyFilter { get; set; } = "";
 
     [Parameter]
     [SupplyParameterFromQuery(Name = "offerUrl")]
@@ -287,6 +290,13 @@
 
         // set default filters if query params are not set
         IsAppliedFilter ??= false;
+
+        // show all offers when entered view for a specific company
+        if (!string.IsNullOrWhiteSpace(CompanyFilter))
+        {
+            IsAppliedFilter = null;
+            HideStatusFilter = HideStatusFilter.All;
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
