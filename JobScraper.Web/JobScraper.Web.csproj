@@ -28,4 +28,12 @@
     </Content>
   </ItemGroup>
 
+  <ItemGroup>
+    <AdditionalFiles Include="Features\Companies\Companies.razor"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Modules\"/>
+  </ItemGroup>
+
 </Project>

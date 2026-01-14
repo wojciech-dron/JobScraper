@@ -1,0 +1,68 @@
+﻿@page "/login"
+@using BlazorBootstrap
+@using ErrorOr
+@using JobScraper.Modules.Auth
+@using Wolverine
+
+<PageTitle>Login</PageTitle>
+
+<Toasts class="p-3" Messages="messages" AutoHide="true" Delay="10000" Placement="ToastsPlacement.TopRight"/>
+
+<EditForm Model="Model" OnValidSubmit="HandleLogin" FormName="LoginForm" Enhance>
+    <DataAnnotationsValidator/>
+
+    <div>
+        <label>Username:</label>
+        <InputText @bind-Value="Model.Login" class="form-control"/>
+    </div>
+    <div>
+        <label>Password:</label>
+        <InputText @bind-Value="Model.Password" type="password" class="form-control"/>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Log in</button>
+</EditForm>
+
+@inject IMessageBus MessageBus
+
+@code {
+    [CascadingParameter]
+    public HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm]
+    public LoginDto Model { get; set; } = new();
+
+    private async Task HandleLogin()
+    {
+        var result = await MessageBus.InvokeAsync<ErrorOr<AuthToken>>(Model);
+
+        if (result.IsError)
+        {
+            PushNotification(result.FirstError.Description, ToastType.Danger);
+            return;
+        }
+
+        // 3. Set the Cookie
+        var token = result.Value.Token;
+        HttpContext.Response.Cookies.Append("access_token", token, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTime.UtcNow.AddHours(1),
+        });
+
+        // 4. Redirect
+        HttpContext.Response.Redirect("/");
+        // 2. Generate JWT
+    }
+
+    readonly List<ToastMessage> messages = [];
+
+    private void PushNotification(string message, ToastType toastType = ToastType.Success) =>
+        messages.Insert(0, new ToastMessage
+        {
+            Type = toastType,
+            Message = message,
+        });
+}

@@ -1,16 +1,14 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using OpenTelemetry.Logs;
+﻿using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 
-namespace JobScraper.Common;
+namespace JobScraper.Modules.OpenTelemetry;
 
 public static class OpenTelemetry
 {
     public static ILoggingBuilder AddOtelLogging(this ILoggingBuilder builder,
         IConfiguration configuration, string serviceName)
     {
-        var otlpEndpoint = configuration["OtelEndpoint"] ?? configuration["OTEL_EXPORTER_OTLP_ENDPOINT"];
+        var otlpEndpoint = configuration["OTEL_EXPORTER_OTLP_ENDPOINT"] ?? configuration["OtelEndpoint"];
         if (string.IsNullOrWhiteSpace(otlpEndpoint))
             return builder;
 

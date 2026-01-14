@@ -3,10 +3,14 @@ using FluentValidation;
 using JobScraper;
 using JobScraper.Common;
 using JobScraper.Jobs;
+using JobScraper.Modules.Auth;
+using JobScraper.Modules.OpenTelemetry;
+using JobScraper.Modules.Wolverine;
 using JobScraper.Persistence;
 using JobScraper.Web.Blazor;
 using JobScraper.Web.Validators;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Identity;
 using NReco.Logging.File;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +24,8 @@ builder.Services.AddRazorComponents()
 builder.Services.AddQuickGridEntityFrameworkAdapter();
 builder.Services.AddBlazorBootstrap();
 builder.Services.AddValidatorsFromAssemblyContaining<JobOfferValidator>();
+builder.AddWolverineServices();
+builder.AddAuthServices();
 
 builder.Logging
     .AddFile(builder.Configuration.GetSection("Logging:File"))
@@ -28,6 +34,7 @@ builder.Logging
 builder.Services
     .AddSqlitePersistance()
     .AddScrapperServices(builder.Configuration);
+
 
 builder.Services.AddJobs(builder.Configuration);
 
@@ -52,12 +59,12 @@ if (!app.Environment.IsDevelopment())
 // pl
 var supportedCultures = new[]
 {
-    new CultureInfo("pl-PL")
+    new CultureInfo("pl-PL"),
 };
 app.UseRequestLocalization(new RequestLocalizationOptions
 {
     SupportedCultures = supportedCultures,
-    SupportedUICultures = supportedCultures
+    SupportedUICultures = supportedCultures,
 });
 
 app.UseHttpsRedirection();
