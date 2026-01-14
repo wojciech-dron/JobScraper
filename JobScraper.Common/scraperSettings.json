@@ -1,27 +1,32 @@
 {
-  "AppSettings":{
-    "PageSavingDirectory": "..\\Data\\jobs",
-  },
-  "SecuritySettings": {
-    "PersistKeysDirectory": "..\\Data\\keys"
-  },
-  "ConnectionStrings": {
-    "DefaultConnection": "data source=..\\Data\\Jobs.db"
-  },
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning",
-      "Microsoft.EntityFrameworkCore": "Error"
+    "AppSettings": {
+        "PageSavingDirectory": "..\\Data\\jobs"
     },
-    "File": {
-        "Path": "..\\Data\\logs.log",
-        "Append": true,
-        "MinLevel": "Warning",  // min level for the file logger
-        "FileSizeLimitBytes": 1000000,  // use to activate rolling file behaviour
-        "MaxRollingFiles": 0  // use to specify max number of log files
-    }
-  },
-  "OtelEndpoint": "http://localhost:4317",
-  "AllowedHosts": "*"
+    "SecuritySettings": {
+        "PersistKeysDirectory": "..\\Data\\keys"
+    },
+    "ConnectionStrings": {
+        "DefaultConnection": "data source=..\\Data\\Jobs.db"
+    },
+    "Logging": {
+        "LogLevel": {
+            "Default": "Information",
+            "Microsoft.AspNetCore": "Warning",
+            "Microsoft.EntityFrameworkCore": "Error"
+        },
+        "File": {
+            "Path": "..\\Data\\logs.log",
+            "Append": true,
+            "MinLevel": "Warning",
+            "FileSizeLimitBytes": 1000000,
+            "MaxRollingFiles": 0
+        }
+    },
+    "Jwt": {
+        "Issuer": "JobScraper",
+        "Audience": "JobScraper",
+        "SigningKey": "992b56c1d54709eb05743abdb70c16a0"
+    },
+    "OtelEndpoint": "http://localhost:4317",
+    "AllowedHosts": "*"
 }

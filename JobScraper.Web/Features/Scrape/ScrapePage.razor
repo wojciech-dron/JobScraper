@@ -1,18 +1,16 @@
 ﻿@page "/scrape"
 @using BlazorBootstrap
-@using JobScraper.Models
 @using Blazored.FluentValidation
-@using Microsoft.AspNetCore.Components.Routing
+@using JobScraper.Models
 @using Microsoft.EntityFrameworkCore
 
 <NavigationLock ConfirmExternalNavigation="@PreventNavigation"
-                OnBeforeInternalNavigation="OnBeforeInternalNavigation" />
-<Toasts class="p-3" Messages="messages" AutoHide="true" Delay="10000" Placement="ToastsPlacement.TopRight"/>
+                OnBeforeInternalNavigation="OnBeforeInternalNavigation"/>
 
 <h2>Scraping</h2>
 
 <EditForm Model="config" disabled="@isWorking">
-    <FluentValidationValidator @ref="validator" />
+    <FluentValidationValidator @ref="validator"/>
 
     <div class="row mb-5">
         <h4>Configure sources</h4>
@@ -37,7 +35,8 @@
                         <i class="bi bi-question-circle"></i>
                     </span>
                 }
-                @if (source.DataOrigin == DataOrigin.Indeed) {
+                @if (source.DataOrigin == DataOrigin.Indeed)
+                {
                     <span class="text-warning small">Probably won't work because of bot recognition.</span>
                 }
             </div>
@@ -58,24 +57,28 @@
                 @if (source.Disabled)
                 {
                     <button class="btn btn-primary"
-                            @onclick="() => source.Disabled = false">Enable</button>
+                            @onclick="() => source.Disabled = false">Enable
+                    </button>
                 }
                 else
                 {
                     <button class="btn btn-secondary"
-                            @onclick="() => source.Disabled = true">Disable</button>
+                            @onclick="() => source.Disabled = true">Disable
+                    </button>
                 }
             </div>
 
             <div class="form-group col-md-1 d-flex flex-column">
                 <label>Actions:</label>
                 <button class="btn btn-danger"
-                        @onclick="() => config.Sources.Remove(source)">Remove</button>
+                        @onclick="() => config.Sources.Remove(source)">Remove
+                </button>
             </div>
         }
         <button type="button"
                 class="btn btn-secondary mt-3"
-                @onclick="() => config.Sources.Add(new())">Add source</button>
+                @onclick="() => config.Sources.Add(new SourceConfig())">Add source
+        </button>
     </div>
 
     <div class="row">
@@ -90,7 +93,7 @@
                         <InputText
                             class="form-control col-md-1"
                             placeholder="Eg. księgowość, programista, praca zdalna"
-                            @bind-Value="config.MyKeywords[index]" />
+                            @bind-Value="config.MyKeywords[index]"/>
                     </div>
                     <div class="col-md-3 d-flex flex-column">
                         <button class="btn btn-danger"
@@ -128,7 +131,7 @@
                         <InputText
                             class="form-control col-md-1"
                             placeholder="Eg. księgowość, programista, praca zdalna"
-                            @bind-Value="config.AvoidKeywords[index]" />
+                            @bind-Value="config.AvoidKeywords[index]"/>
                     </div>
                     <div class="col-md-3 d-flex flex-column">
                         <button class="btn btn-danger"
@@ -158,7 +161,8 @@
             </div>
             <div class="mb-1">
                 <label for="ShowBrowserWhenScraping">Show browser when scraping:</label>
-                <InputSelect id="ShowBrowserWhenScraping" @bind-Value="@config.ShowBrowserWhenScraping" class="form-control">
+                <InputSelect id="ShowBrowserWhenScraping" @bind-Value="@config.ShowBrowserWhenScraping"
+                             class="form-control">
                     <option value="false">No</option>
                     <option value="true">Yes</option>
                 </InputSelect>
@@ -166,38 +170,39 @@
         </div>
 
 
-            <div class="col-md-6 d-flex flex-column mb-5">
-                <h4>Advanced</h4>
-                @if (showAdvanced)
-                {
-                    <div class="mb-1">
-                        <label for="BrowserType">Scrape cron (beta):</label>
-                        <InputText id="ScrapeCron" @bind-Value="@config.ScrapeCron" class="form-control" />
-                        <small class="text-muted">Note: Cron expressions are in UTC time.</small>
-                    </div>
-                    <div class="mb-1">
-                        <button class="btn btn-success mb-3" @onclick="ScheduleScraping" disabled="@isWorking">
-                            @(scrapeJobTicker is null ? "Schedule scraping" : "Update schedule scraping")
-                        </button>
-                        <a href="/tickerq-dashboard">
-                            <button class="btn btn-info mb-3">Go to dashboard</button>
-                        </a>
-                        <button class="btn btn-secondary mb-3" @onclick="() => showAdvanced = false">
-                            Hide advanced
-                        </button>
-                    </div>
-                }
-                else
-                {
-                    <button class="btn btn-secondary mb-3" @onclick="() => showAdvanced = true">Show advanced</button>
-                }
-            </div>
+        <div class="col-md-6 d-flex flex-column mb-5">
+            <h4>Advanced</h4>
+            @if (showAdvanced)
+            {
+                <div class="mb-1">
+                    <label for="BrowserType">Scrape cron (beta):</label>
+                    <InputText id="ScrapeCron" @bind-Value="@config.ScrapeCron" class="form-control"/>
+                    <small class="text-muted">Note: Cron expressions are in UTC time.</small>
+                </div>
+                <div class="mb-1">
+                    <button class="btn btn-success mb-3" @onclick="ScheduleScraping" disabled="@isWorking">
+                        @(scrapeJobTicker is null ? "Schedule scraping" : "Update schedule scraping")
+                    </button>
+                    <a href="/tickerq-dashboard">
+                        <button class="btn btn-info mb-3">Go to dashboard</button>
+                    </a>
+                    <button class="btn btn-secondary mb-3" @onclick="() => showAdvanced = false">
+                        Hide advanced
+                    </button>
+                </div>
+            }
+            else
+            {
+                <button class="btn btn-secondary mb-3" @onclick="() => showAdvanced = true">Show advanced</button>
+            }
+        </div>
     </div>
     <ValidationSummary/>
 
     <div class="mt-3">
         <h4>Status:</h4>
-        @if (isWorking) {
+        @if (isWorking)
+        {
             <div class="spinner-border" role="status">
                 <span class="sr-only"></span>
             </div>
@@ -236,13 +241,13 @@
 
     private bool showAdvanced;
 
-    List<ToastMessage> messages = [];
+    readonly List<ToastMessage> messages = [];
 
     private void ShowNotification(string message, ToastType toastType = ToastType.Success) =>
         messages.Insert(0, new ToastMessage
         {
             Type = toastType,
-            Message = message,
+            Message = message
         });
 
     private void TrySetOrigin(SourceConfig source)

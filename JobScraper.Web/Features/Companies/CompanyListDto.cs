@@ -1,7 +1,7 @@
 ﻿using Facet;
 using JobScraper.Models;
 
-namespace JobScraper.Web.Features.JobOffers.Companies;
+namespace JobScraper.Web.Features.Companies;
 
 [Facet(typeof(Company), nameof(Company.JobOffers), nameof(Company.IndeedUrl))]
 public partial class CompanyListDto
