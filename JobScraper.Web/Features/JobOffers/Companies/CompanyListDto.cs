@@ -1,10 +1,9 @@
 ﻿using Facet;
 using JobScraper.Models;
 
-namespace JobScraper.Web.Pages.JobOffers.Companies;
+namespace JobScraper.Web.Features.JobOffers.Companies;
 
-[Facet(typeof(Company),
-    [nameof(Company.JobOffers), nameof(Company.IndeedUrl)])]
+[Facet(typeof(Company), nameof(Company.JobOffers), nameof(Company.IndeedUrl))]
 public partial class CompanyListDto
 {
     [MapFrom(nameof(Company.Name))]
