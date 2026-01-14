@@ -10,6 +10,8 @@
   </Folder>
   <Folder Name="/solution items/scripts/">
     <File Path="scripts/docker pub scripts.bat" />
+    <File Path="scripts/publish.ps1" />
+    <File Path="scripts/push-docker.ps1" />
     <File Path="scripts/run-JobScraper.bat" />
     <File Path="scripts\ef-core.ps1" />
   </Folder>

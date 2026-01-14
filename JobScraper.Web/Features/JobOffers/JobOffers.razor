@@ -3,10 +3,10 @@
 @using JobScraper.Common.Extensions
 @using JobScraper.Models
 @using JobScraper.Persistence
-@using JobScraper.Web.Components.Components.MySelect
-@using JobScraper.Web.Components.Modals
+@using JobScraper.Web.Blazor.Components.MySelect
+@using JobScraper.Web.Blazor.Modals
 @using JobScraper.Web.Extensions
-@using JobScraper.Web.Pages.JobOffers.Models
+@using JobScraper.Web.Features.JobOffers.Models
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.EntityFrameworkCore
 
@@ -234,7 +234,7 @@
     JobsDbContext dbContext = null!;
     readonly PaginationState pagination = new()
     {
-        ItemsPerPage = 50,
+        ItemsPerPage = 50
     };
     ApplicationOfferModal _applicationOfferModal = null!;
     List<string> myKeywordsOptions = [];

@@ -1,16 +1,13 @@
 using System.Globalization;
 using FluentValidation;
-using FluentValidation.AspNetCore;
 using JobScraper;
 using JobScraper.Common;
 using JobScraper.Jobs;
-using JobScraper.Models;
 using JobScraper.Persistence;
-using JobScraper.Web.Components;
+using JobScraper.Web.Blazor;
 using JobScraper.Web.Validators;
 using Microsoft.AspNetCore.DataProtection;
 using NReco.Logging.File;
-using TickerQ.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,13 +44,16 @@ await app.Services.PrepareDbAsync();
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseExceptionHandler("/Error", true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
 // pl
-var supportedCultures = new []{ new CultureInfo("pl-PL") };
+var supportedCultures = new[]
+{
+    new CultureInfo("pl-PL")
+};
 app.UseRequestLocalization(new RequestLocalizationOptions
 {
     SupportedCultures = supportedCultures,

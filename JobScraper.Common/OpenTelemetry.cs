@@ -10,7 +10,7 @@ public static class OpenTelemetry
     public static ILoggingBuilder AddOtelLogging(this ILoggingBuilder builder,
         IConfiguration configuration, string serviceName)
     {
-        var otlpEndpoint = configuration["OtelEndpoint"];
+        var otlpEndpoint = configuration["OtelEndpoint"] ?? configuration["OTEL_EXPORTER_OTLP_ENDPOINT"];
         if (string.IsNullOrWhiteSpace(otlpEndpoint))
             return builder;
 
