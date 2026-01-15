@@ -10,7 +10,7 @@ namespace JobScraper.Web.Scraping.Jjit;
 
 public class JjitDetailsScraper
 {
-    public record Command : ScrapeCommand;
+    public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
     public class Handler : DetailsScrapperBase<Command>
     {
@@ -49,7 +49,7 @@ public class JjitDetailsScraper
                         CompanyUrl: document.querySelector('svg[data-testid="ApartmentRoundedIcon"]')?.parentNode.parentNode.getAttribute('href')
                     }
                     console.log(result)
-                    
+
                     return JSON.stringify(result)
                 }
                 """);

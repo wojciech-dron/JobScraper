@@ -8,11 +8,10 @@ namespace JobScraper.Web.Scraping.Indeed;
 
 public class IndeedListScraper
 {
-    public record Command : ScrapeCommand;
+    public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
     public class Handler : ListScraperBase<Command>
     {
-
         protected override DataOrigin DataOrigin => DataOrigin.Indeed;
         public Handler(IOptions<AppSettings> config,
             ILogger<Handler> logger,

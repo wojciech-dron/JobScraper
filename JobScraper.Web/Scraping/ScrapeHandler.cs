@@ -14,15 +14,15 @@ using TickerQ.Utilities.Base;
 
 namespace JobScraper.Web.Scraping;
 
-public class ScrapeJob
+public class ScrapeHandler
 {
     private readonly JobsDbContext _dbContext;
-    private readonly ILogger<ScrapeJob> _logger;
+    private readonly ILogger<ScrapeHandler> _logger;
     private readonly IMediator _mediator;
 
-    public ScrapeJob(IMediator mediator,
+    public ScrapeHandler(IMediator mediator,
         JobsDbContext dbContext,
-        ILogger<ScrapeJob> logger)
+        ILogger<ScrapeHandler> logger)
     {
         _mediator = mediator;
         _dbContext = dbContext;
@@ -36,50 +36,29 @@ public class ScrapeJob
         if (config is null)
             return;
 
-        var sources = config.Sources.Where(x => !x.Disabled).ToArray();
-
         _logger.LogInformation("Scheduled scraping in progress");
 
-        var newOffersCount = await ScrapeLists(sources);
+        var newOffersCount = await ScrapeLists(config.Sources);
         _logger.LogInformation("Scraped new {NewOffersCount} list jobs. Scraping details", newOffersCount);
-        await ScrapeDetails(sources);
+        await ScrapeDetails(config.Sources);
 
         _logger.LogInformation("Scheduled scraping completed successfully");
 
     }
 
-    // TODO: Unify this methods here and in ScrapePage.razor.cs
-    private async Task<int> ScrapeLists(IEnumerable<SourceConfig> sources)
+    public async Task<int> ScrapeLists(IEnumerable<SourceConfig> sources)
     {
         var listCommands = sources
             .Where(s => !s.Disabled)
             .Select<SourceConfig, ScrapeCommand>(source => source.DataOrigin switch
             {
-                DataOrigin.Indeed => new IndeedListScraper.Command
-                {
-                    Source = source,
-                },
-                DataOrigin.JustJoinIt => new JjitListScraper.Command
-                {
-                    Source = source,
-                },
-                DataOrigin.NoFluffJobs => new NoFluffJobsListScraper.Command
-                {
-                    Source = source,
-                },
-                DataOrigin.PracujPl => new PracujPlListScraper.Command
-                {
-                    Source = source,
-                },
-                DataOrigin.RocketJobs => new RocketJobsListScraper.Command
-                {
-                    Source = source,
-                },
-                DataOrigin.Olx => new OlxListScraper.Command
-                {
-                    Source = source,
-                },
-                _ => throw new ArgumentOutOfRangeException($"List scraping not implemented for {source}"),
+                DataOrigin.Indeed      => new IndeedListScraper.Command(source),
+                DataOrigin.JustJoinIt  => new JjitListScraper.Command(source),
+                DataOrigin.NoFluffJobs => new NoFluffJobsListScraper.Command(source),
+                DataOrigin.PracujPl    => new PracujPlListScraper.Command(source),
+                DataOrigin.RocketJobs  => new RocketJobsListScraper.Command(source),
+                DataOrigin.Olx         => new OlxListScraper.Command(source),
+                _                      => throw new ArgumentOutOfRangeException($"List scraping not implemented for {source}"),
             }).ToArray();
 
         var offersCount = 0;
@@ -97,30 +76,18 @@ public class ScrapeJob
         return offersCount;
     }
 
-    private async Task<int> ScrapeDetails(IEnumerable<SourceConfig> sources)
+    public async Task<int> ScrapeDetails(IEnumerable<SourceConfig> sources)
     {
         var detailsCommands = sources
             .Where(s => !s.Disabled)
             .Select<SourceConfig, ScrapeCommand?>(source => source.DataOrigin switch
             {
-                DataOrigin.Indeed => new IndeedDetailsScraper.Command
-                {
-                    Source = source,
-                },
-                DataOrigin.JustJoinIt => new JjitDetailsScraper.Command
-                {
-                    Source = source,
-                },
-                DataOrigin.NoFluffJobs => new NoFluffJobsDetailsScraper.Command
-                {
-                    Source = source,
-                },
-                DataOrigin.RocketJobs => new RocketJobsDetailsScraper.Command
-                {
-                    Source = source,
-                },
-                DataOrigin.PracujPl => null,
-                DataOrigin.Olx      => null,
+                DataOrigin.Indeed      => new IndeedDetailsScraper.Command(source),
+                DataOrigin.JustJoinIt  => new JjitDetailsScraper.Command(source),
+                DataOrigin.NoFluffJobs => new NoFluffJobsDetailsScraper.Command(source),
+                DataOrigin.RocketJobs  => new RocketJobsDetailsScraper.Command(source),
+                DataOrigin.PracujPl    => null,
+                DataOrigin.Olx         => null,
 
                 _ => throw new NotImplementedException($"List scraping not implemented for {source}"),
             }).Where(c => c is not null)

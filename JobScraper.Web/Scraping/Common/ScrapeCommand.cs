@@ -3,10 +3,7 @@ using Mediator;
 
 namespace JobScraper.Web.Scraping.Common;
 
-public abstract record ScrapeCommand : IRequest<ScrapeResponse>
-{
-    public SourceConfig Source { get; init; } = null!;
-}
+public abstract record ScrapeCommand(SourceConfig Source) : IRequest<ScrapeResponse>;
 
 public record ScrapeResponse(int ScrapedOffersCount = 0)
 {

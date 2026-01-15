@@ -11,7 +11,7 @@ namespace JobScraper.Web.Scraping.RocketJobs;
 
 public class RocketJobsListScraper
 {
-    public record Command : ScrapeCommand;
+    public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
     public class Handler : ListScraperBase<Command>
     {

@@ -1,10 +1,11 @@
 ﻿using Mediator;
 
-namespace JobScraper.Mediator;
+namespace JobScraper.Web.Modules.Mediator;
 
 public static class Setup
 {
-    public static WebApplicationBuilder AddMediator(this WebApplicationBuilder builder)
+    /// <remarks> Must be here because of source generation </remarks>
+    public static WebApplicationBuilder AddMediatorModule(this WebApplicationBuilder builder)
     {
         builder.Services.AddMediator(options =>
         {

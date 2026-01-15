@@ -1,8 +1,7 @@
 ﻿@page "/login"
 @using BlazorBootstrap
-@using ErrorOr
-@using global::Wolverine
 @using JobScraper.Auth
+@using Mediator
 
 <PageTitle>Login</PageTitle>
 
@@ -23,7 +22,7 @@
     <button type="submit" class="btn btn-primary">Log in</button>
 </EditForm>
 
-@inject IMessageBus MessageBus
+@inject IMediator Mediator
 @inject IHttpContextAccessor HttpContextAccessor
 
 @code {
@@ -32,7 +31,8 @@
 
     private async Task HandleLogin()
     {
-        var result = await MessageBus.InvokeAsync<ErrorOr<AuthToken>>(Model);
+        var cancellationToken = HttpContextAccessor.HttpContext!.RequestAborted;
+        var result = await Mediator.Send(Model, cancellationToken);
 
         if (result.IsError)
         {
@@ -41,7 +41,7 @@
         }
 
         var token = result.Value.Token;
-        HttpContextAccessor.HttpContext!.Response.Cookies.Append("access_token", token, new CookieOptions
+        HttpContextAccessor.HttpContext.Response.Cookies.Append("access_token", token, new CookieOptions
         {
             HttpOnly = true,
             Secure = true,

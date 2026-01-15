@@ -11,7 +11,7 @@ namespace JobScraper.Web.Scraping.Jjit;
 
 public class JjitListScraper
 {
-    public record Command : ScrapeCommand;
+    public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
     public class Handler : ListScraperBase<Command>
     {

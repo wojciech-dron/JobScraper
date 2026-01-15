@@ -5,13 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Cocona" Version="2.2.0"/>
-    <PackageReference Include="ErrorOr" Version="2.0.1" />
-    <PackageReference Include="Mediator.Abstractions" Version="3.0.1" />
-    <PackageReference Include="Mediator.SourceGenerator" Version="3.0.1">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
+    <PackageReference Include="ErrorOr" Version="2.0.1"/>
+    <PackageReference Include="Mediator.Abstractions" Version="3.0.1"/>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -24,11 +19,10 @@
     <PackageReference Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="1.14.0"/>
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.14.0"/>
     <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.14.0"/>
-    <PackageReference Include="Polly" Version="8.6.5" />
+    <PackageReference Include="Polly" Version="8.6.5"/>
     <PackageReference Include="TickerQ" Version="10.0.0"/>
     <PackageReference Include="TickerQ.Dashboard" Version="10.0.0"/>
     <PackageReference Include="TickerQ.EntityFrameworkCore" Version="10.0.0"/>
-    <PackageReference Include="WolverineFx.EntityFrameworkCore" Version="5.10.0"/>
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.14.0"/>
     <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.14.0"/>
     <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.14.0"/>
