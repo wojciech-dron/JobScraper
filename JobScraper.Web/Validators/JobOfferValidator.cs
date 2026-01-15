@@ -1,5 +1,5 @@
 using FluentValidation;
-using JobScraper.Models;
+using JobScraper.Entities;
 using JobScraper.Persistence;
 using Microsoft.EntityFrameworkCore;
 

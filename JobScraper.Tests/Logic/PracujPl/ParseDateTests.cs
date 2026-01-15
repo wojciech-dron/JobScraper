@@ -1,4 +1,4 @@
-﻿using JobScraper.Logic.PracujPl;
+﻿using JobScraper.Web.Scraping.PracujPl;
 using Shouldly;
 
 namespace JobScraper.Tests.Logic.PracujPl;

@@ -1,4 +1,4 @@
-﻿using JobScraper.Models;
+﻿using JobScraper.Entities;
 
 namespace JobScraper.Web.Features.JobOffers.Models;
 

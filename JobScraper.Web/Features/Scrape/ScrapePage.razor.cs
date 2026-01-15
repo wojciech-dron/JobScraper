@@ -1,21 +1,22 @@
 ﻿using BlazorBootstrap;
 using Blazored.FluentValidation;
-using JobScraper.Common.Extensions;
-using JobScraper.Logic.Common;
-using JobScraper.Logic.Functions;
-using JobScraper.Logic.Indeed;
-using JobScraper.Logic.Jjit;
-using JobScraper.Logic.NoFluffJobs;
-using JobScraper.Logic.Olx;
-using JobScraper.Logic.PracujPl;
-using JobScraper.Logic.RocketJobs;
-using JobScraper.Models;
+using JobScraper.Entities;
+using JobScraper.Extensions;
 using JobScraper.Persistence;
+using JobScraper.Web.Scraping.Common;
+using JobScraper.Web.Scraping.Functions;
+using JobScraper.Web.Scraping.Indeed;
+using JobScraper.Web.Scraping.Jjit;
+using JobScraper.Web.Scraping.NoFluffJobs;
+using JobScraper.Web.Scraping.Olx;
+using JobScraper.Web.Scraping.PracujPl;
+using JobScraper.Web.Scraping.RocketJobs;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using TickerQ.Utilities.Entities;
+using NoFluffJobsListScraper = JobScraper.Web.Scraping.NoFluffJobs.NoFluffJobsListScraper;
 
 namespace JobScraper.Web.Features.Scrape;
 
@@ -127,29 +128,29 @@ public partial class ScrapePage
             {
                 DataOrigin.Indeed => new IndeedListScraper.Command
                 {
-                    Source = source
+                    Source = source,
                 },
                 DataOrigin.JustJoinIt => new JjitListScraper.Command
                 {
-                    Source = source
+                    Source = source,
                 },
                 DataOrigin.NoFluffJobs => new NoFluffJobsListScraper.Command
                 {
-                    Source = source
+                    Source = source,
                 },
                 DataOrigin.PracujPl => new PracujPlListScraper.Command
                 {
-                    Source = source
+                    Source = source,
                 },
                 DataOrigin.RocketJobs => new RocketJobsListScraper.Command
                 {
-                    Source = source
+                    Source = source,
                 },
                 DataOrigin.Olx => new OlxListScraper.Command
                 {
-                    Source = source
+                    Source = source,
                 },
-                _ => throw new ArgumentOutOfRangeException($"List scraping not implemented for {source}")
+                _ => throw new ArgumentOutOfRangeException($"List scraping not implemented for {source}"),
             }).ToArray();
 
         var offersCount = 0;
@@ -174,23 +175,23 @@ public partial class ScrapePage
             {
                 DataOrigin.Indeed => new IndeedDetailsScraper.Command
                 {
-                    Source = source
+                    Source = source,
                 },
                 DataOrigin.JustJoinIt => new JjitDetailsScraper.Command
                 {
-                    Source = source
+                    Source = source,
                 },
                 DataOrigin.NoFluffJobs => new NoFluffJobsDetailsScraper.Command
                 {
-                    Source = source
+                    Source = source,
                 },
                 DataOrigin.RocketJobs => new RocketJobsDetailsScraper.Command
                 {
-                    Source = source
+                    Source = source,
                 },
                 DataOrigin.PracujPl => null,
                 DataOrigin.Olx      => null,
-                _                   => throw new ArgumentOutOfRangeException($"List scraping not implemented for {source}")
+                _                   => throw new ArgumentOutOfRangeException($"List scraping not implemented for {source}"),
             }).Where(c => c is not null)
             .ToArray();
 
@@ -272,7 +273,7 @@ public partial class ScrapePage
             Function = "ScrapeJobs",
             Description = "Scheduled in ScrapePage",
             Retries = 1,
-            RetryIntervals = [20] // set in seconds
+            RetryIntervals = [20], // set in seconds
         };
 
         await dbContext.AddAsync(cronTickerEntity);

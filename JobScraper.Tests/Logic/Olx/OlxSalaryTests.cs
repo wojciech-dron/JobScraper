@@ -1,5 +1,5 @@
-using JobScraper.Logic.Olx;
-using JobScraper.Models;
+using JobScraper.Entities;
+using JobScraper.Web.Scraping.Common;
 using Shouldly;
 
 namespace JobScraper.Tests.Logic.Olx;

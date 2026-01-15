@@ -6,6 +6,8 @@
 
   <ItemGroup>
     <PackageReference Include="Cocona" Version="2.2.0"/>
+    <PackageReference Include="ErrorOr" Version="2.0.1" />
+    <PackageReference Include="Mediator.Abstractions" Version="3.0.1" />
     <PackageReference Include="Mediator.SourceGenerator" Version="3.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -17,31 +19,23 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.2"/>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0"/>
     <PackageReference Include="Microsoft.Playwright" Version="1.57.0"/>
+    <PackageReference Include="NReco.Logging.File" Version="1.3.1"/>
+    <PackageReference Include="OpenTelemetry.Api" Version="1.14.0"/>
+    <PackageReference Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="1.14.0"/>
+    <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.14.0"/>
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.14.0"/>
+    <PackageReference Include="Polly" Version="8.6.5" />
     <PackageReference Include="TickerQ" Version="10.0.0"/>
     <PackageReference Include="TickerQ.Dashboard" Version="10.0.0"/>
     <PackageReference Include="TickerQ.EntityFrameworkCore" Version="10.0.0"/>
     <PackageReference Include="WolverineFx.EntityFrameworkCore" Version="5.10.0"/>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\JobScraper.Common\JobScraper.Common.csproj"/>
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.14.0"/>
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.14.0"/>
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.14.0"/>
   </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="JobScraper.Tests"/>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="Logic\Jjit\jjit-list.js"/>
-    <EmbeddedResource Include="Logic\Jjit\jjit-list.js"/>
-    <None Remove="Logic\NoFluffJobs\no-fluff-jobs-list.js"/>
-    <EmbeddedResource Include="Logic\NoFluffJobs\no-fluff-jobs-list.js"/>
   </ItemGroup>
 
 </Project>

@@ -1,4 +1,4 @@
-﻿using JobScraper.Models;
+﻿using JobScraper.Entities;
 using Microsoft.EntityFrameworkCore;
 using TickerQ.EntityFrameworkCore.Configurations;
 using TickerQ.Utilities.Entities;

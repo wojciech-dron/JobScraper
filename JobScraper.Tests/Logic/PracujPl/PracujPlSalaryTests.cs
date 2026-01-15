@@ -1,6 +1,5 @@
-using JobScraper.Logic.Olx;
-using JobScraper.Logic.PracujPl;
-using JobScraper.Models;
+using JobScraper.Entities;
+using JobScraper.Web.Scraping.Common;
 using Shouldly;
 
 namespace JobScraper.Tests.Logic.PracujPl;
@@ -128,7 +127,10 @@ public class PracujPlSalaryTests
     [InlineData("5 000–30 000 zł / mies. (zal. od umowy)", 5000, 30000, "zł")]
     [InlineData("8 000–18 000 zł / mies. (zal. od umowy)", 8000, 18000, "zł")]
     [InlineData("15\u00a0000–26\u00a0880\u00a0zł\u00a0/ mies. (zal. od umowy)", 15000, 26880, "zł")]
-    public void TryParseSalary_AllExamples_SetsCorrectValues(string rawSalary, int expectedMin, int expectedMax, string expectedCurrency)
+    public void TryParseSalary_AllExamples_SetsCorrectValues(string rawSalary,
+        int expectedMin,
+        int expectedMax,
+        string expectedCurrency)
     {
         // Arrange
         var jobOffer = new JobOffer();
