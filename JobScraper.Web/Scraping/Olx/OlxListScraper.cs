@@ -10,7 +10,7 @@ namespace JobScraper.Web.Scraping.Olx;
 
 public class OlxListScraper
 {
-    public record Command : ScrapeCommand;
+    public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
     public class Handler : ListScraperBase<Command>
     {

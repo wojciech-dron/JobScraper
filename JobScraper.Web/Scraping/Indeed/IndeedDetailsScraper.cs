@@ -9,7 +9,7 @@ namespace JobScraper.Web.Scraping.Indeed;
 
 public class IndeedDetailsScraper
 {
-    public record Command : ScrapeCommand;
+    public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
     public class Handler : DetailsScrapperBase<Command>
     {

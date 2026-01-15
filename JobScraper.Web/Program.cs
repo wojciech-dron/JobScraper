@@ -1,26 +1,26 @@
 using FluentValidation;
 using JobScraper.Auth;
 using JobScraper.Jobs;
-using JobScraper.Mediator;
 using JobScraper.OpenTelemetry;
 using JobScraper.Persistence;
 using JobScraper.Security;
 using JobScraper.Settings;
 using JobScraper.Web.Blazor;
-using JobScraper.Wolverine;
+using JobScraper.Web.Modules.Mediator;
+using JobScraper.Web.Scraping;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddScraperSettings();
 builder.AddBlazor();
-builder.AddWolverineServices();
-builder.AddMediator();
+builder.AddMediatorModule();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.AddAuthServices();
 builder.AddLogging();
 builder.AddPersistence();
 builder.AddJobs();
 builder.ConfigureSecurity();
+builder.AddScrapeServices();
 
 
 var app = builder.Build();

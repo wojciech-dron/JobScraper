@@ -243,11 +243,11 @@
 
     readonly List<ToastMessage> messages = [];
 
-    private void ShowNotification(string message, ToastType toastType = ToastType.Success) =>
+    private void PushNotification(string message, ToastType toastType = ToastType.Success) =>
         messages.Insert(0, new ToastMessage
         {
             Type = toastType,
-            Message = message
+            Message = message,
         });
 
     private void TrySetOrigin(SourceConfig source)

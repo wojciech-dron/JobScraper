@@ -2,12 +2,13 @@
 using System.Security.Claims;
 using System.Text;
 using ErrorOr;
+using Mediator;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 
-namespace JobScraper.Auth;
+namespace JobScraper.Web.Features.Login;
 
-public class LoginDto
+public class LoginDto : IRequest<ErrorOr<AuthToken>>
 {
     public string? Login { get; set; }
     public string? Password { get; set; }
@@ -15,7 +16,7 @@ public class LoginDto
 
 public record AuthToken(string Token);
 
-public class AuthHandler
+public class AuthHandler : IRequestHandler<LoginDto, ErrorOr<AuthToken>>
 {
     private readonly IConfiguration _config;
     private readonly IPasswordHasher<string> _hasher;
@@ -26,7 +27,7 @@ public class AuthHandler
         _hasher = hasher;
     }
 
-    public async Task<ErrorOr<AuthToken>> Handle(LoginDto request)
+    public async ValueTask<ErrorOr<AuthToken>> Handle(LoginDto request, CancellationToken cancellationToken)
     {
         // 1. Mock Database Logic
         var mockUser = new

@@ -9,7 +9,7 @@ namespace JobScraper.Web.Scraping.NoFluffJobs;
 
 public class NoFluffJobsDetailsScraper
 {
-    public record Command : ScrapeCommand;
+    public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
     public class Handler : DetailsScrapperBase<Command>
     {

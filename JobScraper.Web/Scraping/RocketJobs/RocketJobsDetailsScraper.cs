@@ -9,7 +9,7 @@ namespace JobScraper.Web.Scraping.RocketJobs;
 
 public class RocketJobsDetailsScraper
 {
-    public record Command : ScrapeCommand;
+    public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
     public class Handler : DetailsScrapperBase<Command>
     {
@@ -48,7 +48,7 @@ public class RocketJobsDetailsScraper
                         CompanyUrl: document.querySelector('svg[data-testid="ApartmentRoundedIcon"]')?.parentNode.parentNode.getAttribute('href')
                     }
                     console.log(result)
-                    
+
                     return JSON.stringify(result)
                 }
                 """);

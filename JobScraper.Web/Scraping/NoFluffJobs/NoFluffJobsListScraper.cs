@@ -11,7 +11,7 @@ namespace JobScraper.Web.Scraping.NoFluffJobs;
 
 public partial class NoFluffJobsListScraper
 {
-    public record Command : ScrapeCommand;
+    public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
     public partial class Handler : ListScraperBase<Command>
     {
