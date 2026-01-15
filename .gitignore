@@ -265,5 +265,6 @@ __pycache__/
 /JobScraper/Data/
 /JobScraper.Web/Data/
 /JobScraper.Common/scraperSettings.Development.json
+/JobScraper.Web/appsettings.Development.json
 /Data/
 .roo/

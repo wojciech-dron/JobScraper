@@ -1,8 +1,8 @@
 ﻿@page "/login"
 @using BlazorBootstrap
 @using ErrorOr
-@using JobScraper.Modules.Auth
-@using Wolverine
+@using global::Wolverine
+@using JobScraper.Auth
 
 <PageTitle>Login</PageTitle>
 
@@ -24,11 +24,9 @@
 </EditForm>
 
 @inject IMessageBus MessageBus
+@inject IHttpContextAccessor HttpContextAccessor
 
 @code {
-    [CascadingParameter]
-    public HttpContext HttpContext { get; set; } = default!;
-
     [SupplyParameterFromForm]
     public LoginDto Model { get; set; } = new();
 
@@ -42,9 +40,8 @@
             return;
         }
 
-        // 3. Set the Cookie
         var token = result.Value.Token;
-        HttpContext.Response.Cookies.Append("access_token", token, new CookieOptions
+        HttpContextAccessor.HttpContext!.Response.Cookies.Append("access_token", token, new CookieOptions
         {
             HttpOnly = true,
             Secure = true,
@@ -52,9 +49,7 @@
             Expires = DateTime.UtcNow.AddHours(1),
         });
 
-        // 4. Redirect
-        HttpContext.Response.Redirect("/");
-        // 2. Generate JWT
+        HttpContextAccessor.HttpContext.Response.Redirect("/");
     }
 
     readonly List<ToastMessage> messages = [];

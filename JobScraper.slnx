@@ -16,7 +16,6 @@
     <File Path="scripts\ef-core.ps1" />
   </Folder>
   <Folder Name="/src/">
-    <Project Path="JobScraper.Common/JobScraper.Common.csproj" />
     <Project Path="JobScraper.Web/JobScraper.Web.csproj" />
     <Project Path="JobScraper/JobScraper.csproj" />
   </Folder>

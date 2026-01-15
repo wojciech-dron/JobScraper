@@ -15,7 +15,7 @@
     <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.1"/>
     <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid" Version="10.0.0"/>
     <PackageReference Include="Microsoft.AspNetCore.Components.QuickGrid.EntityFrameworkAdapter" Version="10.0.0"/>
-    <PackageReference Include="NReco.Logging.File" Version="1.3.1"/>
+
   </ItemGroup>
 
   <ItemGroup>
@@ -28,12 +28,14 @@
     </Content>
   </ItemGroup>
 
+
   <ItemGroup>
-    <AdditionalFiles Include="Features\Companies\Companies.razor"/>
+    <EmbeddedResource Include="Scraping\Jjit\jjit-list.js"/>
+    <EmbeddedResource Include="Scraping\NoFluffJobs\no-fluff-jobs-list.js"/>
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Modules\"/>
+    <InternalsVisibleTo Include="JobScraper.Tests"/>
   </ItemGroup>
 
 </Project>

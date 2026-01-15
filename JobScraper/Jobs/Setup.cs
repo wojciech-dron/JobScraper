@@ -3,17 +3,15 @@ using TickerQ.Dashboard.DependencyInjection;
 using TickerQ.DependencyInjection;
 using TickerQ.EntityFrameworkCore.Customizer;
 using TickerQ.EntityFrameworkCore.DependencyInjection;
-using TickerQ.Utilities.Enums;
 
 namespace JobScraper.Jobs;
 
 public static class Setup
 {
-    public static IServiceCollection AddJobs(this IServiceCollection services,
-        IConfiguration configuration)
+    public static WebApplicationBuilder AddJobs(this WebApplicationBuilder builder)
     {
         // services.AddScoped<JobsExceptionHandler>();
-        services.AddTickerQ(options =>
+        builder.Services.AddTickerQ(options =>
         {
             options.SetExceptionHandler<JobsExceptionHandler>();
             options.ConfigureScheduler(scheduler =>
@@ -35,12 +33,12 @@ public static class Setup
             });
         });
 
-        return services;
+        return builder;
     }
 
     public static IApplicationBuilder UseJobs(this IApplicationBuilder app)
     {
-        app.UseTickerQ(TickerQStartMode.Immediate);
+        app.UseTickerQ();
         return app;
     }
 }

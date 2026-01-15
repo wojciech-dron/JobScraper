@@ -1,7 +1,7 @@
 ﻿@page "/"
 @using System.Web
-@using JobScraper.Common.Extensions
-@using JobScraper.Models
+@using JobScraper.Entities
+@using JobScraper.Extensions
 @using JobScraper.Persistence
 @using JobScraper.Web.Blazor.Components.MySelect
 @using JobScraper.Web.Blazor.Modals
@@ -234,7 +234,7 @@
     JobsDbContext dbContext = null!;
     readonly PaginationState pagination = new()
     {
-        ItemsPerPage = 50
+        ItemsPerPage = 50,
     };
     ApplicationOfferModal _applicationOfferModal = null!;
     List<string> myKeywordsOptions = [];

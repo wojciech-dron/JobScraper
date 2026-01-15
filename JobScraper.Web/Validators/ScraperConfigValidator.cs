@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 using FluentValidation;
-using JobScraper.Models;
+using JobScraper.Entities;
 using Microsoft.Extensions.Options;
 using NCrontab;
 
