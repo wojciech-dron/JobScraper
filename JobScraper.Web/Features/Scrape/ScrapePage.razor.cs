@@ -1,9 +1,9 @@
 ﻿using BlazorBootstrap;
 using Blazored.FluentValidation;
-using JobScraper.Entities;
-using JobScraper.Persistence;
-using JobScraper.Web.Scraping;
-using JobScraper.Web.Scraping.Functions;
+using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Features.Scrape.Logic.Functions;
+using JobScraper.Web.Features.Scraping;
+using JobScraper.Web.Modules.Persistence;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;

@@ -1,6 +1,6 @@
-using JobScraper.Entities;
-using JobScraper.Web.Scraping.Common;
+using JobScraper.Web.Common.Entities;
 using Shouldly;
+using SalaryParser = JobScraper.Web.Features.Scrape.Logic.Common.SalaryParser;
 
 namespace JobScraper.Tests.Logic.Olx;
 

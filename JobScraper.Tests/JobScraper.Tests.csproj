@@ -26,7 +26,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\JobScraper.Web\JobScraper.Web.csproj"/>
-    <ProjectReference Include="..\JobScraper\JobScraper.csproj"/>
   </ItemGroup>
 
 </Project>

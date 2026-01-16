@@ -1,8 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using FluentValidation;
-using JobScraper.Entities;
+using JobScraper.Web.Common.Entities;
 using Microsoft.Extensions.Options;
-using NCrontab;
 
 namespace JobScraper.Web.Validators;
 
@@ -46,6 +45,7 @@ public partial class ScraperConfigValidator : AbstractValidator<ScraperConfig>
             .WithMessage("Cron expression is invalid.");
     }
 
-    [GeneratedRegex(@"^((((\d+,)+\d+|(\d+(\/|-|#)\d+)|\d+L?|\*(\/\d+)?|L(-\d+)?|\?|[A-Z]{3}(-[A-Z]{3})?) ?){5,7})|(@(annually|yearly|monthly|weekly|daily|hourly|reboot))|(@every (\d+(ns|us|µs|ms|s|m|h))+)$")]
+    [GeneratedRegex(
+        @"^((((\d+,)+\d+|(\d+(\/|-|#)\d+)|\d+L?|\*(\/\d+)?|L(-\d+)?|\?|[A-Z]{3}(-[A-Z]{3})?) ?){5,7})|(@(annually|yearly|monthly|weekly|daily|hourly|reboot))|(@every (\d+(ns|us|µs|ms|s|m|h))+)$")]
     private static partial Regex CronRegex();
 }
