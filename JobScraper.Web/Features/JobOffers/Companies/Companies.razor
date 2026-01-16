@@ -44,8 +44,12 @@
                 <a href="?company=@(context.Name)">@context.JobOffersCount</a>
             </ChildContent>
         </TemplateColumn>
-        <PropertyColumn Property="@(c => c.JjitUrl)"/>
-        <PropertyColumn Property="@(c => c.NoFluffJobsUrl)"/>
+        <TemplateColumn Title="Jjit url">
+            <a href="@context.JjitUrl">@context.JjitUrl</a>
+        </TemplateColumn>
+        <TemplateColumn Title="NoFluffJobs url">
+            <a href="@context.NoFluffJobsUrl">@context.NoFluffJobsUrl</a>
+        </TemplateColumn>
     </QuickGrid>
 </div>
 
