@@ -1,4 +1,5 @@
 ﻿using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Modules.Persistence.Interceptors;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TickerQ.EntityFrameworkCore.Configurations;
@@ -9,6 +10,8 @@ namespace JobScraper.Web.Modules.Persistence;
 public class JobsDbContext(DbContextOptions<JobsDbContext> options)
     : IdentityDbContext<ApplicationUser>(options)
 {
+    public string? CurrentUserName { get; set; }
+
     public DbSet<JobOffer> JobOffers { get; set; }
     public DbSet<Company> Companies { get; set; }
     public DbSet<Application> Applications { get; set; }
@@ -26,5 +29,6 @@ public class JobsDbContext(DbContextOptions<JobsDbContext> options)
         modelBuilder.ApplyConfiguration(new TimeTickerConfigurations<TimeTickerEntity>(schema: "jobs"));
         modelBuilder.ApplyConfiguration(new CronTickerConfigurations<CronTickerEntity>(schema: "jobs"));
         modelBuilder.ApplyConfiguration(new CronTickerOccurrenceConfigurations<CronTickerEntity>(schema: "jobs"));
+        modelBuilder.ApplyOwnershipFilter(() => CurrentUserName);
     }
 }

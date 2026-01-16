@@ -21,12 +21,17 @@ public static class Setup
 
             options
                 .UseSqlite(connectionString)
-                .AddInterceptors(new UpdatableInterceptor())
+                .AddInterceptors(new UpdatableInterceptor(),
+                    new OwnerInterceptor())
                 .EnableSensitiveDataLogging();
 
             options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
 
+        // decorate IDbContextFactory with custom implementation
+        builder.Services.Decorate<IDbContextFactory<JobsDbContext>, ScopedJobsContextFactory>();
+
+        // resolve db context with custom pooled factory
         services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<JobsDbContext>>().CreateDbContext());
 
         return builder;

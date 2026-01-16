@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace JobScraper.Web.Common.Entities;
 
-public class Application : IUpdatable
+public class Application : IUpdatable, IOwnable
 {
     public string OfferUrl { get; set; } = null!;
     public DateTime AppliedAt { get; set; } = DateTime.UtcNow;
@@ -16,6 +16,7 @@ public class Application : IUpdatable
     public ApplyStatus Status { get; set; } = ApplyStatus.Applied;
 
     public JobOffer JobOffer { get; set; } = null!;
+    public string? Owner { get; set; } = "";
     public DateTime? UpdatedAt { get; set; }
 }
 
@@ -36,13 +37,18 @@ public class ApplicationModelBuilder : IEntityTypeConfiguration<Application>
     {
         builder.ToTable("Applications");
 
-        builder.HasKey(j => j.OfferUrl);
+        builder.HasKey(j => new
+        {
+            j.Owner,
+            j.OfferUrl,
+        });
         builder.Property<string>("OfferUrl").HasMaxLength(500);
         builder.Property(e => e.AppliedAt).IsRequired();
         builder.Property(e => e.SentCv).HasMaxLength(100).IsRequired();
         builder.Property(e => e.Comments).HasMaxLength(500);
         builder.Property(j => j.Status).HasConversion<string>().HasMaxLength(24);
         builder.Property(j => j.ExpectedSalaryCurrency).HasMaxLength(10);
+        builder.Property(j => j.Owner).HasMaxLength(255);
 
 
         builder.HasOne(e => e.JobOffer)
@@ -50,7 +56,8 @@ public class ApplicationModelBuilder : IEntityTypeConfiguration<Application>
             .HasForeignKey<Application>("OfferUrl")
             .HasPrincipalKey<JobOffer>(x => x.OfferUrl);
 
+        builder.HasIndex(x => x.OfferUrl);
         builder.HasIndex(x => x.AppliedAt);
-        builder.HasIndex(x => x.ExpectedSalary);
+        builder.HasIndex(x => x.ExpectedSalary).IsUnique(false);
     }
 }
