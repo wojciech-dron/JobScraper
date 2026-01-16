@@ -1,8 +1,8 @@
 ﻿@page "/applications"
 @using JobScraper.Web.Blazor.Components.MySelect
-@using JobScraper.Web.Blazor.Modals
 @using JobScraper.Web.Common.Entities
 @using JobScraper.Web.Common.Extensions
+@using JobScraper.Web.Features.JobOffers.Modals
 @using JobScraper.Web.Modules.Extensions
 @using JobScraper.Web.Modules.Persistence
 @using Microsoft.AspNetCore.Components.QuickGrid
@@ -80,7 +80,8 @@
                 </MySelect>
             </HeaderTemplate>
         </PropertyColumn>
-        <PropertyColumn Property="@(p => p.ExpectedMonthSalary)" Title="ExpectedSalary" Sortable="true"/>
+        <PropertyColumn Property="@(p => p.ExpectedSalary)" Title="ExpectedSalary" Sortable="true"/>
+        <PropertyColumn Property="@(p => p.ExpectedSalaryCurrency)" Title="Currency"/>
         <PropertyColumn Property="@(p => p.Comments)" Sortable="true"/>
         <PropertyColumn Property="@(p => p.AppliedAt)" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
         <PropertyColumn Property="@(p => p.RespondedAt)" Format="yyyy-MM-dd" Sortable="true"/>
