@@ -58,7 +58,9 @@ public class JjitDetailsScraper
 
             jobOffer.Description = data.Description;
             jobOffer.OfferKeywords.AddRange(data.Keywords);
-            jobOffer.Company!.JjitUrl = BaseUrl + data.CompanyUrl;
+
+            if (!string.IsNullOrEmpty(data.CompanyUrl))
+                jobOffer.Company!.JjitUrl = BaseUrl + data.CompanyUrl;
 
             jobOffer.ProcessKeywords(ScrapeConfig);
         }
