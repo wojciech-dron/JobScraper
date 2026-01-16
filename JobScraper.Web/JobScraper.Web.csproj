@@ -57,4 +57,12 @@
     <EmbeddedResource Include="Features\JobOffers\Scrape\Logic\NoFluffJobs\no-fluff-jobs-list.js"/>
   </ItemGroup>
 
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Blazor\Modals\ApplicationOfferModal.razor"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="Features\JobOffers\Modals\ApplicationOfferModal.razor"/>
+  </ItemGroup>
+
 </Project>

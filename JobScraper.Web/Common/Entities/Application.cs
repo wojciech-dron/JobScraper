@@ -11,7 +11,8 @@ public class Application : IUpdatable
     public string SentCv { get; set; } = "";
     public DateTime? RespondedAt { get; set; }
     public string? Comments { get; set; }
-    public int? ExpectedMonthSalary { get; set; }
+    public int? ExpectedSalary { get; set; }
+    public string? ExpectedSalaryCurrency { get; set; }
     public ApplyStatus Status { get; set; } = ApplyStatus.Applied;
 
     public JobOffer JobOffer { get; set; } = null!;
@@ -41,6 +42,7 @@ public class ApplicationModelBuilder : IEntityTypeConfiguration<Application>
         builder.Property(e => e.SentCv).HasMaxLength(100).IsRequired();
         builder.Property(e => e.Comments).HasMaxLength(500);
         builder.Property(j => j.Status).HasConversion<string>().HasMaxLength(24);
+        builder.Property(j => j.ExpectedSalaryCurrency).HasMaxLength(10);
 
 
         builder.HasOne(e => e.JobOffer)
@@ -49,6 +51,6 @@ public class ApplicationModelBuilder : IEntityTypeConfiguration<Application>
             .HasPrincipalKey<JobOffer>(x => x.OfferUrl);
 
         builder.HasIndex(x => x.AppliedAt);
-        builder.HasIndex(x => x.ExpectedMonthSalary);
+        builder.HasIndex(x => x.ExpectedSalary);
     }
 }

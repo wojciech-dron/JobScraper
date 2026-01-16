@@ -73,7 +73,8 @@
                 </div>
                 <div class="col-md-4">
                     <label for="salaryCurrency" class="form-label">Currency</label>
-                    <InputText id="salaryCurrency" @bind-Value="jobOffer.SalaryCurrency" class="form-control"/>
+                    <InputText id="salaryCurrency" @bind-Value="jobOffer.SalaryCurrency" MaxLength="10"
+                               class="form-control"/>
                     <ValidationMessage For="@(() => jobOffer.SalaryCurrency)"/>
                 </div>
             </div>
