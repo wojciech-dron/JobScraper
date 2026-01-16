@@ -34,8 +34,6 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Directory.Build.props", "."]
 COPY ["JobScraper.Web/JobScraper.Web.csproj", "JobScraper.Web/"]
-COPY ["JobScraper/JobScraper.csproj", "JobScraper/"]
-COPY ["JobScraper.Common/JobScraper.Common.csproj", "JobScraper.Common/"]
 RUN dotnet restore "JobScraper.Web/JobScraper.Web.csproj"
 COPY . .
 WORKDIR "/src/JobScraper.Web"

@@ -1,8 +1,8 @@
 # Adding migration
-dotnet ef migrations add --project JobScraper/JobScraper.csproj [Name]
+dotnet ef migrations add --project JobScraper.Web/JobScraper.Web.csproj [Name]
 
 # Updating database
-dotnet ef database update --project JobScraper/JobScraper.csproj [Name]
+dotnet ef database update --project JobScraper.Web/JobScraper.Web.csproj [Name]
 
 # Remove migration
-dotnet ef migrations remove --project JobScraper/JobScraper.csproj [Name]
+dotnet ef migrations remove --project JobScraper.Web/JobScraper.Web.csproj [Name]

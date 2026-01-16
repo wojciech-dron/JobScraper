@@ -1,7 +1,6 @@
 using FluentValidation;
 using JobScraper.Web.Blazor;
-using JobScraper.Web.Features.Scrape;
-using JobScraper.Web.Features.Scraping;
+using JobScraper.Web.Features.JobOffers.Scrape;
 using JobScraper.Web.Modules.Auth;
 using JobScraper.Web.Modules.Jobs;
 using JobScraper.Web.Modules.Mediator;

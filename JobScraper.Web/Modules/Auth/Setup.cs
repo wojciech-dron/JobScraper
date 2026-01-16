@@ -1,7 +1,6 @@
-﻿using JobScraper.Web.Blazor.Account;
-using JobScraper.Web.Common.Entities;
+﻿using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Features.Account;
 using JobScraper.Web.Modules.Persistence;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 
@@ -29,13 +28,6 @@ public static class Setup
                 options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
             })
             .AddIdentityCookies();
-
-        builder.Services.AddAuthorization(options =>
-        {
-            options.FallbackPolicy = new AuthorizationPolicyBuilder()
-                .RequireAuthenticatedUser()
-                .Build();
-        });
 
         builder.Services.AddIdentityCore<ApplicationUser>(options =>
             {
