@@ -1,22 +1,14 @@
 ﻿@using JobScraper.Web.Blazor.Layout
+@using JobScraper.Web.Blazor.Pages
 @using JobScraper.Web.Features.Account.Shared
 @using Microsoft.AspNetCore.Components.Authorization
-<CascadingAuthenticationState>
-    <Router AppAssembly="@typeof(Program).Assembly">
-        <Found Context="routeData">
-            <AuthorizeRouteView RouteData="@routeData"
-                                DefaultLayout="@typeof(MainLayout)">
-                <NotAuthorized>
-                    @if (context.User.Identity?.IsAuthenticated != true)
-                    {
-                        <RedirectToLogin/>
-                    }
-                    else
-                    {
-                        <p>You are not authorized to access this resource.</p>
-                    }
-                </NotAuthorized>
-            </AuthorizeRouteView>
-        </Found>
-    </Router>
-</CascadingAuthenticationState>
+<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(NotFound)">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
+            <NotAuthorized>
+                <RedirectToLogin/>
+            </NotAuthorized>
+        </AuthorizeRouteView>
+        <FocusOnNavigate RouteData="routeData" Selector="h1"/>
+    </Found>
+</Router>

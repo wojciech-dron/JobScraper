@@ -16,7 +16,6 @@ public static class Setup
         builder.Services.AddScoped<IdentityRedirectManager>();
         builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
-
         var jwtSigningKey = builder.Configuration["Jwt:SigningKey"];
 
         if (string.IsNullOrWhiteSpace(jwtSigningKey))
@@ -31,7 +30,7 @@ public static class Setup
 
         builder.Services.AddIdentityCore<ApplicationUser>(options =>
             {
-                options.SignIn.RequireConfirmedAccount = true;
+                options.SignIn.RequireConfirmedAccount = false;
                 options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
             })
             .AddEntityFrameworkStores<JobsDbContext>()
