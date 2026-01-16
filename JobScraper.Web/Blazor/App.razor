@@ -1,6 +1,6 @@
 ﻿@using JobScraper.Web.Blazor.Layout
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 
 <head>
     <meta charset="utf-8"/>
@@ -10,6 +10,10 @@
     <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]"/>
     <link rel="stylesheet" href="@Assets["app.css"]"/>
     <link rel="stylesheet" href="@Assets["JobScraper.Web.styles.css"]"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+    <link href="_content/Blazor.Bootstrap/blazor.bootstrap.css" rel="stylesheet"/>
     <ImportMap/>
     <link rel="icon" type="image/png" href="favicon.png"/>
     <HeadOutlet @rendermode="PageRenderMode"/>
@@ -19,7 +23,10 @@
 <Routes @rendermode="PageRenderMode"/>
 <ReconnectModal/>
 <script src="@Assets["_framework/blazor.web.js"]"></script>
-<script src="@Assets["Components/Account/Shared/PasskeySubmit.razor.js"]" type="module"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+<script src="_content/Blazor.Bootstrap/blazor.bootstrap.js"></script>
 </body>
 
 </html>
@@ -29,5 +36,7 @@
     private HttpContext HttpContext { get; set; } = default!;
 
     private IComponentRenderMode? PageRenderMode =>
-        HttpContext.AcceptsInteractiveRouting() ? InteractiveServer : null;
+        HttpContext.AcceptsInteractiveRouting()
+            ? new InteractiveServerRenderMode(prerender: false)
+            : null;
 }

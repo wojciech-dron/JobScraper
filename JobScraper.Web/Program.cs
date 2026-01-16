@@ -30,7 +30,6 @@ await app.Services.PrepareDbAsync();
 if (!app.Environment.IsDevelopment())
     app.UseHsts();
 
-app.UseHttpsRedirection();
 app.UseExceptionHandler("/Error", true);
 app.UseBlazor();
 app.UseJobs();

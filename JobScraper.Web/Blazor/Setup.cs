@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using JobScraper.Web.Features.Account;
 
 namespace JobScraper.Web.Blazor;
 
@@ -36,6 +37,8 @@ public static class Setup
 
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
+
+        app.MapAdditionalIdentityEndpoints();
 
         return app;
     }

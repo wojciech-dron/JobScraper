@@ -1,6 +1,7 @@
 ﻿using JobScraper.Web.Modules.Persistence.Interceptors;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace JobScraper.Web.Modules.Persistence;
 
@@ -22,6 +23,8 @@ public static class Setup
                 .UseSqlite(connectionString)
                 .AddInterceptors(new UpdatableInterceptor())
                 .EnableSensitiveDataLogging();
+
+            options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
 
         services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<JobsDbContext>>().CreateDbContext());
