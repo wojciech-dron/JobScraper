@@ -1,6 +1,7 @@
 ﻿@using BlazorBootstrap
 @using JobScraper.Web.Common.Entities
 @using JobScraper.Web.Modules.Persistence
+@using JobScraper.Web.Modules.Services
 @using Microsoft.EntityFrameworkCore
 <Modal @ref="_modal" Title="Offer application" Fullscreen="ModalFullscreen.Always">
     <BodyTemplate>
@@ -112,11 +113,11 @@
 
                     <div class="form-group pb-1 row">
                         <label for="expectedSalary" class="col-12">Expected Salary:</label>
-                        <div class="col-8">
+                        <div class="col-6">
                             <InputNumber id="expectedSalary" @bind-Value="@_application.ExpectedSalary"
                                          class="form-control" placeholder="Amount"/>
                         </div>
-                        <div class="col-4">
+                        <div class="col-6">
                             <InputText id="expectedSalaryCurrency"
                                        @bind-Value="_application.ExpectedSalaryCurrency"
                                        MaxLength="10"
@@ -155,8 +156,10 @@
     </BodyTemplate>
 </Modal>
 
+// do not inject db context factory in razor view :p
 @inject IDbContextFactory<JobsDbContext> DbContextFactory
 @inject NavigationManager NavigationManager
+@inject IUserProvider UserProvider
 
 @code {
     private bool _isEdit;
@@ -186,6 +189,7 @@
         {
             OfferUrl = _jobOffer.OfferUrl,
             ExpectedSalaryCurrency = "PLN/mth",
+            Owner = UserProvider.UserName,
         };
 
         _alreadyAppliedToCompany = await _context.Companies
