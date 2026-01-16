@@ -1,5 +1,5 @@
 ﻿using Facet;
-using JobScraper.Entities;
+using JobScraper.Web.Common.Entities;
 
 namespace JobScraper.Web.Features.Companies;
 

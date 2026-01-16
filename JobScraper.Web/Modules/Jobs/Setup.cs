@@ -1,0 +1,44 @@
+﻿using JobScraper.Web.Modules.Persistence;
+using TickerQ.Dashboard.DependencyInjection;
+using TickerQ.DependencyInjection;
+using TickerQ.EntityFrameworkCore.Customizer;
+using TickerQ.EntityFrameworkCore.DependencyInjection;
+
+namespace JobScraper.Web.Modules.Jobs;
+
+public static class Setup
+{
+    public static WebApplicationBuilder AddJobs(this WebApplicationBuilder builder)
+    {
+        // services.AddScoped<JobsExceptionHandler>();
+        builder.Services.AddTickerQ(options =>
+        {
+            options.SetExceptionHandler<JobsExceptionHandler>();
+            options.ConfigureScheduler(scheduler =>
+            {
+                scheduler.MaxConcurrency = 10;                         // Maximum concurrent worker threads
+                scheduler.NodeIdentifier = "production-server-01";     // Unique node identifier
+                scheduler.IdleWorkerTimeOut = TimeSpan.FromMinutes(1); // Idle worker timeout
+                scheduler.SchedulerTimeZone = TimeZoneInfo.Utc;        // Timezone for scheduling
+            });
+
+            options.AddOperationalStore(efOptions =>
+            {
+                efOptions.UseApplicationDbContext<JobsDbContext>(ConfigurationType.UseModelCustomizer);
+            });
+
+            options.AddDashboard(dbopt =>
+            {
+                dbopt.SetBasePath("/tickerq-dashboard");
+            });
+        });
+
+        return builder;
+    }
+
+    public static IApplicationBuilder UseJobs(this IApplicationBuilder app)
+    {
+        app.UseTickerQ();
+        return app;
+    }
+}

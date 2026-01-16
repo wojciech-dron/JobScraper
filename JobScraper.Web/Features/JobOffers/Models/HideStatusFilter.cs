@@ -1,4 +1,4 @@
-﻿using JobScraper.Entities;
+﻿using JobScraper.Web.Common.Entities;
 
 namespace JobScraper.Web.Features.JobOffers.Models;
 
@@ -8,7 +8,7 @@ public enum HideStatusFilter
     Visible,
     Hidden,
     Starred,
-    Regular
+    Regular,
 }
 
 public static class HideStatusFilterExtensions
@@ -21,6 +21,6 @@ public static class HideStatusFilterExtensions
         HideStatusFilter.Starred => query.Where(j => j.HideStatus == HideStatus.Starred),
         HideStatusFilter.Regular => query.Where(j => j.HideStatus == HideStatus.Regular),
         HideStatusFilter.Visible => query.Where(j => j.HideStatus == HideStatus.Regular || j.HideStatus == HideStatus.Starred),
-        _                        => query
+        _                        => query,
     };
 }
