@@ -53,55 +53,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <_ContentIncludedByDefault Remove="Features\Account\Login.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\AccessDenied.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\ConfirmEmail.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\ConfirmEmailChange.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\ExternalLogin.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\ForgotPassword.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\ForgotPasswordConfirmation.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\InvalidPasswordReset.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\InvalidUser.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\Lockout.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\Login.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\LoginWith2fa.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\LoginWithRecoveryCode.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\Manage\ChangePassword.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\Manage\DeletePersonalData.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\Manage\Disable2fa.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\Manage\Email.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\Manage\EnableAuthenticator.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\Manage\ExternalLogins.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\Manage\GenerateRecoveryCodes.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\Manage\Index.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\Manage\Passkeys.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\Manage\PersonalData.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\Manage\RenamePasskey.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\Manage\ResetAuthenticator.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\Manage\SetPassword.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\Manage\TwoFactorAuthentication.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\Register.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\RegisterConfirmation.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\ResendEmailConfirmation.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\ResetPassword.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Pages\ResetPasswordConfirmation.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Shared\ExternalLoginPicker.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Shared\ManageLayout.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Shared\ManageNavMenu.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Shared\PasskeySubmit.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Shared\RedirectToLogin.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Shared\ShowRecoveryCodes.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Account\Shared\StatusMessage.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Companies\Companies.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Companies\_Imports.razor"/>
-    <_ContentIncludedByDefault Remove="Features\Scrape\ScrapePage.razor"/>
-  </ItemGroup>
-
-  <ItemGroup>
-    <AdditionalFiles Include="Features\JobOffers\Scrape\ScrapePage.razor"/>
-  </ItemGroup>
-
-  <ItemGroup>
     <EmbeddedResource Include="Features\JobOffers\Scrape\Logic\Jjit\jjit-list.js"/>
     <EmbeddedResource Include="Features\JobOffers\Scrape\Logic\NoFluffJobs\no-fluff-jobs-list.js"/>
   </ItemGroup>
