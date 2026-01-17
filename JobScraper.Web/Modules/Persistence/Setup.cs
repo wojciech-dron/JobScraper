@@ -23,6 +23,7 @@ public static class Setup
                 .UseSqlite(connectionString)
                 .AddInterceptors(new UpdatableInterceptor(),
                     new OwnerInterceptor())
+                .UseProjectables()
                 .EnableSensitiveDataLogging();
 
             options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));

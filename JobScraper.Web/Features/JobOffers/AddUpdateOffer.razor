@@ -101,7 +101,7 @@
                 <div class="col-md-6">
                     <label class="mt-2" for="HideStatus">Visibility:</label>
                     <InputSelect id="HideStatus"
-                                 @bind-Value="jobOffer.HideStatus"
+                                 @bind-Value="userOffer.HideStatus"
                                  class="form-control">
                         @foreach (var option in Enum.GetValues<HideStatus>())
                         {
@@ -141,6 +141,7 @@
     private bool limitEdit => isEdit && jobOffer.Origin != DataOrigin.Manual; // limit scraped update
     private JobsDbContext _dbContext = null!;
 
+    private UserOffer userOffer = null!;
     private JobOffer jobOffer = new()
     {
         Origin = DataOrigin.Manual,
@@ -148,6 +149,7 @@
         ScrapedAt = DateTime.UtcNow,
         SalaryCurrency = "PLN",
     };
+
 
     private string offerKeywordsInput = string.Empty;
     private string myKeywordsInput = string.Empty;
@@ -157,28 +159,32 @@
         _dbContext = await DbContextFactory.CreateDbContextAsync();
 
         if (!isEdit)
+        {
+            userOffer = new UserOffer(jobOffer);
             return;
+        }
 
-        var existingOffer = await _dbContext.JobOffers
-            .Include(j => j.Company)
+        var existingOffer = await _dbContext.UserOffers
+            .Include(j => j.Details.Company)
             .FirstOrDefaultAsync(j => j.OfferUrl == OfferUrl);
 
-        jobOffer = existingOffer ?? throw new ArgumentException($"Job offer wit url: {OfferUrl} not found");
+        jobOffer = existingOffer?.Details ?? throw new ArgumentException($"Job offer wit url: {OfferUrl} not found");
+        userOffer = existingOffer;
 
         // Set keywords for input fields
         offerKeywordsInput = string.Join(", ", jobOffer.OfferKeywords);
-        myKeywordsInput = string.Join(", ", jobOffer.MyKeywords);
+        myKeywordsInput = string.Join(", ", userOffer.MyKeywords);
     }
 
     private async Task SaveAsync()
     {
         // Process keywords
         jobOffer.OfferKeywords = ToKeywordsArray(offerKeywordsInput);
-        jobOffer.MyKeywords = ToKeywordsArray(myKeywordsInput);
+        userOffer.MyKeywords = ToKeywordsArray(myKeywordsInput);
         jobOffer.Company = await ResolveCompany(jobOffer.CompanyName!);
 
         if (!isEdit)
-            await _dbContext.AddAsync(jobOffer);
+            _dbContext.Add(userOffer);
 
         await _dbContext.SaveChangesAsync();
 
@@ -216,7 +222,7 @@
     }
 
 
-    private bool PreventNavigation => !isEdit || _dbContext.Entry(jobOffer).State is EntityState.Modified;
+    private bool PreventNavigation => _dbContext.Entry(userOffer).State is EntityState.Modified or EntityState.Detached;
 
     private async Task OnBeforeInternalNavigation(LocationChangingContext ctx)
     {

@@ -13,7 +13,7 @@ public enum HideStatusFilter
 
 public static class HideStatusFilterExtensions
 {
-    public static IQueryable<JobOffer> ApplyHideStatusFilter(this IQueryable<JobOffer> query,
+    public static IQueryable<UserOffer> ApplyHideStatusFilter(this IQueryable<UserOffer> query,
         HideStatusFilter filter) => filter switch
     {
 

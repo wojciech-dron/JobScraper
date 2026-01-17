@@ -36,8 +36,6 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
 
         await foreach (var jobs in ScrapeJobs(scrape.Source).WithCancellation(cancellationToken))
         {
-            jobs.ForEach(j => j.ProcessKeywords(ScrapeConfig));
-
             Logger.LogInformation("Syncing {DataOrigin} jobs...", DataOrigin);
             newJobsCount += await SyncJobsFromList(jobs, cancellationToken);
         }
@@ -62,7 +60,8 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
             .ToArray();
 
         await AddNewCompanies(companies, cancellationToken);
-        return await SyncJobs(jobs, cancellationToken);
+        await AddNewJobOffers(jobs, cancellationToken);
+        return await AddNewUserOffers(jobs, cancellationToken);
     }
 
     private async Task AddNewCompanies(string[] companyNames, CancellationToken cancellationToken)
@@ -73,7 +72,7 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
         try
         {
             var existingKeys = await DbContext.Companies
-                .Where(c => companyNames.Contains(c.Name))
+                .Where(c => companyNames.Contains(c.Name)) // TODO: check if contains work
                 .Select(c => c.Name)
                 .ToArrayAsync(cancellationToken);
 
@@ -98,31 +97,44 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
         }
     }
 
-    private async Task<int> SyncJobs(List<JobOffer> jobs, CancellationToken cancellationToken)
+    private async Task<int> AddNewJobOffers(List<JobOffer> jobs, CancellationToken cancellationToken)
     {
-        var keys = jobs.ConvertAll(jo => jo.OfferUrl);
+        var keys = jobs.Select(jo => jo.OfferUrl);
 
         var existingJobs = await DbContext.JobOffers
             .Where(j => keys.Contains(j.OfferUrl))
-            .ToListAsync(cancellationToken);
-
-        foreach (var job in existingJobs)
-        {
-            var newScrap = jobs.First(e => e.OfferUrl == job.OfferUrl);
-
-            job.AgeInfo = newScrap.AgeInfo;
-        }
+            .Select(j => j.OfferUrl)
+            .ToArrayAsync(cancellationToken);
 
         var jobsToAdd = jobs
-            .Where(jo => !existingJobs
-                .Select(j => j.OfferUrl)
-                .Contains(jo.OfferUrl))
+            .Where(jo => !existingJobs.Contains(jo.OfferUrl))
             .ToArray();
 
         Logger.LogInformation("Saving {JobsCount} new jobs", jobsToAdd.Length);
 
-        await DbContext.JobOffers.AddRangeAsync(jobsToAdd, cancellationToken);
+        await DbContext.AddRangeAsync(jobsToAdd, cancellationToken);
         await DbContext.SaveChangesAsync(cancellationToken);
+
         return jobsToAdd.Length;
+    }
+
+    private async Task<int> AddNewUserOffers(List<JobOffer> jobs, CancellationToken cancellationToken)
+    {
+        var keys = jobs.Select(jo => jo.OfferUrl);
+
+        var existingUserOffers = await DbContext.UserOffers
+            .Where(j => keys.Contains(j.OfferUrl))
+            .Select(j => j.OfferUrl)
+            .ToArrayAsync(cancellationToken);
+
+        var userOffersToAdd = jobs
+            .Where(jo => !existingUserOffers.Contains(jo.OfferUrl))
+            .Select(jo => new UserOffer(jo).ProcessKeywords(ScrapeConfig))
+            .ToArray();
+
+        await DbContext.AddRangeAsync(userOffersToAdd, cancellationToken);
+        await DbContext.SaveChangesAsync(cancellationToken);
+
+        return userOffersToAdd.Length;
     }
 }

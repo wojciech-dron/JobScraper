@@ -1,7 +1,6 @@
 ﻿using System.Text.Json;
 using JobScraper.Web.Common.Entities;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
-using JobScraper.Web.Features.JobOffers.Scrape.Logic.Extensions;
 using JobScraper.Web.Modules.Persistence;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
@@ -61,8 +60,6 @@ public class JjitDetailsScraper
 
             if (!string.IsNullOrEmpty(data.CompanyUrl))
                 jobOffer.Company!.JjitUrl = BaseUrl + data.CompanyUrl;
-
-            jobOffer.ProcessKeywords(ScrapeConfig);
         }
 
         private record JobData(string Description, string CompanyUrl, List<string> Keywords);
