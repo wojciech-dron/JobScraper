@@ -123,12 +123,16 @@ public class OlxListScraper
                     DetailsScrapeStatus = DetailsScrapeStatus.Scraped, // skip details scraping
                 };
 
-                // skip first row if salary parsed successfully
-                if (SalaryParser.TryParseSalary(jobOffer, data.FirstRowData.First()))
-                    data.FirstRowData.Pop();
+                if (data.FirstRowData.Count > 0)
+                {
+                    // skip first row if salary parsed successfully
+                    if (SalaryParser.TryParseSalary(jobOffer, data.FirstRowData.First()))
+                        data.FirstRowData.Pop();
 
-                jobOffer.Location = data.FirstRowData.Pop();
-                jobOffer.OfferKeywords.AddRange(data.FirstRowData);
+                    jobOffer.Location = data.FirstRowData.Pop();
+                    jobOffer.OfferKeywords.AddRange(data.FirstRowData);
+                }
+
                 jobOffer.Description = GetDescription(jobOffer);
 
                 jobs.Add(jobOffer);

@@ -7,6 +7,7 @@ using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
+using TickerQ.Utilities;
 using TickerQ.Utilities.Entities;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape;
@@ -17,13 +18,16 @@ public partial class ScrapePage
     private readonly IJSRuntime _js;
     private readonly ILogger<ScrapePage> _logger;
     private readonly IServiceProvider _serviceProvider;
-    private readonly AppSettings appSettings;
+    private readonly AppSettings _appSettings;
     private ScraperConfig config = new();
     private JobsDbContext dbContext = null!;
+    private readonly CancellationTokenSource cts = new();
 
     private bool isWorking;
+    private bool dashboardEnabled;
     private CronTickerEntity? scrapeJobTicker;
     private FluentValidationValidator validator = null!;
+    private byte[] requestBytes;
 
     public ScrapePage(IDbContextFactory<JobsDbContext> dbFactory,
         IServiceProvider serviceProvider,
@@ -34,23 +38,32 @@ public partial class ScrapePage
         _dbFactory = dbFactory;
         _serviceProvider = serviceProvider;
         _js = js;
-        this.appSettings = appSettings.Value;
+        _appSettings = appSettings.Value;
         _logger = logger;
     }
 
     protected override async Task OnInitializedAsync()
     {
         dbContext = await _dbFactory.CreateDbContextAsync();
+
+        if (string.IsNullOrEmpty(dbContext.CurrentUserName))
+            throw new InvalidOperationException("User name is not set.");
+
         config = await dbContext.ScraperConfigs.FirstOrDefaultAsync() ?? new ScraperConfig();
+
+        requestBytes = TickerHelper.CreateTickerRequest(
+            new ScrapeRequest(dbContext.CurrentUserName));
 
         scrapeJobTicker = await dbContext.Set<CronTickerEntity>()
             .AsNoTracking()
+            .Where(x => requestBytes.SequenceEqual(x.Request)) // compare request with owner
             .FirstOrDefaultAsync(x => x.Function == "ScrapeJobs");
 
         if (scrapeJobTicker is null)
             return;
 
         config.ScrapeCron = scrapeJobTicker.Expression;
+        dashboardEnabled = _appSettings.TickerQ.Dashboard?.Enabled == true;
     }
 
     private async Task SaveConfig()
@@ -61,7 +74,7 @@ public partial class ScrapePage
         isWorking = true;
         await UpdatePageAsync();
 
-        if (config.Id == 0)
+        if (config.Owner == "system") // check if it is a default value
             dbContext.Add(config);
         else
             dbContext.Update(config);
@@ -79,6 +92,15 @@ public partial class ScrapePage
 
         await SaveConfig();
 
+        if (ScrapeHandler.ScrapeSemaphore.CurrentCount == 0)
+        {
+            PushNotification("Scraping process is already in progress. " +
+                "Probably another user is scraping. Try again later.",
+                ToastType.Warning);
+
+            return;
+        }
+
         isWorking = true;
         PushNotification("Scraping in progress...");
         await UpdatePageAsync();
@@ -89,9 +111,9 @@ public partial class ScrapePage
             var scrapeHandler = scope.ServiceProvider.GetRequiredService<ScrapeHandler>();
             var sources = config.Sources.Where(x => !x.Disabled).ToArray();
 
-            var newOffersCount = await scrapeHandler.ScrapeLists(sources);
+            var newOffersCount = await scrapeHandler.ScrapeLists(sources, cts.Token);
             PushNotification("Scraping details...");
-            var offerDetailsScrapedCount = await scrapeHandler.ScrapeDetails(sources);
+            var offerDetailsScrapedCount = await scrapeHandler.ScrapeDetails(sources, cts.Token);
 
             PushScrapeFinishNotif(newOffersCount, offerDetailsScrapedCount);
         }
@@ -179,6 +201,7 @@ public partial class ScrapePage
             Expression = config.ScrapeCron,
             Function = "ScrapeJobs",
             Description = "Scheduled in ScrapePage",
+            Request = requestBytes,
             Retries = 1,
             RetryIntervals = [20], // set in seconds
         };
@@ -192,5 +215,11 @@ public partial class ScrapePage
 
         PushNotification("Scraping scheduled correctly.");
         isWorking = false;
+    }
+
+    public void Dispose()
+    {
+        cts.Cancel();
+        cts.Dispose();
     }
 }

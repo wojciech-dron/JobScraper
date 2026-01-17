@@ -25,7 +25,7 @@ public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IReque
         }
 
         var jobs = await DbContext.JobOffers
-            .Include(j => j.UserOffer) // TODO: check if join contains query filter
+            .Include(j => j.UserOffers) // TODO: check if join contains query filter
             .Include(j => j.Company)
             .Where(j => j.Origin              == DataOrigin)
             .Where(j => j.DetailsScrapeStatus != DetailsScrapeStatus.Scraped)

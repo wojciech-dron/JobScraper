@@ -1,4 +1,6 @@
-﻿namespace JobScraper.Web.Common.Entities;
+﻿using JobScraper.Web.Modules.Jobs;
+
+namespace JobScraper.Web.Common.Entities;
 
 public class AppSettings
 {
@@ -10,4 +12,6 @@ public class AppSettings
     public BrowserTypeEnum[] AllowedBrowsers => PreinstalledPlaywright
         ? [BrowserTypeEnum.Firefox] // preinstalled in Dockerfile
         : Enum.GetValues<BrowserTypeEnum>();
+
+    public TickerConfig TickerQ { get; set; }
 }

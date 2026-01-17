@@ -83,7 +83,8 @@ public partial class NoFluffJobsListScraper
 
         private async Task<List<JobOffer>> ScrapeJobsFromList(IPage page)
         {
-            var script = await ScrapeHelpers.GetJsScript("JobScraper.Logic.NoFluffJobs.no-fluff-jobs-list.js");
+            var script = await ScrapeHelpers.GetJsScript(
+                "JobScraper.Web.Features.JobOffers.Scrape.Logic.NoFluffJobs.no-fluff-jobs-list.js");
             var result = await page.EvaluateAsync<string>(script);
             var scrapedOffers = JsonSerializer.Deserialize<JobData[]>(result)!;
 

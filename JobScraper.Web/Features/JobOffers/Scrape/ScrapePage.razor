@@ -7,6 +7,8 @@
 <NavigationLock ConfirmExternalNavigation="@PreventNavigation"
                 OnBeforeInternalNavigation="OnBeforeInternalNavigation"/>
 
+<Toasts class="p-3" Messages="messages" Placement="ToastsPlacement.TopRight"/>
+
 <h2>Scraping</h2>
 
 <EditForm Model="config" disabled="@isWorking">
@@ -153,7 +155,7 @@
             <div class="mb-1">
                 <label for="BrowserType">Browser type:</label>
                 <InputSelect id="BrowserType" @bind-Value="@config.BrowserType" class="form-control">
-                    @foreach (var type in appSettings.AllowedBrowsers)
+                    @foreach (var type in _appSettings.AllowedBrowsers)
                     {
                         <option value="@type">@type</option>
                     }
@@ -175,7 +177,7 @@
             @if (showAdvanced)
             {
                 <div class="mb-1">
-                    <label for="BrowserType">Scrape cron (beta):</label>
+                    <label for="BrowserType">Scrape cron:</label>
                     <InputText id="ScrapeCron" @bind-Value="@config.ScrapeCron" class="form-control"/>
                     <small class="text-muted">Note: Cron expressions are in UTC time.</small>
                 </div>
@@ -183,9 +185,12 @@
                     <button class="btn btn-success mb-3" @onclick="ScheduleScraping" disabled="@isWorking">
                         @(scrapeJobTicker is null ? "Schedule scraping" : "Update schedule scraping")
                     </button>
-                    <a href="/tickerq-dashboard">
-                        <button class="btn btn-info mb-3">Go to dashboard</button>
-                    </a>
+                    @if (dashboardEnabled)
+                    {
+                        <a href="/tickerq-dashboard">
+                            <button class="btn btn-info mb-3">Go to dashboard</button>
+                        </a>
+                    }
                     <button class="btn btn-secondary mb-3" @onclick="() => showAdvanced = false">
                         Hide advanced
                     </button>
@@ -231,6 +236,7 @@
         You can retry with no worry :)
     </span>
 </EditForm>
+
 
 @code
 {

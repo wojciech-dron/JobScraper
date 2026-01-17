@@ -6,6 +6,7 @@ App is currently targeting polish users.
 It's written in C# using Playwright for web scraping.
 
 ## Main features:
+
 - portability, you can run it on a computer without installing any
   additional programs and from any folder using a .bat file
 - fetching job offers from given links (pracuj.pl, rocketjobs.pl, olx.pl, and
@@ -20,27 +21,37 @@ It's written in C# using Playwright for web scraping.
 - configuration of sources
 
 ## Notes:
+
 - there may be high resource usage because a browser is launched to fetch job
   offers (it can be run in hidden mode - "ShowBrowserWhenScraping": false in
   scraperSettings.json)
 - saved job offers and configuration are stored in the Data folder
-- to update application, extract new version and copy Data folder from the previous version and replace it with the new one
+- to update application, extract new version and copy Data folder from the
+  previous version and replace it with the new one
 - to delete all data, just delete the Data folder
 - updating the app is safe, it won't delete data from the previous version,
   however, moving data from a newer version to an older one won't work
 
-Let me know what you think of the app, your experience and what could be improved - 
+Let me know what you think of the app, your experience and what could be
+improved -
 I appreciate any feedback ;)
 
-
 ## Demo
+
+Site is available at https://jobscraper.wojciechdron.net/
+
+Example login:
+test@email.com
+WxV79RZgjzsTgW#
 
 [Configuration and scraping](https://drive.google.com/file/d/1D-sGQ3w9u8nb9_HW_olHNEMGFR9nUWQm/view)
 
 [Managing offers and applications (v0.0.1)](https://drive.google.com/file/d/1nu9P4w3vn8zJl3TTss1zsLBxoxjgEGqP/view)
 
 ## Quick start with docker
+
 To run the app using Docker, you can use the following command:
+
 ```bash
 docker run -d --name job-scraper -p 12986:8080 -v jobscraper_data:/home/app/data combi71/jobscraper.web:latest
 ```
@@ -65,29 +76,34 @@ dotnet tool install --global Microsoft.Playwright.CLI
 ```
 
 ### Running the application
+
 Clone the repository and navigate to the project directory in your terminal.
+
 ```bash
 git clone https://github.com/wojciech-dron/JobScraper.git
 cd JobScraper
 ```
 
 Run the following command to run project
+
 ```bash
 cd JobScraper.Web
 dotnet run
 ```
-   
+
 ## Docker
 
 You can also build and run the project using Docker.
 
 Clone the repository.
+
 ```bash
 git clone https://github.com/wojciech-dron/JobScraper.git
 cd JobScraper
 ```
 
 Navigate to the project directory in your terminal and run docker compose.
+
 ```bash
 docker-compose up -d
 ```
@@ -110,14 +126,20 @@ docker run -d --name jobscraper.web -p 12986:8080 -v jobscraper_data:/home/app/d
 
 ### Docker file access/permissions issues
 
-If you encounter issues with file access or permissions when running the application with Docker, particularly related to the volume mount for data persistence, try setting appropriate permissions on the host directory.
+If you encounter issues with file access or permissions when running the
+application with Docker, particularly related to the volume mount for data
+persistence, try setting appropriate permissions on the host directory.
 
-For example, if using the named volume `jobscraper_data`, ensure the directory has proper permissions:
+For example, if using the named volume `jobscraper_data`, ensure the directory
+has proper permissions:
+
 ```bash
 chmod -R 755 jobscraper_data
 ```
 
-This ensures that the Docker container can read and write to the data directory properly.
+This ensures that the Docker container can read and write to the data directory
+properly.
 
-
-<span style="color: green">**Recommended:**</span> Be nice to people's servers by not lowering the `secondsToWait` variable too low. <font size="1">(keep yourself from being banned from the site)</font>
+<span style="color: green">**Recommended:**</span> Be nice to people's servers
+by not lowering the `secondsToWait` variable too low. <font size="1">(keep
+yourself from being banned from the site)</font>
