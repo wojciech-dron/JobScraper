@@ -25,6 +25,7 @@ public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IReque
         }
 
         var jobs = await DbContext.JobOffers
+            .Include(j => j.UserOffer) // TODO: check if join contains query filter
             .Include(j => j.Company)
             .Where(j => j.Origin              == DataOrigin)
             .Where(j => j.DetailsScrapeStatus != DetailsScrapeStatus.Scraped)
@@ -39,7 +40,7 @@ public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IReque
                     await ScrapeJobDetails(job));
 
                 job.DetailsScrapeStatus = DetailsScrapeStatus.Scraped;
-                job.ProcessKeywords(ScrapeConfig);
+                job.UserOffer?.ProcessKeywords(ScrapeConfig);
 
                 await DbContext.SaveChangesAsync(cancellationToken);
             }

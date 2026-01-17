@@ -5,6 +5,7 @@ namespace JobScraper.Web.Modules.Persistence.Interceptors;
 
 public interface IOwnable
 {
+    /// <remarks> Owner interceptor sets this on save changes</remarks>
     public string? Owner { get; set; }
 }
 

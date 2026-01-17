@@ -7,6 +7,7 @@
   <ItemGroup>
     <PackageReference Include="Blazor.Bootstrap" Version="3.5.0"/>
     <PackageReference Include="Blazored.FluentValidation" Version="2.2.0"/>
+    <PackageReference Include="EntityFrameworkCore.Projectables" Version="5.0.1"/>
     <PackageReference Include="ErrorOr" Version="2.0.1"/>
     <PackageReference Include="Facet" Version="5.4.0"/>
     <PackageReference Include="Facet.Extensions" Version="5.4.0"/>
@@ -56,18 +57,6 @@
   <ItemGroup>
     <EmbeddedResource Include="Features\JobOffers\Scrape\Logic\Jjit\jjit-list.js"/>
     <EmbeddedResource Include="Features\JobOffers\Scrape\Logic\NoFluffJobs\no-fluff-jobs-list.js"/>
-  </ItemGroup>
-
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="Blazor\Modals\ApplicationOfferModal.razor"/>
-  </ItemGroup>
-
-  <ItemGroup>
-    <AdditionalFiles Include="Features\JobOffers\Modals\ApplicationOfferModal.razor"/>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Modules\Persistence\Extensions\"/>
   </ItemGroup>
 
 </Project>

@@ -34,7 +34,6 @@ public class IndeedDetailsScraper
             jobOffer.PublishedAt = DateTime.UtcNow;
 
             await Task.WhenAll(
-                ScrapApplyUrl(jobOffer, page),
                 ScrapDescription(jobOffer, page),
                 ScrapCompany(jobOffer.Company!, page),
                 ScrapeSalary(jobOffer, page)
@@ -83,19 +82,6 @@ public class IndeedDetailsScraper
                 return;
 
             jobOffer.Description = jobDescription;
-        }
-
-
-        private static async Task ScrapApplyUrl(JobOffer jobOffer, IPage page)
-        {
-            var indeedApplyElement = await page.QuerySelectorAsync(
-                "span[data-indeed-apply-joburl], button[href*='https://www.indeed.com/applystart?jk=']");
-            if (indeedApplyElement != null)
-                jobOffer.ApplyUrl = await indeedApplyElement.GetAttributeAsync("data-indeed-apply-joburl");
-
-            var externalApplyElement = await page.QuerySelectorAsync("button[aria-haspopup='dialog']");
-            if (externalApplyElement is not null)
-                jobOffer.ApplyUrl = await externalApplyElement.GetAttributeAsync("href");
         }
 
         private static async Task ScrapCompany(Company company, IPage page)

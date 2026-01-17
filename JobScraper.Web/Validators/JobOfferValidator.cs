@@ -55,9 +55,9 @@ public class JobOfferValidator : AbstractValidator<JobOffer>
 
         RuleFor(x => x.Description)
             .MaximumLength(5000).WithMessage("Description must not exceed 5000 characters");
-
-        RuleFor(x => x.Comments)
-            .MaximumLength(500).WithMessage("Comments must not exceed 500 characters");
+        //
+        // RuleFor(x => x.Comments)
+        //     .MaximumLength(500).WithMessage("Comments must not exceed 500 characters");
     }
 
     private async Task<bool> BeUniqueUrl(string url, CancellationToken cancellationToken)

@@ -15,8 +15,8 @@
 <h1>Job offers</h1>
 
 <div id="table-container" class="overflow-auto h-100">
-    <QuickGrid @ref="@grid" Items="jobOffers" Pagination="@pagination" class="table small-padding-table">
-        <TemplateColumn SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Application == null))" Title="Apply">
+    <QuickGrid @ref="@grid" Items="offers" Pagination="@pagination" class="table small-padding-table">
+        <TemplateColumn SortBy="@(GridSort<UserOffer>.ByAscending(p => p.Application == null))" Title="Apply">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -39,7 +39,7 @@
                 }
             </ChildContent>
         </TemplateColumn>
-        <TemplateColumn SortBy="@(GridSort<JobOffer>.ByAscending(p => p.HideStatus))" Title="Hide">
+        <TemplateColumn SortBy="@(GridSort<UserOffer>.ByAscending(p => p.HideStatus))" Title="Hide">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -73,7 +73,7 @@
                 </div>
             </ChildContent>
         </TemplateColumn>
-        <PropertyColumn class="col-2" Property="@(p => p.CompanyName)" Sortable="true" Title="Company">
+        <PropertyColumn class="col-2" Property="@(p => p.Details.CompanyName)" Sortable="true" Title="Company">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -85,7 +85,7 @@
             </HeaderTemplate>
         </PropertyColumn>
         <TemplateColumn class="col-3 text-truncate" Title="Title"
-                        SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Title))">
+                        SortBy="@(GridSort<UserOffer>.ByAscending(p => p.Details.Title))">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -98,16 +98,16 @@
             <ChildContent>
                 @if (context.HideStatus == HideStatus.Starred)
                 {
-                    <span class="text-warning" title="@context.Title">* @context.Title</span>
+                    <span class="text-warning" title="@context.Details.Title">* @context.Details.Title</span>
                 }
                 else
                 {
-                    <span title="@context.Title">@context.Title</span>
+                    <span title="@context.Details.Title">@context.Details.Title</span>
                 }
 
             </ChildContent>
         </TemplateColumn>
-        <PropertyColumn class="" Property="@(p => p.SalaryMinMonth)" Title="Min" Sortable="true">
+        <PropertyColumn class="" Property="@(p => p.Details.SalaryMinMonth)" Title="Min" Sortable="true">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -119,7 +119,7 @@
                        class="form-control form-control-sm"/>
             </HeaderTemplate>
         </PropertyColumn>
-        <PropertyColumn class="" Property="@(p => p.SalaryMaxMonth)" Title="Max" Sortable="true">
+        <PropertyColumn class="" Property="@(p => p.Details.SalaryMaxMonth)" Title="Max" Sortable="true">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -131,7 +131,7 @@
                        class="form-control form-control-sm"/>
             </HeaderTemplate>
         </PropertyColumn>
-        <PropertyColumn class="" Property="@(p => p.SalaryCurrency)" Title="Currency" Sortable="true">
+        <PropertyColumn class="" Property="@(p => p.Details.SalaryCurrency)" Title="Currency" Sortable="true">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -146,7 +146,7 @@
         </PropertyColumn>
         <PropertyColumn class="col-1" Property="@(p => p.Comments)" Sortable="true"/>
         <TemplateColumn class="text-truncate" Title="Location"
-                        SortBy="@(GridSort<JobOffer>.ByAscending(p => p.Location))">
+                        SortBy="@(GridSort<UserOffer>.ByAscending(p => p.Details.Location))">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -157,11 +157,11 @@
                        class="form-control form-control-sm"/>
             </HeaderTemplate>
             <ChildContent>
-                <span title="@context.Location">@context.Location</span>
+                <span title="@context.Details.Location">@context.Details.Location</span>
             </ChildContent>
         </TemplateColumn>
 
-        <PropertyColumn class="col-1" Property="@(p => p.Origin)" Sortable="true">
+        <PropertyColumn class="col-1" Property="@(p => p.Details.Origin)" Sortable="true">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -190,7 +190,7 @@
                 <span>@string.Join(", ", context.MyKeywords)</span>
             </ChildContent>
         </TemplateColumn>
-        <PropertyColumn class="col" Property="@(p => p.ScrapedAt)" Format="yyyy-MM-dd" Sortable="true"/>
+        <PropertyColumn class="col" Property="@(p => p.Details.ScrapedAt)" Format="yyyy-MM-dd" Sortable="true"/>
         <PropertyColumn class="col text-nowrap" Property="@(p => p.UpdatedAt)" Format="yyyy-MM-dd HH:mm"
                         Sortable="true"/>
     </QuickGrid>
@@ -230,7 +230,7 @@
 @inject NavigationManager NavigationManager
 
 @code {
-    QuickGrid<JobOffer> grid = null!;
+    QuickGrid<UserOffer> grid = null!;
     JobsDbContext dbContext = null!;
     readonly PaginationState pagination = new()
     {
@@ -259,22 +259,22 @@
     [SupplyParameterFromQuery(Name = "offerUrl")]
     public string? OfferUrl { get; set; }
 
-    IQueryable<JobOffer> jobOffers => dbContext.JobOffers
-        .Include(jo => jo.Company)
+    IQueryable<UserOffer> offers => dbContext.UserOffers
+        .Include(jo => jo.Details.Company)
         .Include(jo => jo.Application)
-        .Where(jo => jo.DetailsScrapeStatus == DetailsScrapeStatus.Scraped)
-        .WhereIf(!string.IsNullOrEmpty(TitleFilter), jo => jo.Title.ToLower().Contains(TitleFilter!.ToLower()))
-        .WhereIf(!string.IsNullOrEmpty(CompanyFilter), jo => jo.CompanyName!.ToLower().Contains(CompanyFilter!.ToLower()))
-        .WhereIf(!string.IsNullOrEmpty(LocationFilter), jo => jo.Location!.ToLower().Contains(LocationFilter!.ToLower()))
-        .WhereIf(OriginFilter?.Length     > 0, jo => OriginFilter!.Contains(jo.Origin.ToString()))
+        .Where(jo => jo.Details.DetailsScrapeStatus == DetailsScrapeStatus.Scraped)
+        .WhereIf(!string.IsNullOrEmpty(TitleFilter), jo => jo.Details.Title.ToLower().Contains(TitleFilter!.ToLower()))
+        .WhereIf(!string.IsNullOrEmpty(CompanyFilter), jo => jo.Details.CompanyName!.ToLower().Contains(CompanyFilter!.ToLower()))
+        .WhereIf(!string.IsNullOrEmpty(LocationFilter), jo => jo.Details.Location!.ToLower().Contains(LocationFilter!.ToLower()))
+        .WhereIf(OriginFilter?.Length     > 0, jo => OriginFilter!.Contains(jo.Details.Origin.ToString()))
         .WhereIf(MyKeywordsFilter?.Length > 0, jo => jo.MyKeywords.Any(mk => MyKeywordsFilter!.Contains(mk)))
-        .WhereIf(CurrencyFilter?.Length   > 0, jo => CurrencyFilter!.Contains(jo.SalaryCurrency))
+        .WhereIf(CurrencyFilter?.Length   > 0, jo => CurrencyFilter!.Contains(jo.Details.SalaryCurrency))
         .WhereIf(IsAppliedFilter.HasValue, jo => IsAppliedFilter == true ? jo.Application != null : jo.Application == null)
         .ApplyHideStatusFilter(HideStatusFilter)
-        .WhereIf(SalaryMinFilter.HasValue, jo => jo.SalaryMinMonth >= SalaryMinFilter)
-        .WhereIf(SalaryMaxFilter.HasValue, jo => jo.SalaryMaxMonth <= SalaryMaxFilter)
+        .WhereIf(SalaryMinFilter.HasValue, jo => jo.Details.SalaryMinMonth >= SalaryMinFilter)
+        .WhereIf(SalaryMaxFilter.HasValue, jo => jo.Details.SalaryMaxMonth <= SalaryMaxFilter)
         .OrderByDescending(jo => jo.HideStatus)
-        .ThenByDescending(jo => jo.SalaryMaxMonth);
+        .ThenByDescending(jo => jo.Details.SalaryMaxMonth);
 
     protected override async Task OnInitializedAsync()
     {
@@ -305,23 +305,23 @@
             await ShowApplyModal(OfferUrl);
     }
 
-    private async Task HideOffer(JobOffer jobOffer)
+    private async Task HideOffer(UserOffer offer)
     {
-        jobOffer.HideStatus = HideStatus.Hidden;
+        offer.HideStatus = HideStatus.Hidden;
         await dbContext.SaveChangesAsync();
         await grid.RefreshDataAsync();
     }
 
-    private async Task StarOffer(JobOffer jobOffer)
+    private async Task StarOffer(UserOffer offer)
     {
-        jobOffer.HideStatus = HideStatus.Starred;
+        offer.HideStatus = HideStatus.Starred;
         await dbContext.SaveChangesAsync();
         await grid.RefreshDataAsync();
     }
 
-    private async Task RegularOffer(JobOffer jobOffer)
+    private async Task RegularOffer(UserOffer offer)
     {
-        jobOffer.HideStatus = HideStatus.Regular;
+        offer.HideStatus = HideStatus.Regular;
         await dbContext.SaveChangesAsync();
         await grid.RefreshDataAsync();
     }
@@ -332,16 +332,19 @@
         if (string.IsNullOrWhiteSpace(offerUrl))
             return;
 
-        var selectedOffer = await dbContext.JobOffers.FindAsync(offerUrl);
+        var selectedOffer = await dbContext.UserOffers
+            .Include(u => u.Details)
+            .FirstOrDefaultAsync(x => x.OfferUrl == offerUrl);
+
         if (selectedOffer is not null)
             await _applicationOfferModal.ShowAsync(selectedOffer);
     }
 
-    private async Task OpenApplyModal(JobOffer jobOffer)
+    private async Task OpenApplyModal(UserOffer offer)
     {
-        await _applicationOfferModal.ShowAsync(jobOffer);
+        await _applicationOfferModal.ShowAsync(offer);
 
-        var offerUrl = HttpUtility.UrlEncode(jobOffer.OfferUrl);
+        var offerUrl = HttpUtility.UrlEncode(offer.OfferUrl);
         NavigationManager.NavigateTo($"?offerUrl={offerUrl}");
     }
 

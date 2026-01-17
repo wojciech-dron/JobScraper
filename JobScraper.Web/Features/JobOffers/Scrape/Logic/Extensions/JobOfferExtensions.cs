@@ -15,39 +15,41 @@ public static class JobOfferExtensions
         return stringBuilder.ToString();
     }
 
-    public static void ProcessKeywords(this JobOffer jobOffer, ScraperConfig config)
+    public static UserOffer ProcessKeywords(this UserOffer userOffer, ScraperConfig config)
     {
-        jobOffer.MyKeywords = config.MyKeywords
-            .Where(keyword => ContainKeyword(jobOffer, keyword))
+        userOffer.MyKeywords = config.MyKeywords
+            .Where(keyword => ContainKeyword(userOffer.Details, keyword))
             .ToList();
 
-        if (ShouldStar(jobOffer, config))
-            jobOffer.HideStatus = HideStatus.Starred;
+        if (ShouldStar(userOffer, config))
+            userOffer.HideStatus = HideStatus.Starred;
 
         var avoidKeywords = config.AvoidKeywords
-            .Where(keyword => ContainKeyword(jobOffer, keyword))
+            .Where(keyword => ContainKeyword(userOffer.Details, keyword))
             .ToList();
 
-        jobOffer.MyKeywords.AddRange(avoidKeywords);
+        userOffer.MyKeywords.AddRange(avoidKeywords);
 
-        if (ShouldHide(jobOffer, avoidKeywords))
-            jobOffer.HideStatus = HideStatus.Hidden;
+        if (ShouldHide(userOffer, avoidKeywords))
+            userOffer.HideStatus = HideStatus.Hidden;
+
+        return userOffer;
     }
 
-    private static bool ShouldStar(JobOffer jobOffer, ScraperConfig config)
+    private static bool ShouldStar(UserOffer offer, ScraperConfig config)
     {
         if (!config.StarMyKeywords)
             return false;
 
-        if (jobOffer.HideStatus is not HideStatus.Regular)
+        if (offer.HideStatus is not HideStatus.Regular)
             return false;
 
-        return jobOffer.MyKeywords.Count > 0;
+        return offer.MyKeywords.Count > 0;
     }
 
-    private static bool ShouldHide(JobOffer jobOffer, List<string> avoidKeywords)
+    private static bool ShouldHide(UserOffer offer, List<string> avoidKeywords)
     {
-        if (jobOffer.HideStatus is not HideStatus.Regular)
+        if (offer.HideStatus is not HideStatus.Regular)
             return false;
 
         if (avoidKeywords.Count == 0)

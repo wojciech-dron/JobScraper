@@ -28,7 +28,8 @@ public class RefreshKeywordsOnOffers
 
             while (true)
             {
-                var offers = await _dbContext.JobOffers
+                var offers = await _dbContext.UserOffers
+                    .Include(u => u.Details)
                     .Skip(skip)
                     .Take(batchSize)
                     .ToListAsync(cancellationToken);

@@ -15,7 +15,7 @@
 <div id="table-container" class="overflow-auto h-100">
     <QuickGrid @ref="@grid" Items="applications" Pagination="@pagination" class="table">
         <TemplateColumn Title="Details">
-            <button class="btn btn-primary" @onclick="_ => _applicationOfferModal.ShowAsync(context.JobOffer)">Modify
+            <button class="btn btn-primary" @onclick="_ => _applicationOfferModal.ShowAsync(context.Offer)">Modify
             </button>
         </TemplateColumn>
         <TemplateColumn SortBy="@(GridSort<Application>.ByAscending(p => p.Status))" Title="Rejected">
@@ -41,7 +41,7 @@
                 }
             </ChildContent>
         </TemplateColumn>
-        <PropertyColumn Property="@(p => p.JobOffer.CompanyName)" Title="Company" Sortable="true">
+        <PropertyColumn Property="@(p => p.Offer.Details.CompanyName)" Title="Company" Sortable="true">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -53,7 +53,7 @@
             </HeaderTemplate>
         </PropertyColumn>
         <TemplateColumn class="text-truncate" Title="Title"
-                        SortBy="@(GridSort<Application>.ByAscending(p => p.JobOffer.Title))">
+                        SortBy="@(GridSort<Application>.ByAscending(p => p.Offer.Details.Title))">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -64,7 +64,7 @@
                        class="form-control form-control-sm"/>
             </HeaderTemplate>
             <ChildContent>
-                <span title="@context.JobOffer.Title">@context.JobOffer.Title</span>
+                <span title="@context.Offer.Details.Title">@context.Offer.Details.Title</span>
             </ChildContent>
         </TemplateColumn>
         <PropertyColumn Property="@(p => p.Status)" Sortable="true">
@@ -85,7 +85,7 @@
         <PropertyColumn Property="@(p => p.Comments)" Sortable="true"/>
         <PropertyColumn Property="@(p => p.AppliedAt)" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
         <PropertyColumn Property="@(p => p.RespondedAt)" Format="yyyy-MM-dd" Sortable="true"/>
-        <PropertyColumn class="col-1" Property="@(p => p.JobOffer.Origin)" Sortable="true">
+        <PropertyColumn class="col-1" Property="@(p => p.Offer.Details.Origin)" Sortable="true">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -143,10 +143,10 @@
     public string[]? OriginFilter { get; set; } = [];
 
     IQueryable<Application> applications => context.Applications
-        .Include(jo => jo.JobOffer.Company)
+        .Include(jo => jo.Offer.Details.Company)
         .WhereIf(IsRejectedFilter.HasValue, a => IsRejectedFilter == true ? a.Status == ApplyStatus.Rejected : a.Status != ApplyStatus.Rejected)
-        .WhereIf(!string.IsNullOrEmpty(TitleFilter), a => a.JobOffer.Title.ToLower().Contains(TitleFilter!.ToLower()))
-        .WhereIf(!string.IsNullOrEmpty(CompanyFilter), a => a.JobOffer.CompanyName!.ToLower().Contains(CompanyFilter!.ToLower()))
+        .WhereIf(!string.IsNullOrEmpty(TitleFilter), a => a.Offer.Details.Title.ToLower().Contains(TitleFilter!.ToLower()))
+        .WhereIf(!string.IsNullOrEmpty(CompanyFilter), a => a.Offer.Details.CompanyName!.ToLower().Contains(CompanyFilter!.ToLower()))
         .WhereIf(StatusFilter?.Length > 0, jo => StatusFilter!.Contains(jo.Status, null))
         .OrderByDescending(jo => jo.RespondedAt)
         .ThenByDescending(jo => jo.AppliedAt);

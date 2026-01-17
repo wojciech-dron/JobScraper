@@ -5,11 +5,10 @@
 
 <h3>Job Offer Details</h3>
 
-@if (jobOffer != null)
+@if (userOffer != null)
 {
     <div>
-        <a href="@jobOffer.OfferUrl" target="_blank">View Job Page</a><br/>
-        <a href="@jobOffer.ApplyUrl" target="_blank">Apply page</a><br/>
+        <a href="@jobOffer!.OfferUrl" target="_blank">View Job Page</a><br/>
         <strong>Title:</strong> @jobOffer.Title<br/>
         <strong>Company Name:</strong> @(jobOffer.CompanyName ?? "Not specified")<br/>
         <strong>Location:</strong> @(jobOffer.Location ?? "Not specified")<br/>
@@ -25,7 +24,7 @@
         </ul>
         <strong>My Keywords:</strong><br/>
         <ul>
-            @foreach (var keyword in jobOffer.MyKeywords)
+            @foreach (var keyword in userOffer.MyKeywords)
             {
                 <li>@keyword</li>
             }
@@ -45,12 +44,14 @@ else
 @code {
     private JobsDbContext context = null!;
     private JobOffer? jobOffer { get; set; }
+    private UserOffer? userOffer { get; set; }
 
     [Parameter] public required string OfferUrl { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
         context = await DbFactory.CreateDbContextAsync();
-        jobOffer = await context.JobOffers.FindAsync(OfferUrl);
+        userOffer = await context.UserOffers.FindAsync(context.CurrentUserName, OfferUrl);
+        jobOffer = await context.JobOffers.FindAsync(context.CurrentUserName, OfferUrl);
     }
 }
