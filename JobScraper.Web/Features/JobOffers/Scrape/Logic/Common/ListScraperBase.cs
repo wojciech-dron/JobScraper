@@ -110,8 +110,6 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
             .Where(jo => !existingJobs.Contains(jo.OfferUrl))
             .ToArray();
 
-        Logger.LogInformation("Saving {JobsCount} new jobs", jobsToAdd.Length);
-
         await DbContext.AddRangeAsync(jobsToAdd, cancellationToken);
         await DbContext.SaveChangesAsync(cancellationToken);
 
@@ -131,6 +129,8 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
             .Where(jo => !existingUserOffers.Contains(jo.OfferUrl))
             .Select(jo => new UserOffer(jo).ProcessKeywords(ScrapeConfig))
             .ToArray();
+
+        Logger.LogInformation("Saving {JobsCount} new user offers", userOffersToAdd.Length);
 
         await DbContext.AddRangeAsync(userOffersToAdd, cancellationToken);
         await DbContext.SaveChangesAsync(cancellationToken);

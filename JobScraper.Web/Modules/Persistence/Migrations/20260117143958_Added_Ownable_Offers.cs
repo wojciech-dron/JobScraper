@@ -110,7 +110,7 @@ namespace JobScraper.Migrations
                 table: "JobOffers");
         }
 
-        private void MigrateData(MigrationBuilder migrationBuilder)
+        private static void MigrateData(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql(
                 """
@@ -148,7 +148,7 @@ namespace JobScraper.Migrations
                 """);
         }
 
-        private void RollbackData(MigrationBuilder migrationBuilder)
+        private static void RollbackData(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql(
                 """

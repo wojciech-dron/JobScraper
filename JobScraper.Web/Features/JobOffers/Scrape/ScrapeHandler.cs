@@ -8,101 +8,144 @@ using JobScraper.Web.Features.JobOffers.Scrape.Logic.PracujPl;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.RocketJobs;
 using JobScraper.Web.Modules.Extensions;
 using JobScraper.Web.Modules.Persistence;
+using JobScraper.Web.Modules.Services;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using TickerQ.Utilities.Base;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape;
 
-public class ScrapeHandler
+public record struct ScrapeRequest(string Owner);
+
+public sealed class ScrapeHandler
 {
     private readonly JobsDbContext _dbContext;
     private readonly ILogger<ScrapeHandler> _logger;
     private readonly IMediator _mediator;
+    private readonly UserProvider _userProvider;
+
+    public static readonly SemaphoreSlim ScrapeSemaphore = new(1, 1);
 
     public ScrapeHandler(IMediator mediator,
+        UserProvider userProvider,
         JobsDbContext dbContext,
         ILogger<ScrapeHandler> logger)
     {
         _mediator = mediator;
+        _userProvider = userProvider;
         _dbContext = dbContext;
         _logger = logger;
     }
 
     [TickerFunction("ScrapeJobs")]
-    public async Task ScrapeJobs(CancellationToken cancellationToken)
+    public async Task ScrapeJobs(TickerFunctionContext<ScrapeRequest> context, CancellationToken cancellationToken)
     {
+        _dbContext.CurrentUserName = context.Request.Owner;
+        _userProvider.UserName = context.Request.Owner;
+
         var config = await _dbContext.ScraperConfigs.FirstOrDefaultAsync(cancellationToken);
         if (config is null)
             return;
 
-        _logger.LogInformation("Scheduled scraping in progress");
+        await ScrapeSemaphore.WaitAsync(cancellationToken);
 
-        var newOffersCount = await ScrapeLists(config.Sources);
-        _logger.LogInformation("Scraped new {NewOffersCount} list jobs. Scraping details", newOffersCount);
-        await ScrapeDetails(config.Sources);
+        _logger.LogInformation("Scraping in progress for user {UserName}", _userProvider.UserName);
 
-        _logger.LogInformation("Scheduled scraping completed successfully");
+
+        var newOffersCount = await ScrapeLists(config.Sources, cancellationToken);
+        _logger.LogInformation("Scraped new {NewOffersCount} list jobs for user {UserName}. Scraping details",
+            newOffersCount,
+            _userProvider.UserName);
+
+        await ScrapeDetails(config.Sources, cancellationToken);
+
+        _logger.LogInformation("Scraping completed successfully for user {UserName}", _userProvider.UserName);
 
     }
 
-    public async Task<int> ScrapeLists(IEnumerable<SourceConfig> sources)
+    public async Task<int> ScrapeLists(IEnumerable<SourceConfig> sources,
+        CancellationToken cancellationToken = default)
     {
-        var listCommands = sources
-            .Where(s => !s.Disabled)
-            .Select<SourceConfig, ScrapeCommand>(source => source.DataOrigin switch
-            {
-                DataOrigin.Indeed      => new IndeedListScraper.Command(source),
-                DataOrigin.JustJoinIt  => new JjitListScraper.Command(source),
-                DataOrigin.NoFluffJobs => new NoFluffJobsListScraper.Command(source),
-                DataOrigin.PracujPl    => new PracujPlListScraper.Command(source),
-                DataOrigin.RocketJobs  => new RocketJobsListScraper.Command(source),
-                DataOrigin.Olx         => new OlxListScraper.Command(source),
-                _                      => throw new ArgumentOutOfRangeException($"List scraping not implemented for {source}"),
-            }).ToArray();
-
         var offersCount = 0;
-        for (var idx = 0; idx < listCommands.Length; idx++)
-        {
-            var command = listCommands[idx];
-            _logger.LogInformation("Scheduled scraping list pages of source {Index}/{CommandsCount}",
-                idx + 1,
-                listCommands.Length);
+        var entered = await ScrapeSemaphore.WaitAsync(0, cancellationToken);
+        if (!entered)
+            return -1;
 
-            var result = await _mediator.SendWithRetry(command, _logger);
-            offersCount += result.ScrapedOffersCount;
+        try
+        {
+            var listCommands = sources
+                .Where(s => !s.Disabled)
+                .Select<SourceConfig, ScrapeCommand>(source => source.DataOrigin switch
+                {
+                    DataOrigin.Indeed      => new IndeedListScraper.Command(source),
+                    DataOrigin.JustJoinIt  => new JjitListScraper.Command(source),
+                    DataOrigin.NoFluffJobs => new NoFluffJobsListScraper.Command(source),
+                    DataOrigin.PracujPl    => new PracujPlListScraper.Command(source),
+                    DataOrigin.RocketJobs  => new RocketJobsListScraper.Command(source),
+                    DataOrigin.Olx         => new OlxListScraper.Command(source),
+                    _                      => throw new ArgumentOutOfRangeException($"List scraping not implemented for {source}"),
+                }).ToArray();
+
+            for (var idx = 0; idx < listCommands.Length; idx++)
+            {
+                var command = listCommands[idx];
+                _logger.LogInformation("Scraping list pages of source {Index}/{CommandsCount} for user {UserName}",
+                    idx + 1,
+                    listCommands.Length,
+                    _userProvider.UserName);
+
+                var result = await _mediator.SendWithRetry(command, _logger, cancellationToken: cancellationToken);
+                offersCount += result.ScrapedOffersCount;
+            }
+        }
+        finally
+        {
+            ScrapeSemaphore.Release();
         }
 
         return offersCount;
     }
 
-    public async Task<int> ScrapeDetails(IEnumerable<SourceConfig> sources)
+    public async Task<int> ScrapeDetails(IEnumerable<SourceConfig> sources,
+        CancellationToken cancellationToken = default)
     {
-        var detailsCommands = sources
-            .Where(s => !s.Disabled)
-            .Select<SourceConfig, ScrapeCommand?>(source => source.DataOrigin switch
-            {
-                DataOrigin.Indeed      => new IndeedDetailsScraper.Command(source),
-                DataOrigin.JustJoinIt  => new JjitDetailsScraper.Command(source),
-                DataOrigin.NoFluffJobs => new NoFluffJobsDetailsScraper.Command(source),
-                DataOrigin.RocketJobs  => new RocketJobsDetailsScraper.Command(source),
-                DataOrigin.PracujPl    => null,
-                DataOrigin.Olx         => null,
-
-                _ => throw new NotImplementedException($"List scraping not implemented for {source}"),
-            }).Where(c => c is not null)
-            .ToArray();
-
         var offersCount = 0;
-        for (var idx = 0; idx < detailsCommands.Length; idx++)
-        {
-            var command = detailsCommands[idx]!;
-            _logger.LogInformation("Scheduled scraping details pages of source {Index}/{CommandsCount}",
-                idx + 1,
-                detailsCommands.Length);
+        var entered = await ScrapeSemaphore.WaitAsync(0, cancellationToken);
+        if (!entered)
+            return -1;
 
-            var result = await _mediator.SendWithRetry(command, _logger);
-            offersCount += result.ScrapedOffersCount;
+        try
+        {
+            var detailsCommands = sources
+                .Where(s => !s.Disabled)
+                .Select<SourceConfig, ScrapeCommand?>(source => source.DataOrigin switch
+                {
+                    DataOrigin.Indeed      => new IndeedDetailsScraper.Command(source),
+                    DataOrigin.JustJoinIt  => new JjitDetailsScraper.Command(source),
+                    DataOrigin.NoFluffJobs => new NoFluffJobsDetailsScraper.Command(source),
+                    DataOrigin.RocketJobs  => new RocketJobsDetailsScraper.Command(source),
+                    DataOrigin.PracujPl    => null,
+                    DataOrigin.Olx         => null,
+
+                    _ => throw new NotImplementedException($"List scraping not implemented for {source}"),
+                }).Where(c => c is not null)
+                .ToArray();
+
+            for (var idx = 0; idx < detailsCommands.Length; idx++)
+            {
+                var command = detailsCommands[idx]!;
+                _logger.LogInformation("Scraping details pages of source {Index}/{CommandsCount}, for user {UserName}",
+                    idx + 1,
+                    detailsCommands.Length,
+                    _userProvider.UserName);
+
+                var result = await _mediator.SendWithRetry(command, _logger, cancellationToken: cancellationToken);
+                offersCount += result.ScrapedOffersCount;
+            }
+        }
+        finally
+        {
+            ScrapeSemaphore.Release();
         }
 
         return offersCount;

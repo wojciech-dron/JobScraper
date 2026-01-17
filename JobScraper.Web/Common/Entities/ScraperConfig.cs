@@ -1,11 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using JobScraper.Web.Modules.Persistence.Interceptors;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace JobScraper.Web.Common.Entities;
 
-public class ScraperConfig
+public class ScraperConfig : IOwnable, IUpdatable
 {
-    public int Id { get; set; }
+    public string? Owner { get; set; } = "system";
+    public DateTime? UpdatedAt { get; set; }
 
     public float WaitForListSeconds { get; set; } = 10;
     public float WaitForScrollSeconds { get; set; } = 5;
@@ -49,7 +51,8 @@ public class ScraperConfigModelBuilder : IEntityTypeConfiguration<ScraperConfig>
     {
         builder.ToTable("ScraperConfigs");
 
-        builder.HasKey(x => x.Id);
+        builder.HasKey(x => x.Owner);
+        builder.Property(j => j.Owner).HasMaxLength(255);
 
         builder.Property(x => x.WaitForListSeconds);
         builder.Property(x => x.WaitForScrollSeconds);

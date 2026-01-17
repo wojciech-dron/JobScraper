@@ -10,7 +10,8 @@ public static class Setup
 {
     public static WebApplicationBuilder AddJobs(this WebApplicationBuilder builder)
     {
-        // services.AddScoped<JobsExceptionHandler>();
+        var config = builder.Configuration.GetSection(TickerConfig.SectionName).Get<TickerConfig>();
+
         builder.Services.AddTickerQ(options =>
         {
             options.SetExceptionHandler<JobsExceptionHandler>();
@@ -19,7 +20,7 @@ public static class Setup
                 scheduler.MaxConcurrency = 10;                         // Maximum concurrent worker threads
                 scheduler.NodeIdentifier = "production-server-01";     // Unique node identifier
                 scheduler.IdleWorkerTimeOut = TimeSpan.FromMinutes(1); // Idle worker timeout
-                scheduler.SchedulerTimeZone = TimeZoneInfo.Utc;        // Timezone for scheduling
+                scheduler.SchedulerTimeZone = TimeZoneInfo.Local;      // Timezone for scheduling
             });
 
             options.AddOperationalStore(efOptions =>
@@ -27,10 +28,14 @@ public static class Setup
                 efOptions.UseApplicationDbContext<JobsDbContext>(ConfigurationType.UseModelCustomizer);
             });
 
-            options.AddDashboard(dbopt =>
-            {
-                dbopt.SetBasePath("/tickerq-dashboard");
-            });
+            if (config?.Dashboard.Enabled == true)
+                options.AddDashboard(dbopt =>
+                {
+                    dbopt.SetBasePath("/tickerq-dashboard");
+
+                    if (config.Dashboard.UseBasicAuth)
+                        dbopt.WithBasicAuth(config.Dashboard.User, config.Dashboard.Password);
+                });
         });
 
         return builder;
@@ -41,4 +46,20 @@ public static class Setup
         app.UseTickerQ();
         return app;
     }
+}
+
+public class TickerConfig
+{
+    public const string SectionName = "AppSettings:TickerQ";
+    public TickerDashboardConfig Dashboard { get; set; } = new();
+}
+
+public class TickerDashboardConfig
+{
+    public string? BasePath { get; set; }
+    public string? User { get; set; }
+    public string? Password { get; set; }
+
+    public bool Enabled => !string.IsNullOrWhiteSpace(BasePath);
+    public bool UseBasicAuth => !string.IsNullOrWhiteSpace(User) && !string.IsNullOrWhiteSpace(Password);
 }
