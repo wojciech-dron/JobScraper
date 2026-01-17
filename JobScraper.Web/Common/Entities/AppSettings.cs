@@ -13,5 +13,5 @@ public class AppSettings
         ? [BrowserTypeEnum.Firefox] // preinstalled in Dockerfile
         : Enum.GetValues<BrowserTypeEnum>();
 
-    public TickerConfig TickerQ { get; set; }
+    public TickerConfig? TickerQ { get; set; }
 }

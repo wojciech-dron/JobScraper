@@ -63,7 +63,7 @@ public partial class ScrapePage
             return;
 
         config.ScrapeCron = scrapeJobTicker.Expression;
-        dashboardEnabled = _appSettings.TickerQ.Dashboard?.Enabled == true;
+        dashboardEnabled = _appSettings.TickerQ?.Dashboard?.Enabled == true;
     }
 
     private async Task SaveConfig()
