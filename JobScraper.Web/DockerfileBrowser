@@ -7,8 +7,26 @@ EXPOSE 8081
 ENV CONNECTIONSTRINGS__DEFAULTCONNECTION="data source=/home/app/data/Jobs.db"
 ENV SECURITYSETTINGS__PERSISTKEYSDIRECTORY="/home/app/data/keys"
 ENV APPSETTINGS__PAGESAVINGDIRECTORY="/home/app/data/jobs"
-ENV APPSETTINGS__CONTAINERIZEDAPP=true
-ENV APPSETTINGS__PLAYWRIGHTMODE="OverCdp"
+ENV APPSETTINGS__PREINSTALLEDPLAYWRIGHT=true
+
+# Switch to root to install dependencies
+USER root
+
+# Install PowerShell for Playwright scripts
+RUN apt-get update -yq \
+    && apt-get install -yq wget gnupg2 \
+    && wget -q https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-prod.deb \
+    && dpkg -i packages-microsoft-prod.deb \
+    && apt-get update -yq \
+    && apt-get install -yq powershell \
+    && rm -rf /var/lib/apt/lists/*  # Cleanup to reduce image size
+
+# Set the permissions for the directories created by root for app user
+RUN chmod -R 777 /home/app
+
+# Switch back to the application user
+USER $APP_UID
+
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
@@ -31,6 +49,16 @@ WORKDIR /home/app
 
 # Copy published app with chown
 COPY --chown=$APP_UID:$APP_UID --from=publish /app/publish .
+
+# Install system dependencies
+USER root
+RUN pwsh -c "./playwright.ps1 install-deps"
+
+# Install browsers as non-root so cache goes under /home/app (no copy/chmod needed)
+USER $APP_UID
+ENV HOME=/home/app \
+    PLAYWRIGHT_BROWSERS_PATH=/home/app/.cache/ms-playwright
+RUN pwsh -c "./playwright.ps1 install firefox"
 
 # Create data directory and volume for data
 RUN mkdir -p /home/app/data

@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <PlaywrightPlatform>all</PlaywrightPlatform>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>

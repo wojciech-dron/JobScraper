@@ -25,4 +25,5 @@ LICENSE
 README.md
 
 /JobScraper.Common/scraperSettings.Development.json
+/JobScraper.Web/appsettings.Development.json
 **/Data

@@ -36,7 +36,7 @@ public partial class ScraperConfigValidator : AbstractValidator<ScraperConfig>
             .WithMessage("Avoid keyword must not be empty.");
 
         RuleFor(x => x.BrowserType)
-            .Must(x => _appSettings.AllowedBrowsers.Contains(x))
+            .Must(x => _appSettings.AllowedBrowsers().Contains(x))
             .WithMessage("Browser type must be one of the allowed browsers.");
 
         RuleFor(x => x.ScrapeCron)
