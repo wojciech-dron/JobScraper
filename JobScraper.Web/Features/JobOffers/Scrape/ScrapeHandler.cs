@@ -47,27 +47,29 @@ public sealed class ScrapeHandler
         if (config is null)
             return;
 
-        await ScrapeSemaphore.WaitAsync(cancellationToken);
-
-        _logger.LogInformation("Scraping in progress for user {UserName}", _userProvider.UserName);
-
+        _logger.LogInformation("Scraping in progress for user {UserName}", context.Request.Owner);
 
         var newOffersCount = await ScrapeLists(config.Sources, cancellationToken);
-        _logger.LogInformation("Scraped new {NewOffersCount} list jobs for user {UserName}. Scraping details",
-            newOffersCount,
-            _userProvider.UserName);
+        if (newOffersCount == -1)
+            throw new ApplicationException("Scrape semaphore is locked");
 
-        await ScrapeDetails(config.Sources, cancellationToken);
+        _logger.LogInformation("Scraped new {NewOffersCount} list jobs. Scraping details",
+            newOffersCount);
 
-        _logger.LogInformation("Scraping completed successfully for user {UserName}", _userProvider.UserName);
+        var detailsCount = await ScrapeDetails(config.Sources, cancellationToken);
+        if (detailsCount == -1)
+            throw new ApplicationException("Scrape semaphore is locked");
 
+        _logger.LogInformation("Scraping completed successfully");
     }
 
     public async Task<int> ScrapeLists(IEnumerable<SourceConfig> sources,
         CancellationToken cancellationToken = default)
     {
+        using var userLogScope = _logger.BeginScope("Scraping lists for user {UserName}", _userProvider.UserName);
+
         var offersCount = 0;
-        var entered = await ScrapeSemaphore.WaitAsync(0, cancellationToken);
+        var entered = await ScrapeSemaphore.WaitAsync(TimeSpan.FromMinutes(3), cancellationToken);
         if (!entered)
             return -1;
 
@@ -89,10 +91,9 @@ public sealed class ScrapeHandler
             for (var idx = 0; idx < listCommands.Length; idx++)
             {
                 var command = listCommands[idx];
-                _logger.LogInformation("Scraping list pages of source {Index}/{CommandsCount} for user {UserName}",
+                _logger.LogInformation("Scraping list pages of source {Index}/{CommandsCount}",
                     idx + 1,
-                    listCommands.Length,
-                    _userProvider.UserName);
+                    listCommands.Length);
 
                 var result = await _mediator.SendWithRetry(command, _logger, cancellationToken: cancellationToken);
                 offersCount += result.ScrapedOffersCount;
@@ -109,8 +110,10 @@ public sealed class ScrapeHandler
     public async Task<int> ScrapeDetails(IEnumerable<SourceConfig> sources,
         CancellationToken cancellationToken = default)
     {
+        using var userLogScope = _logger.BeginScope("Scraping details for user {UserName}", _userProvider.UserName);
+
         var offersCount = 0;
-        var entered = await ScrapeSemaphore.WaitAsync(0, cancellationToken);
+        var entered = await ScrapeSemaphore.WaitAsync(TimeSpan.FromMinutes(10), cancellationToken);
         if (!entered)
             return -1;
 
@@ -134,10 +137,9 @@ public sealed class ScrapeHandler
             for (var idx = 0; idx < detailsCommands.Length; idx++)
             {
                 var command = detailsCommands[idx]!;
-                _logger.LogInformation("Scraping details pages of source {Index}/{CommandsCount}, for user {UserName}",
+                _logger.LogInformation("Scraping details pages of source {Index}/{CommandsCount}",
                     idx + 1,
-                    detailsCommands.Length,
-                    _userProvider.UserName);
+                    detailsCommands.Length);
 
                 var result = await _mediator.SendWithRetry(command, _logger, cancellationToken: cancellationToken);
                 offersCount += result.ScrapedOffersCount;

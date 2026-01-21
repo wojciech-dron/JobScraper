@@ -1,9 +1,8 @@
-﻿using JobScraper.Web.Modules.Services;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace JobScraper.Web.Modules.Persistence;
 
-public class ScopedJobsContextFactory(
+public class UserJobsContextFactory(
     IDbContextFactory<JobsDbContext> pooledFactory,
     IHttpContextAccessor httpContextAccessor)
     : IDbContextFactory<JobsDbContext>
@@ -12,6 +11,7 @@ public class ScopedJobsContextFactory(
     {
         var context = pooledFactory.CreateDbContext();
 
+        // get the current username with each factory invocation
         context.CurrentUserName = httpContextAccessor.HttpContext?.User.Identity?.Name;
 
         return context;

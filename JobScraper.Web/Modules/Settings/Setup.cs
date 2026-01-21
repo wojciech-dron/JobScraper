@@ -23,7 +23,6 @@ public static class Setup
 
         builder.Services.Configure<AppSettings>(configuration.GetSection(AppSettings.SectionName));
 
-
         return builder;
     }
 

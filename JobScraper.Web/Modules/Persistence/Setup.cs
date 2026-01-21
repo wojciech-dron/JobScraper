@@ -30,7 +30,7 @@ public static class Setup
         });
 
         // decorate IDbContextFactory with custom implementation
-        builder.Services.Decorate<IDbContextFactory<JobsDbContext>, ScopedJobsContextFactory>();
+        builder.Services.Decorate<IDbContextFactory<JobsDbContext>, UserJobsContextFactory>();
 
         // resolve db context with custom pooled factory
         services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<JobsDbContext>>().CreateDbContext());

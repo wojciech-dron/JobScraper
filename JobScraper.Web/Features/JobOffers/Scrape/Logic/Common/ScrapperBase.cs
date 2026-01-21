@@ -88,10 +88,7 @@ public abstract class ScrapperBase : IDisposable
             _                        => throw new ArgumentOutOfRangeException(nameof(ScrapeConfig.BrowserType)),
         };
 
-        _browser = await browserType.LaunchAsync(new BrowserTypeLaunchOptions
-        {
-            Headless = !ScrapeConfig.ShowBrowserWhenScraping,
-        });
+        _browser = await _playwright.Chromium.ConnectOverCDPAsync("http://192.168.1.220:9222");
 
         return await _browser.NewPageAsync(new BrowserNewPageOptions
         {

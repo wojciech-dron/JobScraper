@@ -194,13 +194,16 @@
             Owner = UserProvider.UserName,
         };
 
-        _alreadyAppliedToCompany = await _context.Applications
-            .AnyAsync(a => a.Offer.Details.CompanyName!.ToLower() == _offer.Details.CompanyName!.ToLower());
+        var companyName = _offer.Details.CompanyName?.ToLowerInvariant();
+        if (!string.IsNullOrWhiteSpace(companyName))
+        {
+            _alreadyAppliedToCompany = await _context.Applications
+                .AnyAsync(a => a.Offer.Details.CompanyName!.ToLower() == companyName);
 
-        _companyMyOffersCount = await _context.UserOffers
-            .Where(jo => jo.Details.CompanyName!.ToLower() == _offer.Details.CompanyName!.ToLower())
-            .CountAsync();
-
+            _companyMyOffersCount = await _context.UserOffers
+                .Where(jo => jo.Details.CompanyName!.ToLower() == companyName)
+                .CountAsync();
+        }
 
         await _modal.ShowAsync();
     }
