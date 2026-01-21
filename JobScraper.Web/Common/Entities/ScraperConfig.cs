@@ -17,7 +17,7 @@ public class ScraperConfig : IOwnable, IUpdatable
     public bool SavePages { get; set; }
 
     public bool ShowBrowserWhenScraping { get; set; }
-    public BrowserTypeEnum BrowserType { get; set; } = BrowserTypeEnum.Firefox;
+    public BrowserTypeEnum BrowserType { get; set; } = BrowserTypeEnum.Chromium;
 
     public bool StarMyKeywords { get; set; }
     public List<string> MyKeywords { get; set; } = [];

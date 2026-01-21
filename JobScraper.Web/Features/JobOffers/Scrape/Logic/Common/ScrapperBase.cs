@@ -77,7 +77,7 @@ public abstract class ScrapperBase : IDisposable
 
         _playwright = await Playwright.CreateAsync();
 
-        if (!AppSettings.PreinstalledPlaywright)
+        if (!AppSettings.ContainerizedApp)
             Install();
 
         var browserType = ScrapeConfig.BrowserType switch
@@ -88,15 +88,44 @@ public abstract class ScrapperBase : IDisposable
             _                        => throw new ArgumentOutOfRangeException(nameof(ScrapeConfig.BrowserType)),
         };
 
-        _browser = await browserType.LaunchAsync(new BrowserTypeLaunchOptions
+        _browser = AppSettings.PlaywrightMode switch
         {
-            Headless = !ScrapeConfig.ShowBrowserWhenScraping,
-        });
+            PlaywrightModeEnum.OverCdp => await ConnectOverCdpAsync(browserType),
+            PlaywrightModeEnum.Local   => await LaunchLocalBrowser(browserType),
+        };
+
 
         return await _browser.NewPageAsync(new BrowserNewPageOptions
         {
             UserAgent = UserAgentStrings[Random.Shared.Next() % UserAgentStrings.Length],
         });
+    }
+
+    private async Task<IBrowser> LaunchLocalBrowser(IBrowserType browserType)
+    {
+        var launchOptions = new BrowserTypeLaunchOptions
+        {
+            Headless = !ScrapeConfig.ShowBrowserWhenScraping,
+        };
+        var browser = await browserType.LaunchAsync(launchOptions);
+        Logger.LogInformation("Browser launched with mode: {PlaywrightMode}", AppSettings.PlaywrightMode);
+
+        return browser;
+    }
+
+    private async Task<IBrowser> ConnectOverCdpAsync(IBrowserType browserType)
+    {
+        if (string.IsNullOrWhiteSpace(AppSettings.CdpEndpointUrl))
+            throw new ArgumentException("Playwright connection string is not set");
+
+        var launchOptions = new BrowserTypeConnectOverCDPOptions();
+        var browser = await browserType.ConnectOverCDPAsync(AppSettings.CdpEndpointUrl, launchOptions);
+
+        Logger.LogInformation("Browser launched with mode: {PlaywrightMode}, endpoint: {CdpEndpointUrl}",
+            AppSettings.PlaywrightMode,
+            AppSettings.CdpEndpointUrl);
+
+        return browser;
     }
 
     public void Install()
