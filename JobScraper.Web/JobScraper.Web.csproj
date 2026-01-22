@@ -49,6 +49,7 @@
     <Content Include="..\.dockerignore">
       <Link>.dockerignore</Link>
     </Content>
+    <Content Remove="Features\TickerQ.razor" />
   </ItemGroup>
 
   <ItemGroup>

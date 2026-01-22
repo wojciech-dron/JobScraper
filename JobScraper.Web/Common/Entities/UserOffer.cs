@@ -7,6 +7,8 @@ namespace JobScraper.Web.Common.Entities;
 /// <summary> Junction entity between User and JobOffer </summary>
 public record UserOffer : IOwnable, IUpdatable
 {
+    /// <remarks> It is unnecessary to manual set of owner. It will be handled by <see cref="OwnerInterceptor"/> </remarks>
+    public string? Owner { get; set; } = "system";
     public string OfferUrl { get; set; } = null!;
 
     public HideStatus HideStatus { get; set; }
@@ -15,7 +17,7 @@ public record UserOffer : IOwnable, IUpdatable
 
     public JobOffer Details { get; set; } = null!;
     public Application? Application { get; set; }
-    public string? Owner { get; set; } = "system";
+
     public DateTime? UpdatedAt { get; set; }
 
     public UserOffer()
