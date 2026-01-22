@@ -27,12 +27,23 @@
             </div>
 
             <div class="row mb-3">
+                <label for="offerUrl" class="form-label bold">Offer URL* (must be unique)</label>
                 <div class="col-md-6">
-                    <label for="offerUrl" class="form-label bold">Offer URL* (must be unique)</label>
-                    <InputText id="offerUrl" @bind-Value="jobOffer.OfferUrl" class="form-control" required
-                               disabled="@limitEdit"/>
+                    <InputText id="offerUrl" @bind-Value="jobOffer.OfferUrl"
+                               @bind-Value:after="OnOfferUrlChanged"
+                               class="form-control" required
+                               disabled="@limitEdition"/>
                     <ValidationMessage For="@(() => jobOffer.OfferUrl)"/>
                 </div>
+                @if (existingJobOffer is not null)
+                {
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-secondary" @onclick="UseExistingOffer">
+                            Use existing offer from db
+                        </button>
+                    </div>
+                }
+
             </div>
 
             <div class="row mb-3">
@@ -47,7 +58,7 @@
                 <div class="col-md-6">
                     <label for="companyName" class="form-label">Company Name*</label>
                     <InputText id="companyName" @bind-Value="jobOffer.CompanyName" class="form-control" required
-                               disabled="@limitEdit"/>
+                               disabled="@limitEdition"/>
                     <ValidationMessage For="@(() => jobOffer.CompanyName)"/>
                 </div>
             </div>
@@ -138,9 +149,9 @@
     public string? OfferUrl { get; set; }
 
     private bool isEdit => !string.IsNullOrEmpty(OfferUrl);
-    private bool limitEdit => isEdit && jobOffer.Origin != DataOrigin.Manual; // limit scraped update
     private JobsDbContext _dbContext = null!;
 
+    private JobOffer? existingJobOffer;
     private UserOffer userOffer = null!;
     private JobOffer jobOffer = new()
     {
@@ -150,9 +161,9 @@
         SalaryCurrency = "PLN",
     };
 
-
     private string offerKeywordsInput = string.Empty;
     private string myKeywordsInput = string.Empty;
+    private bool limitEdition;
 
     protected override async Task OnInitializedAsync()
     {
@@ -170,6 +181,7 @@
 
         jobOffer = existingOffer?.Details ?? throw new ArgumentException($"Job offer wit url: {OfferUrl} not found");
         userOffer = existingOffer;
+        limitEdition = true;
 
         // Set keywords for input fields
         offerKeywordsInput = string.Join(", ", jobOffer.OfferKeywords);
@@ -209,6 +221,7 @@
         return company;
     }
 
+
     private static List<string> ToKeywordsArray(string keywordsInput)
     {
         if (string.IsNullOrWhiteSpace(keywordsInput))
@@ -221,8 +234,27 @@
             .ToList();
     }
 
-
     private bool PreventNavigation => _dbContext.Entry(userOffer).State is EntityState.Modified or EntityState.Detached;
+
+    private void OnOfferUrlChanged()
+    {
+        // do nothing if a user offer exists - cannot create a user offer if it already exists
+        if (_dbContext.UserOffers.Any(uo => uo.OfferUrl == jobOffer.OfferUrl))
+            return;
+
+        // if a user ofer not exist and a job offer exists, take it
+        existingJobOffer = _dbContext.JobOffers.Find(jobOffer.OfferUrl);
+    }
+
+    private void UseExistingOffer()
+    {
+        ArgumentNullException.ThrowIfNull(existingJobOffer);
+        jobOffer = existingJobOffer;
+        userOffer.Details = existingJobOffer;
+
+        existingJobOffer = null;
+        limitEdition = true;
+    }
 
     private async Task OnBeforeInternalNavigation(LocationChangingContext ctx)
     {

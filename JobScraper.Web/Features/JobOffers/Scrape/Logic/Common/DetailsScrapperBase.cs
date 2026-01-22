@@ -40,7 +40,15 @@ public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IReque
                     await ScrapeJobDetails(job));
 
                 job.DetailsScrapeStatus = DetailsScrapeStatus.Scraped;
-                job.UserOffer?.ProcessKeywords(ScrapeConfig);
+
+                var userOffer = job.UserOffer;
+                if (userOffer is null)
+                {
+                    userOffer = new UserOffer(job);
+                    DbContext.Add(userOffer);
+                }
+
+                userOffer.ProcessKeywords(ScrapeConfig);
 
                 await DbContext.SaveChangesAsync(cancellationToken);
             }

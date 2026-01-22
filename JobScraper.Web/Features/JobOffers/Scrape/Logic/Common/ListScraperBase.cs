@@ -60,8 +60,8 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
             .ToArray();
 
         await AddNewCompanies(companies, cancellationToken);
-        await AddNewJobOffers(jobs, cancellationToken);
-        return await AddNewUserOffers(jobs, cancellationToken);
+        var trackedJobs = await AddNewJobOffers(jobs, cancellationToken);
+        return await AddNewUserOffers(trackedJobs, cancellationToken);
     }
 
     private async Task AddNewCompanies(string[] companyNames, CancellationToken cancellationToken)
@@ -97,36 +97,42 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
         }
     }
 
-    private async Task<int> AddNewJobOffers(List<JobOffer> jobs, CancellationToken cancellationToken)
+    private async Task<List<JobOffer>> AddNewJobOffers(List<JobOffer> jobs, CancellationToken cancellationToken)
     {
         var keys = jobs.Select(jo => jo.OfferUrl);
 
+        // keep this in dbContext to avoid creation of duplicate job offers
         var existingJobs = await DbContext.JobOffers
             .Where(j => keys.Contains(j.OfferUrl))
-            .Select(j => j.OfferUrl)
             .ToArrayAsync(cancellationToken);
 
+        var existingOfferUrls = existingJobs.Select(jo => jo.OfferUrl);
+
         var jobsToAdd = jobs
-            .Where(jo => !existingJobs.Contains(jo.OfferUrl))
-            .ToArray();
+            .Where(jo => !existingOfferUrls.Contains(jo.OfferUrl))
+            .ToList();
 
         await DbContext.AddRangeAsync(jobsToAdd, cancellationToken);
         await DbContext.SaveChangesAsync(cancellationToken);
 
-        return jobsToAdd.Length;
+        // Add existing tracked jobs to the list and return
+        jobsToAdd.AddRange(existingJobs);
+        return jobsToAdd;
     }
 
     private async Task<int> AddNewUserOffers(List<JobOffer> jobs, CancellationToken cancellationToken)
     {
         var keys = jobs.Select(jo => jo.OfferUrl);
 
+        // keep this in dbContext to avoid creation of duplicate job offers
         var existingUserOffers = await DbContext.UserOffers
             .Where(j => keys.Contains(j.OfferUrl))
-            .Select(j => j.OfferUrl)
             .ToArrayAsync(cancellationToken);
 
+        var existingOfferUrls = existingUserOffers.Select(jo => jo.OfferUrl);
+
         var userOffersToAdd = jobs
-            .Where(jo => !existingUserOffers.Contains(jo.OfferUrl))
+            .Where(jo => !existingOfferUrls.Contains(jo.OfferUrl))
             .Select(jo => new UserOffer(jo).ProcessKeywords(ScrapeConfig))
             .ToArray();
 

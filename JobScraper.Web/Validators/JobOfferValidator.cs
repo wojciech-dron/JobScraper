@@ -21,17 +21,16 @@ public class JobOfferValidator : AbstractValidator<JobOffer>
             () =>
             {
                 RuleFor(x => x.OfferUrl)
-                    .MustAsync(BeUniqueUrl).WithMessage("This offer URL already exists in the database");
+                    .MustAsync(BeUniqueUrlForUserAdd)
+                    .WithMessage("This offer URL already exists in the database");
             });
 
         RuleSet("EditRuleSet",
             () =>
             {
                 RuleFor(x => x.OfferUrl)
-                    .MustAsync(async (jobOffer, url, context, cancellationToken) =>
-                    {
-                        return await BeUniqueUrlForEdit(jobOffer, url, cancellationToken);
-                    }).WithMessage("This offer URL already exists for another job offer");
+                    .MustAsync(BeUniqueUrlForUserEdit)
+                    .WithMessage("This offer URL already exists for another job offer");
             });
 
         RuleFor(x => x.Title)
@@ -60,16 +59,16 @@ public class JobOfferValidator : AbstractValidator<JobOffer>
         //     .MaximumLength(500).WithMessage("Comments must not exceed 500 characters");
     }
 
-    private async Task<bool> BeUniqueUrl(string url, CancellationToken cancellationToken)
+    private async Task<bool> BeUniqueUrlForUserAdd(string url, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(url))
             return true; // Let the NotEmpty validation handle this
 
         await using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
-        return !await context.JobOffers.AnyAsync(jo => jo.OfferUrl == url, cancellationToken);
+        return !await context.UserOffers.AnyAsync(jo => jo.OfferUrl == url, cancellationToken);
     }
 
-    private async Task<bool> BeUniqueUrlForEdit(JobOffer jobOffer, string url, CancellationToken cancellationToken)
+    private async Task<bool> BeUniqueUrlForUserEdit(JobOffer jobOffer, string url, CancellationToken cancellationToken)
     {
         if (string.IsNullOrEmpty(url))
             return true; // Let the NotEmpty validation handle this
@@ -80,6 +79,6 @@ public class JobOfferValidator : AbstractValidator<JobOffer>
 
         // Otherwise, check if the new URL exists for any other job offer
         await using var context = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
-        return !await context.JobOffers.AnyAsync(jo => jo.OfferUrl == url, cancellationToken);
+        return !await context.UserOffers.AnyAsync(jo => jo.OfferUrl == url, cancellationToken);
     }
 }
