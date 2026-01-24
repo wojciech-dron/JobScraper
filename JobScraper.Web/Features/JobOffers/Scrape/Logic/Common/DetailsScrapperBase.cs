@@ -24,29 +24,25 @@ public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IReque
             return new ScrapeResponse();
         }
 
-        var jobs = await DbContext.JobOffers
-            .Include(j => j.UserOffers) // TODO: check if join contains query filter
-            .Include(j => j.Company)
-            .Where(j => j.Origin              == DataOrigin)
-            .Where(j => j.DetailsScrapeStatus != DetailsScrapeStatus.Scraped)
+        var userOffers = await DbContext.UserOffers
+            .Include(j => j.Details.Company) // TODO: check if join contains query filter
+            .Where(j => j.Details.Origin              == DataOrigin)
+            .Where(j => j.Details.DetailsScrapeStatus != DetailsScrapeStatus.Scraped)
             .ToListAsync(cancellationToken);
 
-        Logger.LogInformation("Found {Count} jobs to scrape details", jobs.Count);
+        Logger.LogInformation("Found {Count} jobs to scrape details", userOffers.Count);
 
-        foreach (var job in jobs)
+        foreach (var userOffer in userOffers)
+        {
+            var jobOffer = userOffer.Details;
+            using var offerUrlScope = Logger.BeginScope("OfferUrl: {OfferUrl}", jobOffer.OfferUrl);
+
             try
             {
                 await RetryPolicy.ExecuteAsync(async () =>
-                    await ScrapeJobDetails(job));
+                    await ScrapeJobDetails(jobOffer));
 
-                job.DetailsScrapeStatus = DetailsScrapeStatus.Scraped;
-
-                var userOffer = job.UserOffer;
-                if (userOffer is null)
-                {
-                    userOffer = new UserOffer(job);
-                    DbContext.Add(userOffer);
-                }
+                jobOffer.DetailsScrapeStatus = DetailsScrapeStatus.Scraped;
 
                 userOffer.ProcessKeywords(ScrapeConfig);
 
@@ -54,8 +50,8 @@ public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IReque
             }
             catch (Exception e)
             {
-                Logger.LogError(e, "Failed to scrape job: {JobUrl}", job.OfferUrl);
-                job.DetailsScrapeStatus = DetailsScrapeStatus.Failed;
+                Logger.LogError(e, "Failed to scrape job: {JobUrl}", jobOffer.OfferUrl);
+                jobOffer.DetailsScrapeStatus = DetailsScrapeStatus.Failed;
 
                 await DbContext.SaveChangesAsync(cancellationToken);
 
@@ -65,8 +61,9 @@ public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IReque
             {
                 Dispose();
             }
+        }
 
-        return new ScrapeResponse(ScrapedOffersCount: jobs.Count);
+        return new ScrapeResponse(ScrapedOffersCount: userOffers.Count);
     }
 
     public abstract Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer);

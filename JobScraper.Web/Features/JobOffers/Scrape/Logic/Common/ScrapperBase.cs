@@ -92,6 +92,7 @@ public abstract class ScrapperBase : IDisposable
         {
             PlaywrightModeEnum.OverCdp => await ConnectOverCdpAsync(browserType),
             PlaywrightModeEnum.Local   => await LaunchLocalBrowser(browserType),
+            _                          => throw new ArgumentOutOfRangeException(nameof(AppSettings.PlaywrightMode)),
         };
 
 
@@ -108,7 +109,7 @@ public abstract class ScrapperBase : IDisposable
             Headless = !ScrapeConfig.ShowBrowserWhenScraping,
         };
         var browser = await browserType.LaunchAsync(launchOptions);
-        Logger.LogInformation("Browser launched with mode: {PlaywrightMode}", AppSettings.PlaywrightMode);
+        Logger.LogTrace("Browser launched with mode: {PlaywrightMode}", AppSettings.PlaywrightMode);
 
         return browser;
     }
@@ -121,7 +122,7 @@ public abstract class ScrapperBase : IDisposable
         var launchOptions = new BrowserTypeConnectOverCDPOptions();
         var browser = await browserType.ConnectOverCDPAsync(AppSettings.CdpEndpointUrl, launchOptions);
 
-        Logger.LogInformation("Browser launched with mode: {PlaywrightMode}, endpoint: {CdpEndpointUrl}",
+        Logger.LogTrace("Browser launched with mode: {PlaywrightMode}, endpoint: {CdpEndpointUrl}",
             AppSettings.PlaywrightMode,
             AppSettings.CdpEndpointUrl);
 
