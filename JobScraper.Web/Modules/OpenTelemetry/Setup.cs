@@ -22,7 +22,12 @@ public static class Setup
         var loggingBuilder = builder.Logging;
         var configuration = builder.Configuration;
 
-        var otlpEndpoint = configuration["OTEL_EXPORTER_OTLP_ENDPOINT"] ?? configuration["OtelEndpoint"];
+        var otlpEndpoint = configuration["OtelEndpoint"]   ?? configuration["OTEL_EXPORTER_OTLP_ENDPOINT"];
+        var protocolString = configuration["OtelProtocol"] ?? configuration["OTEL_EXPORTER_OTLP_PROTOCOL"];
+        var protocol = Enum.TryParse(protocolString, true, out OtlpExportProtocol protocolEnum)
+            ? protocolEnum
+            : OtlpExportProtocol.Grpc;
+
         if (string.IsNullOrWhiteSpace(otlpEndpoint))
             return builder;
 
@@ -46,7 +51,7 @@ public static class Setup
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation();
             })
-            .UseOtlpExporter(OtlpExportProtocol.Grpc, new Uri(otlpEndpoint));
+            .UseOtlpExporter(protocol, new Uri(otlpEndpoint));
 
         return builder;
     }
