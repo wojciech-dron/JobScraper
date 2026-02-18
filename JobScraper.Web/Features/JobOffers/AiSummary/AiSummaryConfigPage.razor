@@ -12,10 +12,21 @@
 <EditForm Model="_config" disabled="@isWorking">
     <FluentValidationValidator @ref="validator"/>
 
-    <InputText class="form-control" @bind-Value="_config.ApiKey"/>
-    <InputText class="form-control" @bind-Value="_config.BaseUrl"/>
-    <InputText class="form-control" @bind-Value="_config.ModelName"/>
+    <div class="row mb-3">
+        <label for="baseUrlInput" class="form-label bold">Base Url</label>
+        <InputText id="baseUrlInput" class="form-control" @bind-Value="_config.BaseUrl"/>
+    </div>
 
+
+    <div class="row mb-3">
+        <label for="modelNameInput" class="form-label bold">Model Name</label>
+        <InputText id="modelNameInput" class="form-control" @bind-Value="_config.ModelName"/>
+    </div>
+
+    <div class="row mb-3">
+        <label for="apiKeyInput" class="form-label bold">Api Key</label>
+        <InputText id="apiKeyInput" class="form-control" @bind-Value="_config.ApiKey"/>
+    </div>
 
     <ValidationSummary/>
 
@@ -26,11 +37,11 @@
             <div class="spinner-border" role="status">
                 <span class="sr-only"></span>
             </div>
-            <h5>Do not leave this page. Scraping in progress...</h5>
+            <h5>Do not leave this page. Ai offer summary is in progress...</h5>
         }
         else
         {
-            <h5>Ready to scrape</h5>
+            <h5>Ready to summarize offers</h5>
         }
     </div>
 
@@ -41,7 +52,7 @@
         @*     </button> *@
         @* </div> *@
         <div class="col-md-6 d-flex flex-column">
-            <button class="btn btn-primary mb-3" @onclick="VerifyConnection" disabled="@isWorking">
+            <button class="btn btn-primary mb-3" @onclick="VerifyModel" disabled="@isWorking">
                 @(isWorking ? "Verifying..." : "Verify connection")
             </button>
         </div>
