@@ -9,6 +9,7 @@
     <File Path="README.md" />
   </Folder>
   <Folder Name="/solution items/scripts/">
+    <File Path="scripts/add-migration.ps1" />
     <File Path="scripts/docker pub scripts.bat" />
     <File Path="scripts/publish.ps1" />
     <File Path="scripts/push-docker.ps1" />

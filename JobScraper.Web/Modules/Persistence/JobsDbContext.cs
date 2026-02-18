@@ -1,4 +1,5 @@
 ﻿using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Modules.Auth;
 using JobScraper.Web.Modules.Persistence.Interceptors;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,7 @@ public class JobsDbContext(DbContextOptions<JobsDbContext> options)
         modelBuilder.ApplyConfiguration(new CompanyModelBuilder());
         modelBuilder.ApplyConfiguration(new ApplicationModelBuilder());
         modelBuilder.ApplyConfiguration(new ScraperConfigModelBuilder());
+        modelBuilder.ApplyConfiguration(new RoleConfiguration());
 
         modelBuilder.ApplyConfiguration(new TimeTickerConfigurations<TimeTickerEntity>(schema: "jobs"));
         modelBuilder.ApplyConfiguration(new CronTickerConfigurations<CronTickerEntity>(schema: "jobs"));

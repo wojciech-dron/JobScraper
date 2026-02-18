@@ -17,7 +17,7 @@ namespace JobScraper.Web.Features.JobOffers.Scrape;
 
 public record struct ScrapeRequest(string Owner);
 
-public sealed class ScrapeHandler
+public sealed partial class ScrapeHandler
 {
     private readonly JobsDbContext _dbContext;
     private readonly ILogger<ScrapeHandler> _logger;
@@ -47,14 +47,13 @@ public sealed class ScrapeHandler
         if (config is null)
             return;
 
-        _logger.LogInformation("Scraping in progress for user {UserName}", context.Request.Owner);
+        LogScrapingInProgress(context.Request.Owner);
 
         var newOffersCount = await ScrapeLists(config.Sources, cancellationToken);
         if (newOffersCount == -1)
             throw new ApplicationException("Scrape semaphore is locked");
 
-        _logger.LogInformation("Scraped new {NewOffersCount} list jobs. Scraping details",
-            newOffersCount);
+        LogScrapedNewOffersFromLists(newOffersCount);
 
         var detailsCount = await ScrapeDetails(config.Sources, cancellationToken);
         if (detailsCount == -1)
@@ -91,9 +90,7 @@ public sealed class ScrapeHandler
             for (var idx = 0; idx < listCommands.Length; idx++)
             {
                 var command = listCommands[idx];
-                _logger.LogInformation("Scraping list pages of source {Index}/{CommandsCount}",
-                    idx + 1,
-                    listCommands.Length);
+                LogScrapingListPages(idx + 1, listCommands.Length);
 
                 var result = await _mediator.SendWithRetry(command, _logger, cancellationToken: cancellationToken);
                 offersCount += result.ScrapedOffersCount;
@@ -137,9 +134,7 @@ public sealed class ScrapeHandler
             for (var idx = 0; idx < detailsCommands.Length; idx++)
             {
                 var command = detailsCommands[idx]!;
-                _logger.LogInformation("Scraping details pages of source {Index}/{CommandsCount}",
-                    idx + 1,
-                    detailsCommands.Length);
+                LogScrapingDetails(idx + 1, detailsCommands.Length);
 
                 var result = await _mediator.SendWithRetry(command, _logger, cancellationToken: cancellationToken);
                 offersCount += result.ScrapedOffersCount;
@@ -152,4 +147,16 @@ public sealed class ScrapeHandler
 
         return offersCount;
     }
+
+    [LoggerMessage(LogLevel.Information, "Scraping list pages of source {index}/{commandsCount}")]
+    partial void LogScrapingListPages(int index, int commandsCount);
+
+    [LoggerMessage(LogLevel.Information, "Scraping details pages of source {index}/{commandsCount}")]
+    partial void LogScrapingDetails(int index, int commandsCount);
+
+    [LoggerMessage(LogLevel.Information, "Scraped new {NewOffersCount} list jobs. Scraping details")]
+    partial void LogScrapedNewOffersFromLists(int NewOffersCount);
+
+    [LoggerMessage(LogLevel.Information, "Scraping in progress for user {UserName}")]
+    partial void LogScrapingInProgress(string UserName);
 }
