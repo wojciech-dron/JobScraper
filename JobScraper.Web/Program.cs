@@ -1,10 +1,11 @@
 using FluentValidation;
 using JobScraper.Web.Blazor;
 using JobScraper.Web.Features.JobOffers.Scrape;
+using JobScraper.Web.Integration;
 using JobScraper.Web.Modules.Auth;
 using JobScraper.Web.Modules.Jobs;
+using JobScraper.Web.Modules.Logging;
 using JobScraper.Web.Modules.Mediator;
-using JobScraper.Web.Modules.OpenTelemetry;
 using JobScraper.Web.Modules.Persistence;
 using JobScraper.Web.Modules.Security;
 using JobScraper.Web.Modules.Services;
@@ -23,6 +24,7 @@ builder.AddJobs();
 builder.ConfigureSecurity();
 builder.AddScrapeServices();
 builder.Services.AddUserProvider();
+builder.AddIntegrationServices();
 
 
 var app = builder.Build();

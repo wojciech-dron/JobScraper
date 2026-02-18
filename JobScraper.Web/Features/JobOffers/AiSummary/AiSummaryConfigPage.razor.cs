@@ -1,19 +1,17 @@
 ﻿using Blazored.FluentValidation;
 using JobScraper.Web.Modules.Persistence;
 using Mediator;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
 
 namespace JobScraper.Web.Features.JobOffers.AiSummary;
 
 public partial class AiSummaryConfigPage
 {
-    private readonly IDbContextFactory<JobsDbContext> _dbFactory;
     private readonly IJSRuntime _js;
-    private readonly AiSummaryConfig _config = new();
-    private readonly JobsDbContext _dbContext = null!;
+    private readonly JobsDbContext _dbContext;
     private readonly IMediator _mediator;
     private readonly CancellationTokenSource _cts = new();
+    private readonly AiSummaryConfig _config = new();
 
     private bool isWorking;
     private FluentValidationValidator validator = null!;
@@ -33,8 +31,6 @@ public partial class AiSummaryConfigPage
             throw new InvalidOperationException("User name is not set.");
 
         return Task.CompletedTask;
-
-        // config = await dbContext.ScraperConfigs.FirstOrDefaultAsync() ?? new ScraperConfig();
 
     }
 
@@ -57,10 +53,9 @@ public partial class AiSummaryConfigPage
         PushNotification("Configuration saved successfully.");
     }
 
-    private async Task VerifyConnection()
+    private async Task VerifyModel()
     {
-        var result = await _mediator.Send(new VerifyConnection.Request(_config), _cts.Token);
-
+        var result = await _mediator.Send(new GetAvailableModels.Request(_config), _cts.Token);
 
         if (result.IsError)
         {
@@ -68,8 +63,15 @@ public partial class AiSummaryConfigPage
             return;
         }
 
-        PushNotification("Connection verified successfully.");
-        Console.WriteLine(result.Value.Data);
+        var models = result.Value.Models;
+        var modelsCount = models.Length;
+
+        if (models.Any(m => m.Id == _config.ModelName))
+            PushNotification($"Model verified. {modelsCount} models found.");
+        else
+            PushNotification($"Connection verified successfully, but specified model does not exist. " +
+                $"{modelsCount} models found.");
+
     }
 
     private async Task UpdatePageAsync()
