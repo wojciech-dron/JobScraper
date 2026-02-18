@@ -1,11 +1,11 @@
 ﻿using ErrorOr;
 using Mediator;
 
-namespace JobScraper.Web.Features.JobOffers.AiSummary;
+namespace JobScraper.Web.Features.AiSummary;
 
 public class GetAvailableModels
 {
-    public record Request(AiSummaryConfig Config) : IRequest<ErrorOr<Response>>;
+    public record Request(AiProviderConfig Config) : IRequest<ErrorOr<Response>>;
 
     public record Response(ModelsDto[] Models);
 
@@ -18,7 +18,7 @@ public class GetAvailableModels
             var client = clientFactory.CreateClient();
             client.BaseAddress = new Uri(config.BaseUrl);
 
-            var response = await client.GetAsync("api/v1/models", cancellationToken);
+            var response = await client.GetAsync("models", cancellationToken);
 
             if (!response.IsSuccessStatusCode)
                 return Error.Unexpected(description: $"Server returned error code: {response.StatusCode}");
