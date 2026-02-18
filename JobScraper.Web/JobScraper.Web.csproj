@@ -30,6 +30,9 @@
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.2"/>
     <PackageReference Include="Microsoft.Playwright" Version="1.57.0"/>
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.71.0"/>
+    <PackageReference Include="Microsoft.SemanticKernel.Agents.Core" Version="1.71.0"/>
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.71.0"/>
     <PackageReference Include="OpenTelemetry.Api" Version="1.14.0"/>
     <PackageReference Include="OpenTelemetry.Api.ProviderBuilderExtensions" Version="1.14.0"/>
     <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.14.0"/>
@@ -75,6 +78,22 @@
 
   <ItemGroup>
     <Folder Include="Modules\Ai\"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Features\JobOffers\AiSummary\AiSummaryConfigPage.razor"/>
+    <_ContentIncludedByDefault Remove="Features\JobOffers\AiSummary\_Imports.razor"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="Features\AiSummary\AiSummaryConfigPage.razor"/>
+    <AdditionalFiles Include="Features\AiSummary\_Imports.razor"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Features\AiSummary\AiSummaryConfigPage.css">
+      <DependentUpon>AiSummaryConfigPage.razor</DependentUpon>
+    </None>
   </ItemGroup>
 
 </Project>

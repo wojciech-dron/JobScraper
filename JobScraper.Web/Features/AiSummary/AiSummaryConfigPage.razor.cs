@@ -1,9 +1,10 @@
-﻿using Blazored.FluentValidation;
+﻿using BlazorBootstrap;
+using Blazored.FluentValidation;
 using JobScraper.Web.Modules.Persistence;
 using Mediator;
 using Microsoft.JSInterop;
 
-namespace JobScraper.Web.Features.JobOffers.AiSummary;
+namespace JobScraper.Web.Features.AiSummary;
 
 public partial class AiSummaryConfigPage
 {
@@ -11,7 +12,8 @@ public partial class AiSummaryConfigPage
     private readonly JobsDbContext _dbContext;
     private readonly IMediator _mediator;
     private readonly CancellationTokenSource _cts = new();
-    private readonly AiSummaryConfig _config = new();
+    private readonly AiProviderConfig _config = new();
+    private readonly SummarizeOfferRequest _request = new();
 
     private bool isWorking;
     private FluentValidationValidator validator = null!;
@@ -31,7 +33,6 @@ public partial class AiSummaryConfigPage
             throw new InvalidOperationException("User name is not set.");
 
         return Task.CompletedTask;
-
     }
 
     private async Task SaveConfig()
@@ -74,6 +75,37 @@ public partial class AiSummaryConfigPage
 
     }
 
+    private async Task RequestAiSummary()
+    {
+        if (string.IsNullOrEmpty(_config.ApiKey)        ||
+            string.IsNullOrEmpty(_request.CvContent)    ||
+            string.IsNullOrEmpty(_request.OfferContent) ||
+            string.IsNullOrEmpty(_request.UserRequirements))
+        {
+            PushNotification("Please fill all required fields.", ToastType.Warning);
+            return;
+        }
+
+        isWorking = true;
+        PushNotification("AI summary in progress...");
+
+        var request = new SummarizeOffer.Request(
+            Config: _config,
+            CvContent: _request.CvContent,
+            OfferContent: _request.OfferContent,
+            UserRequirements: _request.UserRequirements);
+
+        var result = await _mediator.Send(request, _cts.Token);
+
+        if (result.IsError)
+            PushNotification(result.FirstError.Description);
+        else
+            PushNotification("AI summary finished.");
+
+        chatHistory = result.Value.ChatHistory;
+        isWorking = false;
+    }
+
     private async Task UpdatePageAsync()
     {
         StateHasChanged();
@@ -86,6 +118,4 @@ public partial class AiSummaryConfigPage
         _cts.Cancel();
         _cts.Dispose();
     }
-
-
 }
