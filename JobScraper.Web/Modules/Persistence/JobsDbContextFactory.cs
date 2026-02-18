@@ -8,7 +8,9 @@ public class JobsDbContextFactory : IDesignTimeDbContextFactory<JobsDbContext>
     public JobsDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<JobsDbContext>();
-        optionsBuilder.UseSqlite(@"Data Source=.\Data\Jobs.db");
+
+        var connectionString = args.FirstOrDefault() ?? "";
+        optionsBuilder.UseSqlite(connectionString);
 
         return new JobsDbContext(optionsBuilder.Options);
     }

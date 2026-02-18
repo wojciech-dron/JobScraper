@@ -1,0 +1,6 @@
+@using Microsoft.AspNetCore.Authorization
+@using JobScraper.Web.Modules.Auth
+@using JobScraper.Web.Modules.Auth.Attributes
+@using JobScraper.Web.Modules.Auth
+
+@attribute [AuthorizeAnyRole(AppRoles.AiSummary, AppRoles.Admin)]

@@ -65,13 +65,32 @@ dotnet_naming_symbols.constant_fields.required_modifiers = const
 dotnet_naming_style.pascal_case_style.capitalization = pascal_case
 
 
-# internal and private fields should be _camelCase
-dotnet_naming_rule.camel_case_for_private_internal_fields.severity = suggestion
-dotnet_naming_rule.camel_case_for_private_internal_fields.symbols = private_internal_fields
-dotnet_naming_rule.camel_case_for_private_internal_fields.style = camel_case_underscore_style
-dotnet_naming_symbols.private_internal_fields.applicable_kinds = field
-dotnet_naming_symbols.private_internal_fields.applicable_accessibilities = private, internal
+# internal fields should be camelCase
+dotnet_naming_rule.camel_case_for_internal_fields.severity = suggestion
+dotnet_naming_rule.camel_case_for_internal_fields.symbols = internal_fields
+dotnet_naming_rule.camel_case_for_internal_fields.style = camel_case_style
+dotnet_naming_symbols.internal_fields.applicable_kinds = field
+dotnet_naming_symbols.internal_fields.applicable_accessibilities = internal
+
+# private readonly fields should be _camelCase
+dotnet_naming_rule.camel_case_for_private_readonly_fields.severity = suggestion
+dotnet_naming_rule.camel_case_for_private_readonly_fields.symbols = private_readonly_fields
+dotnet_naming_rule.camel_case_for_private_readonly_fields.style = camel_case_underscore_style
+dotnet_naming_symbols.private_readonly_fields.applicable_kinds = field
+dotnet_naming_symbols.private_readonly_fields.applicable_accessibilities = private
+dotnet_naming_symbols.private_readonly_fields.required_modifiers = readonly
+
+# private non-readonly fields should be camelCase
+dotnet_naming_rule.camel_case_for_private_non_readonly_fields.severity = suggestion
+dotnet_naming_rule.camel_case_for_private_non_readonly_fields.symbols = private_non_readonly_fields
+dotnet_naming_rule.camel_case_for_private_non_readonly_fields.style = camel_case_style
+dotnet_naming_symbols.private_non_readonly_fields.applicable_kinds = field
+dotnet_naming_symbols.private_non_readonly_fields.applicable_accessibilities = private
+
 dotnet_naming_style.camel_case_underscore_style.capitalization = camel_case
+dotnet_naming_style.camel_case_underscore_style.required_prefix = _
+
+dotnet_naming_style.camel_case_style.capitalization = camel_case
 
 # Chop method arguments
 csharp_wrap_arguments_style = chop_if_long

@@ -49,7 +49,7 @@
     <Content Include="..\.dockerignore">
       <Link>.dockerignore</Link>
     </Content>
-    <Content Remove="Features\TickerQ.razor" />
+    <Content Remove="Features\TickerQ.razor"/>
   </ItemGroup>
 
   <ItemGroup>
@@ -59,6 +59,10 @@
   <ItemGroup>
     <EmbeddedResource Include="Features\JobOffers\Scrape\Logic\Jjit\jjit-list.js"/>
     <EmbeddedResource Include="Features\JobOffers\Scrape\Logic\NoFluffJobs\no-fluff-jobs-list.js"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Modules\Ai\"/>
   </ItemGroup>
 
 </Project>

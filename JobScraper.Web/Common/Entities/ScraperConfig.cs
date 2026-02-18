@@ -26,7 +26,6 @@ public class ScraperConfig : IOwnable, IUpdatable
 
     public string ScrapeCron { get; set; } = "0 15 * * *"; // default: every day at 15:00
 
-    public DataOrigin[] GetEnabledOrigins() => Sources.Where(x => !x.Disabled).Select(x => x.DataOrigin).ToArray();
     public bool IsEnabled(DataOrigin origin) => Sources.Any(x => x.DataOrigin == origin && !x.Disabled);
 }
 

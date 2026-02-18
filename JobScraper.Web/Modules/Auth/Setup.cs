@@ -33,6 +33,7 @@ public static class Setup
                 options.SignIn.RequireConfirmedAccount = false;
                 options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
             })
+            .AddRoles<IdentityRole>()
             .AddEntityFrameworkStores<JobsDbContext>()
             .AddSignInManager()
             .AddDefaultTokenProviders();
