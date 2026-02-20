@@ -1,6 +1,9 @@
 ﻿() => {
-    let jobItems = document.querySelectorAll("a.posting-list-item")
-    // let a = jobItems[0];
+    let lists = document.querySelectorAll('nfj-postings-list[listname="search"]'); // skip extended search
+    let jobItems = Array.from(lists).flatMap(list =>
+        Array.from(list.querySelectorAll("a.posting-list-item"))
+    );
+    let a = jobItems[0];
 
     let results = Array.from(jobItems).map(a => {
         let aside = a.querySelector('aside')
