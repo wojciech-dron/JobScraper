@@ -9,11 +9,11 @@ using Microsoft.Playwright;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape.Logic.RocketJobs;
 
-public class RocketJobsListScraper
+public partial class RocketJobsListScraper
 {
     public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
-    public class Handler : ListScraperBase<Command>
+    public partial class Handler : ListScraperBase<Command>
     {
 
         protected override DataOrigin DataOrigin => DataOrigin.RocketJobs;
@@ -66,7 +66,7 @@ public class RocketJobsListScraper
                 yield return newJobs;
             }
 
-            Logger.LogInformation("{DataOrigin} - scrapping complete", DataOrigin);
+            LogDataOriginScrappingComplete(Logger, DataOrigin);
         }
 
         private async Task AcceptCookies(IPage page)
@@ -144,5 +144,8 @@ public class RocketJobsListScraper
             string Salary,
             List<string> OfferKeywords
         );
+
+        [LoggerMessage(LogLevel.Information, "{dataOrigin} - scrapping complete")]
+        static partial void LogDataOriginScrappingComplete(ILogger<ScrapperBase> logger, DataOrigin dataOrigin);
     }
 }

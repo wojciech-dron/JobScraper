@@ -98,7 +98,7 @@ public partial class AiSummaryConfigPage(
 
         var request = new SummarizeOfferContent.Request(
             CvContent: form.CvContent,
-            OfferContent: form.TestOfferContent,
+            OfferContent: form.TestOfferContent!,
             UserRequirements: form.UserRequirements ?? "");
 
         var result = await mediator.Send(request, _cts.Token);
