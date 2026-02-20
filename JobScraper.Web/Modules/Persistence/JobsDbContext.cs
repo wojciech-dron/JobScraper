@@ -18,6 +18,7 @@ public class JobsDbContext(DbContextOptions<JobsDbContext> options)
     public DbSet<Company> Companies { get; set; }
     public DbSet<Application> Applications { get; set; }
     public DbSet<ScraperConfig> ScraperConfigs { get; set; }
+    public DbSet<AiSummaryConfig> AiSummaryConfigs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -28,6 +29,7 @@ public class JobsDbContext(DbContextOptions<JobsDbContext> options)
         modelBuilder.ApplyConfiguration(new CompanyModelBuilder());
         modelBuilder.ApplyConfiguration(new ApplicationModelBuilder());
         modelBuilder.ApplyConfiguration(new ScraperConfigModelBuilder());
+        modelBuilder.ApplyConfiguration(new AiSummaryConfigModelBuilder());
         modelBuilder.ApplyConfiguration(new RoleConfiguration());
 
         modelBuilder.ApplyConfiguration(new TimeTickerConfigurations<TimeTickerEntity>(schema: "jobs"));

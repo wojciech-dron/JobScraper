@@ -1,4 +1,5 @@
 ﻿using ErrorOr;
+using JobScraper.Web.Integration.AiProvider;
 using Mediator;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
@@ -8,19 +9,19 @@ using Microsoft.SemanticKernel.ChatCompletion;
 namespace JobScraper.Web.Features.AiSummary;
 #pragma warning disable SKEXP0110
 
-public class SummarizeOffer
+public class SummarizeOfferContent
 {
     public record Request(
-        AiProviderConfig Config,
         string CvContent,
         string OfferContent,
-        string UserRequirements
+        string UserRequirements,
+        string ProviderName = AiProvidersConfig.MainProvider
     ) : IRequest<ErrorOr<Response>>;
 
     public record Response(string? AiSummary, List<ChatItem> ChatHistory);
 
     internal class Handler(
-        IHttpClientFactory clientFactory,
+        IServiceProvider serviceProvider,
         ILoggerFactory loggerFactory
     ) : IRequestHandler<Request, ErrorOr<Response>>
     {
@@ -78,19 +79,7 @@ public class SummarizeOffer
 
         private AgentGroupChat PrepareAgentsChat(Request request)
         {
-            var config = request.Config;
-
-            ArgumentException.ThrowIfNullOrWhiteSpace(config.ApiKey);
-
-            var client = clientFactory.CreateClient();
-            client.BaseAddress = new Uri(config.BaseUrl);
-
-            var kernel = Kernel.CreateBuilder()
-                .AddOpenAIChatClient(
-                    config.ModelName,
-                    config.ApiKey,
-                    httpClient: client)
-                .Build();
+            var kernel = serviceProvider.GetRequiredKeyedService<Kernel>(request.ProviderName);
 
             var analystAgent = new ChatCompletionAgent
             {
@@ -127,32 +116,32 @@ public class SummarizeOffer
                 Kernel = kernel,
                 Instructions =
                     $"""
-                       You are an agent that holds a conversation with analyst agent to provide a final summary of the job offer.
-                       The order of agents is sequential, analyst first, then summarizer.
-                       You can ask questions to analyst agent to clarify details.
-                       When you generate a final summary, finish it with {DoneSignal}, that ends the conversation.
-                       Use language of the offer for final summary.
-                       Use plain text only.
-                       If something is wrong or required data is missing (like cv or offer content),
-                       return reason and {FailSignal}, that terminates conversation.
+                     You are an agent that holds a conversation with analyst agent to provide a final summary of the job offer.
+                     The order of agents is sequential, analyst first, then summarizer.
+                     You can ask questions to analyst agent to clarify details.
+                     When you generate a final summary, finish it with {DoneSignal}, that ends the conversation.
+                     Use language of the offer for final summary.
+                     Use plain text only.
+                     If something is wrong or required data is missing (like cv or offer content),
+                     return reason and {FailSignal}, that terminates conversation.
 
-                       Final summary must contain sections with concise bullet-points defined below:
-                           - Job abstract - most important information and responsibilities of the job
-                           - User requirements - if offer matches requirements given by the user
-                           - CV matches - technologies, skills, and responsibilities from offer that are strongly aligned with CV
-                           - CV gaps - technologies, skills and responsibilities from offer that are not present in CV
-                           - Suggestions - what to improve in CV content
-                           - Trivia - interesting information, if there is any
+                     Final summary must contain sections with concise bullet-points defined below:
+                         - Job abstract - most important information and responsibilities of the job
+                         - User requirements - if offer matches requirements given by the user
+                         - CV matches - technologies, skills, and responsibilities from offer that are strongly aligned with CV
+                         - CV gaps - technologies, skills and responsibilities from offer that are not present in CV
+                         - Suggestions - what to improve in CV content
+                         - Trivia - interesting information, if there is any
 
-                       Requirements for an offer defined by user (optional):
-                       {request.UserRequirements}
+                     Requirements for an offer defined by user (optional):
+                     {request.UserRequirements}
 
-                       The CV content:
-                       {request.CvContent}
+                     The CV content:
+                     {request.CvContent}
 
 
-                       Job offer content will be provided in user prompt.
-                       """,
+                     Job offer content will be provided in user prompt.
+                     """,
                 LoggerFactory = loggerFactory,
             };
 
@@ -173,12 +162,11 @@ public class SummarizeOffer
             };
             return chat;
         }
-
     }
 
     private class ApprovalTerminationStrategy : TerminationStrategy
     {
-        public string? FinalAgentName { get; set; }
+        public string? FinalAgentName { get; init; }
         public required string DoneSignal { get; init; }
         public required string FailSignal { get; init; }
 

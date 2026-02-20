@@ -1,38 +1,42 @@
 ﻿using BlazorBootstrap;
 using Blazored.FluentValidation;
+using Facet;
+using Facet.Extensions;
+using FluentValidation;
+using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Integration.AiProvider;
 using JobScraper.Web.Modules.Persistence;
 using Mediator;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
+using Riok.Mapperly.Abstractions;
 
 namespace JobScraper.Web.Features.AiSummary;
 
-public partial class AiSummaryConfigPage
+public partial class AiSummaryConfigPage(
+    JobsDbContext dbContext,
+    IMediator mediator,
+    IJSRuntime js)
 {
-    private readonly IJSRuntime _js;
-    private readonly JobsDbContext _dbContext;
-    private readonly IMediator _mediator;
     private readonly CancellationTokenSource _cts = new();
-    private readonly AiProviderConfig _config = new();
-    private readonly SummarizeOfferRequest _request = new();
+    private AiSummaryViewModel form = new();
 
     private bool isWorking;
     private FluentValidationValidator validator = null!;
 
-    public AiSummaryConfigPage(JobsDbContext dbContext,
-        IMediator mediator,
-        IJSRuntime js)
+    protected override async Task OnInitializedAsync()
     {
-        _dbContext = dbContext;
-        _mediator = mediator;
-        _js = js;
-    }
-
-    protected override Task OnInitializedAsync()
-    {
-        if (string.IsNullOrEmpty(_dbContext.CurrentUserName))
+        if (string.IsNullOrEmpty(dbContext.CurrentUserName))
             throw new InvalidOperationException("User name is not set.");
 
-        return Task.CompletedTask;
+        form = await dbContext.AiSummaryConfigs
+                .Select(AiSummaryViewModel.Projection)
+                .FirstOrDefaultAsync()
+         ?? new AiSummaryViewModel
+            {
+                ProviderName = AiProvidersConfig.MainProvider,
+            };
     }
 
     private async Task SaveConfig()
@@ -43,59 +47,59 @@ public partial class AiSummaryConfigPage
         isWorking = true;
         await UpdatePageAsync();
 
-        if (_config.Owner == "system") // check if it is a default value
-            _dbContext.Add(_config);
-        else
-            _dbContext.Update(_config);
+        var dbConfig = await dbContext.AiSummaryConfigs.FirstOrDefaultAsync();
 
-        await _dbContext.SaveChangesAsync();
+        if (dbConfig is null)
+        {
+            dbConfig = form.ToSource();
+            dbContext.Add(dbConfig);
+        }
+        else
+            dbConfig.ApplyFacet(form);
+
+        await dbContext.SaveChangesAsync();
 
         isWorking = false;
         PushNotification("Configuration saved successfully.");
     }
 
-    private async Task VerifyModel()
+    private async Task VerifyProvider()
     {
-        var result = await _mediator.Send(new GetAvailableModels.Request(_config), _cts.Token);
+        isWorking = true;
+
+        var result = await mediator.Send(
+            new VerifyProviderAndGetModels.Request(AiProvidersConfig.MainProvider),
+            _cts.Token);
 
         if (result.IsError)
         {
-            PushNotification(result.FirstError.Description);
+            PushNotification(result.FirstError.Description, ToastType.Warning);
+            isWorking = false;
+
             return;
         }
 
-        var models = result.Value.Models;
-        var modelsCount = models.Length;
-
-        if (models.Any(m => m.Id == _config.ModelName))
-            PushNotification($"Model verified. {modelsCount} models found.");
-        else
-            PushNotification($"Connection verified successfully, but specified model does not exist. " +
-                $"{modelsCount} models found.");
-
+        PushNotification("Provider works fine.");
+        isWorking = false;
     }
 
-    private async Task RequestAiSummary()
+    private async Task SummarizeTestOfferContent()
     {
-        if (string.IsNullOrEmpty(_config.ApiKey)        ||
-            string.IsNullOrEmpty(_request.CvContent)    ||
-            string.IsNullOrEmpty(_request.OfferContent) ||
-            string.IsNullOrEmpty(_request.UserRequirements))
+        if (!await validator.ValidateAsync(options => options.IncludeRuleSets("TestOffer")))
         {
-            PushNotification("Please fill all required fields.", ToastType.Warning);
+            PushNotification("Provide test offer content.", ToastType.Warning);
             return;
         }
 
         isWorking = true;
         PushNotification("AI summary in progress...");
 
-        var request = new SummarizeOffer.Request(
-            Config: _config,
-            CvContent: _request.CvContent,
-            OfferContent: _request.OfferContent,
-            UserRequirements: _request.UserRequirements);
+        var request = new SummarizeOfferContent.Request(
+            CvContent: form.CvContent,
+            OfferContent: form.TestOfferContent,
+            UserRequirements: form.UserRequirements ?? "");
 
-        var result = await _mediator.Send(request, _cts.Token);
+        var result = await mediator.Send(request, _cts.Token);
 
         if (result.IsError)
             PushNotification(result.FirstError.Description);
@@ -112,10 +116,37 @@ public partial class AiSummaryConfigPage
         await Task.Yield();
     }
 
-
     public void Dispose()
     {
         _cts.Cancel();
         _cts.Dispose();
     }
+}
+
+[Facet(typeof(AiSummaryConfig),
+    exclude: [nameof(AiSummaryConfig.Owner)],
+    GenerateToSource = true)]
+[Mapper(RequiredMappingStrategy = RequiredMappingStrategy.Target)]
+public partial class AiSummaryViewModel;
+
+public class AiSummaryViewModelValidator : AbstractValidator<AiSummaryViewModel>
+{
+    private readonly AiProvidersConfig _config;
+    public AiSummaryViewModelValidator(IOptions<AiProvidersConfig> config)
+    {
+        _config = config.Value;
+
+        RuleFor(x => x.ProviderName)
+            .NotEmpty()
+            .Must(BeAvailable).WithMessage(
+                $"Selected provider is not available. Available providers: {string.Join(", ", _config.AvailableProviders)}");
+
+        RuleFor(x => x.CvContent)
+            .NotEmpty().When(x => x.AiSummaryEnabled);
+
+        RuleSet("TestOffer",
+            () => RuleFor(x => x.TestOfferContent).NotEmpty());
+    }
+
+    private bool BeAvailable(string providerName) => _config.AvailableProviders.Contains(providerName);
 }

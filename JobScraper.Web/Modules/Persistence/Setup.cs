@@ -21,8 +21,7 @@ public static class Setup
 
             options
                 .UseSqlite(connectionString)
-                .AddInterceptors(new UpdatableInterceptor(),
-                    new OwnerInterceptor())
+                .AddInterceptors(new UpdatableInterceptor(), new OwnerInterceptor())
                 .UseProjectables()
                 .EnableSensitiveDataLogging();
 
