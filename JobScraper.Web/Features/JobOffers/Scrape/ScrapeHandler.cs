@@ -132,6 +132,13 @@ public sealed partial class ScrapeHandler(
                 var result = await mediator.SendWithRetry(command, logger, cancellationToken: cancellationToken);
                 offersScraped.AddRange(result.OffersUrls);
             }
+
+            var aiSummaryEnabled = dbContext.AiSummaryConfigs.Any(x => x.AiSummaryEnabled == true);
+            if (aiSummaryEnabled)
+            {
+                await MarkOffersForAiSummary(offersScraped);
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
         }
         finally
         {
@@ -143,20 +150,25 @@ public sealed partial class ScrapeHandler(
 
     private async Task MarkOffersAndScheduleAiSummary(string[] offerUrls)
     {
-        if (dbContext.AiSummaryConfigs.All(x => x.AiSummaryEnabled == false))
+        var aiSummaryEnabled = dbContext.AiSummaryConfigs.Any(x => x.AiSummaryEnabled == true);
+        if (!aiSummaryEnabled)
             return;
 
-        // mark offers to ai summary
+        await MarkOffersForAiSummary(offerUrls);
+
+        dbContext.ScheduleAiSummary(DateTime.UtcNow.AddMinutes(1));
+
+        await dbContext.SaveChangesAsync();
+    }
+
+    private async Task MarkOffersForAiSummary(IEnumerable<string> offerUrls)
+    {
         var offers = await dbContext.UserOffers
             .Where(uo => offerUrls.Contains(uo.OfferUrl))
             .ToArrayAsync();
 
         foreach (var offer in offers)
             offer.AiSummaryStatus = AiSummaryStatus.Marked;
-
-        dbContext.ScheduleAiSummary(DateTime.UtcNow.AddMinutes(1));
-
-        await dbContext.SaveChangesAsync();
     }
 
     [LoggerMessage(LogLevel.Information, "Scraping list pages of source {index}/{commandsCount}")]

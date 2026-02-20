@@ -45,6 +45,8 @@ public sealed partial class AiSummaryJob(
 
             if (offer.AiSummaryStatus == AiSummaryStatus.Generated)
                 successCount++;
+
+            LogJobOfferSummaryCompleted(logger, offer.OfferUrl);
         }
 
         LogSummaryCompleted(logger, successCount);
@@ -77,6 +79,9 @@ public sealed partial class AiSummaryJob(
 
     [LoggerMessage(LogLevel.Information, "AiSummaryJobs completed with {successCount} successfully summaries")]
     static partial void LogSummaryCompleted(ILogger<ScrapeHandler> logger, int successCount);
+
+    [LoggerMessage(LogLevel.Information, "Job offer {JobUrl} summary completed")]
+    static partial void LogJobOfferSummaryCompleted(ILogger<ScrapeHandler> logger, string JobUrl);
 }
 
 public static class AiSummaryJobExtensions
