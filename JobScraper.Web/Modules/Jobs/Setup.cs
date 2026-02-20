@@ -41,7 +41,7 @@ public static class Setup
         return builder;
     }
 
-    public static IApplicationBuilder UseJobs(this IApplicationBuilder app)
+    public static IHost UseJobs(this IHost app)
     {
         app.UseTickerQ();
         return app;

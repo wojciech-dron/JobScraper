@@ -50,6 +50,7 @@ public partial class ScrapePage
             throw new InvalidOperationException("User name is not set.");
 
         config = await dbContext.ScraperConfigs.FirstOrDefaultAsync() ?? new ScraperConfig();
+        dashboardEnabled = _appSettings.TickerQ?.Dashboard?.Enabled == true;
 
         requestBytes = TickerHelper.CreateTickerRequest(
             new ScrapeRequest(dbContext.CurrentUserName));
@@ -63,7 +64,6 @@ public partial class ScrapePage
             return;
 
         config.ScrapeCron = scrapeJobTicker.Expression;
-        dashboardEnabled = _appSettings.TickerQ?.Dashboard?.Enabled == true;
     }
 
     private async Task SaveConfig()
