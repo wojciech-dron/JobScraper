@@ -120,17 +120,17 @@ public partial class AiSummaryConfigPage(
         await SaveConfig();
 
         var nextScheduledJob = await dbContext.TimeTickers
+            .AsNoTracking()
             .Where(x => x.Function      == AiSummaryJob.FunctionName)
-            .Where(x => x.ExecutionTime > DateTime.UtcNow.AddMinutes(-10))
+            .Where(x => x.ExecutionTime > DateTime.UtcNow.AddMinutes(-30)) // check if job is scheduled within last 30 minutes
             .Where(x => x.Status == TickerStatus.Idle   ||
                 x.Status         == TickerStatus.Queued ||
                 x.Status         == TickerStatus.InProgress)
             .OrderByDescending(x => x.ExecutionTime)
-            .Select(x => x.ExecutionTime)
             .FirstOrDefaultAsync(_cts.Token);
 
         var nextExecutionTime = DateTime.UtcNow.AddMinutes(1);
-        if (nextScheduledJob < nextExecutionTime)
+        if (nextScheduledJob is not null && nextScheduledJob.ExecutionTime < nextExecutionTime)
         {
             PushNotification("Ai summary job is already scheduled, and will be executed in the next minute.", ToastType.Warning);
             return;

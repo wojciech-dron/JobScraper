@@ -1,6 +1,7 @@
 ﻿using BlazorBootstrap;
 using Blazored.FluentValidation;
 using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Features.AiSummary;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Functions;
 using JobScraper.Web.Modules.Persistence;
 using Mediator;
@@ -102,6 +103,14 @@ public partial class ScrapePage(
             var newOffersCount = await scrapeHandler.ScrapeLists(sources, cts.Token);
             PushNotification("Scraping details...");
             var result = await scrapeHandler.ScrapeDetails(sources, cts.Token);
+
+            var aiSummaryEnabled = dbContext.AiSummaryConfigs.Any(x => x.AiSummaryEnabled == true);
+            if (aiSummaryEnabled)
+            {
+                dbContext.ScheduleAiSummary(DateTime.UtcNow.AddMinutes(1));
+                await dbContext.SaveChangesAsync();
+                PushNotification("Offer AI summary scheduled for new offers...");
+            }
 
             PushScrapeFinishNotif(newOffersCount, result?.Length ?? 0);
         }
