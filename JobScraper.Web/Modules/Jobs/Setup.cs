@@ -34,7 +34,7 @@ public static class Setup
                     dbopt.SetBasePath("/tickerq-dashboard");
 
                     if (config.Dashboard.UseBasicAuth)
-                        dbopt.WithBasicAuth(config.Dashboard.User, config.Dashboard.Password);
+                        dbopt.WithBasicAuth(config.Dashboard.User!, config.Dashboard.Password!);
                 });
         });
 

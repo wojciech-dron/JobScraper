@@ -23,7 +23,7 @@ public static class Setup
     {
         app.UseAntiforgery();
         app.UseStaticFiles();
-        app.MapStaticAssets();
+        // app.MapStaticAssets(); // this causes 405 for POST on tickerq dashboard, but it might breaks somthing else
 
         var supportedCultures = new[]
         {
