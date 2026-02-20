@@ -70,7 +70,7 @@ public partial class AiSummaryConfigPage(
         isWorking = true;
 
         var result = await mediator.Send(
-            new VerifyProviderAndGetModels.Request(AiProvidersConfig.MainProvider),
+            new VerifyProviderAndGetModels.Request(form.ProviderName),
             _cts.Token);
 
         if (result.IsError)
@@ -99,7 +99,8 @@ public partial class AiSummaryConfigPage(
         var request = new SummarizeOfferContent.Request(
             CvContent: form.CvContent,
             OfferContent: form.TestOfferContent!,
-            UserRequirements: form.UserRequirements ?? "");
+            UserRequirements: form.UserRequirements ?? "",
+            ProviderName: form.ProviderName);
 
         var result = await mediator.Send(request, _cts.Token);
 

@@ -14,5 +14,5 @@ public class ProviderConfig
     public string ModelId { get; set; } = "arcee-ai/trinity-large-preview:free";
     public string BaseUrl { get; set; } = "https://openrouter.ai/api/v1/";
     public string? ApiKey { get; set; }
-    public bool Visible { get; set; }
+    public bool Visible { get; set; } = true;
 }

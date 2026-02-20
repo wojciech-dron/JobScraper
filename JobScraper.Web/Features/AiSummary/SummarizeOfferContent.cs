@@ -1,5 +1,4 @@
 ﻿using ErrorOr;
-using JobScraper.Web.Integration.AiProvider;
 using Mediator;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
@@ -15,7 +14,7 @@ public class SummarizeOfferContent
         string CvContent,
         string OfferContent,
         string UserRequirements,
-        string ProviderName = AiProvidersConfig.MainProvider
+        string ProviderName
     ) : IRequest<ErrorOr<Response>>;
 
     public record Response(string? AiSummary, List<ChatItem> ChatHistory);
