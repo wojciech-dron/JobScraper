@@ -9,7 +9,7 @@ public class AiSummaryConfig : IOwnable
     public string? Owner { get; set; } = "system";
 
     public bool AiSummaryEnabled { get; set; }
-    public string ProviderName { get; set; }
+    public string ProviderName { get; set; } = null!;
 
     public string CvContent { get; set; } = "";
     public string? UserRequirements { get; set; }

@@ -12,13 +12,14 @@ using TickerQ.Utilities.Entities;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape;
 
-public partial class ScrapePage
+public partial class ScrapePage(
+    IDbContextFactory<JobsDbContext> dbFactory,
+    IServiceProvider serviceProvider,
+    IJSRuntime js,
+    IOptions<AppSettings> appSettings,
+    ILogger<ScrapePage> logger)
 {
-    private readonly IDbContextFactory<JobsDbContext> _dbFactory;
-    private readonly IJSRuntime _js;
-    private readonly ILogger<ScrapePage> _logger;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly AppSettings _appSettings;
+    private readonly AppSettings _appSettings = appSettings.Value;
     private ScraperConfig config = new();
     private JobsDbContext dbContext = null!;
     private readonly CancellationTokenSource cts = new();
@@ -27,24 +28,11 @@ public partial class ScrapePage
     private bool dashboardEnabled;
     private CronTickerEntity? scrapeJobTicker;
     private FluentValidationValidator validator = null!;
-    private byte[] requestBytes;
-
-    public ScrapePage(IDbContextFactory<JobsDbContext> dbFactory,
-        IServiceProvider serviceProvider,
-        IJSRuntime js,
-        IOptions<AppSettings> appSettings,
-        ILogger<ScrapePage> logger)
-    {
-        _dbFactory = dbFactory;
-        _serviceProvider = serviceProvider;
-        _js = js;
-        _appSettings = appSettings.Value;
-        _logger = logger;
-    }
+    private byte[] requestBytes = [];
 
     protected override async Task OnInitializedAsync()
     {
-        dbContext = await _dbFactory.CreateDbContextAsync();
+        dbContext = await dbFactory.CreateDbContextAsync();
 
         if (string.IsNullOrEmpty(dbContext.CurrentUserName))
             throw new InvalidOperationException("User name is not set.");
@@ -107,7 +95,7 @@ public partial class ScrapePage
 
         try
         {
-            using var scope = _serviceProvider.CreateScope();
+            using var scope = serviceProvider.CreateScope();
             var scrapeHandler = scope.ServiceProvider.GetRequiredService<ScrapeHandler>();
             var sources = config.Sources.Where(x => !x.Disabled).ToArray();
 
@@ -119,7 +107,7 @@ public partial class ScrapePage
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An error occurred during the scraping process");
+            logger.LogError(ex, "An error occurred during the scraping process");
             PushNotification($"Error: {ex.Message}", ToastType.Danger);
         }
         finally
@@ -157,7 +145,7 @@ public partial class ScrapePage
 
         try
         {
-            using var scope = _serviceProvider.CreateScope();
+            using var scope = serviceProvider.CreateScope();
             var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
             var result = await mediator.Send(new RefreshKeywordsOnOffers.Command());
 
@@ -165,7 +153,7 @@ public partial class ScrapePage
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An error occurred during the refreshing offers");
+            logger.LogError(ex, "An error occurred during the refreshing offers");
             PushNotification($"Error: {ex.Message}");
         }
         finally
