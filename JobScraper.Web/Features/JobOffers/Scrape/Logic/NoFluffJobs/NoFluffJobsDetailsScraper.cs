@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using JobScraper.Web.Common.Entities;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
+using JobScraper.Web.Features.JobOffers.Scrape.Logic.Extensions;
 using JobScraper.Web.Modules.Persistence;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
@@ -37,19 +38,10 @@ public class NoFluffJobsDetailsScraper
 
         private async Task ScrapeDescription(JobOffer jobOffer, IPage page)
         {
-            var result = await page.EvaluateAsync<string>(
-                """
-                () => {
-                    const result = {
-                        Description: document.querySelector('nfj-read-more')?.textContent.trim(),
-                        Keywords: [...document.querySelector('section[commonpostingrequirements]').querySelectorAll('li')].map(x => x?.textContent?.trim()),
-                        CompanyUrl: document.querySelector('#postingCompanyUrl').getAttribute('href')
-                    }
-                    console.log(result)
+            var script = await ScrapeHelpers.GetJsScript(
+                "JobScraper.Web.Features.JobOffers.Scrape.Logic.NoFluffJobs.no-fluff-jobs-details.js");
 
-                    return JSON.stringify(result)
-                }
-                """);
+            var result = await page.EvaluateAsync<string>(script);
 
             var data = JsonSerializer.Deserialize<JobData>(result)!;
 
