@@ -1,7 +1,9 @@
 ﻿@using BlazorBootstrap
 @using JobScraper.Web.Common.Entities
+@using JobScraper.Web.Modules.Auth
 @using JobScraper.Web.Modules.Persistence
 @using JobScraper.Web.Modules.Services
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 <Modal @ref="_modal" Title="Offer application" Fullscreen="ModalFullscreen.Always">
     <BodyTemplate>
@@ -126,13 +128,28 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-success"
+                    <button type="submit" class="btn btn-success ms-1"
                             @onclick="SaveAsync">@(_isEdit ? "Update" : "Create")</button>
-                    <button type="button" class="btn btn-secondary" @onclick="CloseAsync">Close</button>
+                    @if (_canAiSummary)
+                    {
+                        <button type="submit" class="btn btn-primary ms-1" @onclick="MarkForAiSummary">
+                            Mark for AI summary
+                        </button>
+                    }
+                    <button type="button" class="btn btn-secondary ms-1" @onclick="CloseAsync">Close</button>
                 </EditForm>
 
             </div>
             <div class="col-md-6">
+
+                @if (!string.IsNullOrEmpty(_offer.AiSummary))
+                {
+                    <h4 style="color: #FFC2B2">Ai Summary:</h4>
+                    <span style="white-space: pre-line">
+                        @_offer.AiSummary
+                    </span>
+                }
+
                 <h4>Description:</h4>
                 @if (_offer.OfferUrl.StartsWith("http"))
                 {
@@ -162,7 +179,11 @@
 @inject IUserProvider UserProvider
 
 @code {
+    [CascadingParameter] private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
+
     private bool _isEdit;
+    private bool _canAiSummary;
+    private bool _aiSummaryRole;
     private Modal _modal = default!;
     private JobsDbContext _context = null!;
     private UserOffer _offer = null!;
@@ -180,6 +201,8 @@
     protected override async Task OnInitializedAsync()
     {
         _context = await DbContextFactory.CreateDbContextAsync();
+        var authState = await AuthStateTask;
+        _aiSummaryRole = authState.User.IsInRole(AppRoles.AiSummary);
     }
 
     public async Task ShowAsync(UserOffer jobOffer)
@@ -187,6 +210,7 @@
         _offer = jobOffer;
         _application = jobOffer.Application;
         _isEdit = jobOffer.Application is not null;
+        _canAiSummary = _aiSummaryRole && _offer.AiSummaryStatus != AiSummaryStatus.Marked;
         _application ??= new Application
         {
             OfferUrl = _offer.OfferUrl,
@@ -263,6 +287,18 @@
     {
         await Hide();
         NavigationManager.NavigateTo($"/edit-offer/{Uri.EscapeDataString(_offer.OfferUrl)}");
+    }
+
+    private async Task MarkForAiSummary()
+    {
+        if (!_canAiSummary)
+            return;
+
+        _offer.AiSummaryStatus = AiSummaryStatus.Marked;
+        _context.Update(_offer);
+        await _context.SaveChangesAsync();
+        OnUpdate?.Invoke();
+        _canAiSummary = false;
     }
 
     private async Task Hide()

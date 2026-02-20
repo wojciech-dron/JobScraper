@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using Riok.Mapperly.Abstractions;
+using TickerQ.Utilities.Enums;
 
 namespace JobScraper.Web.Features.AiSummary;
 
@@ -36,6 +37,7 @@ public partial class AiSummaryConfigPage(
          ?? new AiSummaryViewModel
             {
                 ProviderName = AiProvidersConfig.MainProvider,
+                AiSummaryEnabled = true,
             };
     }
 
@@ -110,6 +112,38 @@ public partial class AiSummaryConfigPage(
         isWorking = false;
     }
 
+    public async Task ScheduleSummaryJob()
+    {
+        if (isWorking || !await validator.ValidateAsync())
+            return;
+
+        await SaveConfig();
+
+        var nextScheduledJob = await dbContext.TimeTickers
+            .Where(x => x.Function      == AiSummaryJob.FunctionName)
+            .Where(x => x.ExecutionTime > DateTime.UtcNow.AddMinutes(-10))
+            .Where(x => x.Status == TickerStatus.Idle   ||
+                x.Status         == TickerStatus.Queued ||
+                x.Status         == TickerStatus.InProgress)
+            .OrderByDescending(x => x.ExecutionTime)
+            .Select(x => x.ExecutionTime)
+            .FirstOrDefaultAsync(_cts.Token);
+
+        var nextExecutionTime = DateTime.UtcNow.AddMinutes(1);
+        if (nextScheduledJob < nextExecutionTime)
+        {
+            PushNotification("Ai summary job is already scheduled, and will be executed in the next minute.", ToastType.Warning);
+            return;
+        }
+
+        isWorking = true;
+
+        dbContext.ScheduleAiSummary(nextExecutionTime);
+        await dbContext.SaveChangesAsync(_cts.Token);
+        PushNotification("Ai summary job scheduled.");
+        isWorking = false;
+    }
+
     private async Task UpdatePageAsync()
     {
         StateHasChanged();
@@ -142,7 +176,7 @@ public class AiSummaryViewModelValidator : AbstractValidator<AiSummaryViewModel>
                 $"Selected provider is not available. Available providers: {string.Join(", ", _config.AvailableProviders)}");
 
         RuleFor(x => x.CvContent)
-            .NotEmpty().When(x => x.AiSummaryEnabled);
+            .NotEmpty().WithMessage("CV content is required for AI summary.");
 
         RuleSet("TestOffer",
             () => RuleFor(x => x.TestOfferContent).NotEmpty());

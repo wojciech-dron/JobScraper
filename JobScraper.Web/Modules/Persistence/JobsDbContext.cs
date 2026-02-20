@@ -20,6 +20,9 @@ public class JobsDbContext(DbContextOptions<JobsDbContext> options)
     public DbSet<ScraperConfig> ScraperConfigs { get; set; }
     public DbSet<AiSummaryConfig> AiSummaryConfigs { get; set; }
 
+    public DbSet<TimeTickerEntity> TimeTickers { get; set; }
+    public DbSet<CronTickerEntity> CronTickers { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

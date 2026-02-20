@@ -22,31 +22,31 @@ public class VerifyProviderAndGetModels
         {
             var providerName = request.ProviderName;
             if (!config.Value.TryGetValue(providerName, out var settings))
-                return Error.Unexpected(description: $"Provider '{providerName}' not found in configuration");
+                return Error.Failure(description: $"Provider '{providerName}' not found in configuration");
 
             var httpClient = clientFactory.CreateClient(providerName);
 
             var response = await httpClient.GetAsync("models", cancellationToken);
 
             if (!response.IsSuccessStatusCode)
-                return Error.Unexpected(description: $"Server returned error code: {response.StatusCode}");
+                return Error.Failure(description: $"Server returned error code: {response.StatusCode}");
 
             var responseContent = await response.Content.ReadFromJsonAsync<ResponseDto>(cancellationToken);
 
             if (responseContent is null)
-                return Error.Unexpected(description: "Failed to deserialize response");
+                return Error.Failure(description: "Failed to deserialize response");
 
             var models = responseContent.Data;
             var currentModelId = settings.ModelId;
 
             if (models.All(m => m.Id != currentModelId))
-                return Error.Unexpected(description: $"Model '{currentModelId}' not found in available models");
+                return Error.Failure(description: $"Model '{currentModelId}' not found in available models");
 
             // verify api key
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", settings.ApiKey);
             var verifyKeyResponse = await httpClient.GetAsync("key", cancellationToken);
             if (!verifyKeyResponse.IsSuccessStatusCode)
-                return Error.Unexpected(description: $"Api key for {providerName} is invalid.");
+                return Error.Failure(description: $"Api key for {providerName} is invalid.");
 
             return new Response(responseContent.Data);
         }

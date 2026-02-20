@@ -1,4 +1,5 @@
 ﻿using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Features.AiSummary;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Indeed;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Jjit;
@@ -17,33 +18,23 @@ namespace JobScraper.Web.Features.JobOffers.Scrape;
 
 public record struct ScrapeRequest(string Owner);
 
-public sealed partial class ScrapeHandler
+public sealed partial class ScrapeHandler(
+    IMediator mediator,
+    UserProvider userProvider,
+    JobsDbContext dbContext,
+    ILogger<ScrapeHandler> logger
+)
 {
-    private readonly JobsDbContext _dbContext;
-    private readonly ILogger<ScrapeHandler> _logger;
-    private readonly IMediator _mediator;
-    private readonly UserProvider _userProvider;
 
     public static readonly SemaphoreSlim ScrapeSemaphore = new(1, 1);
-
-    public ScrapeHandler(IMediator mediator,
-        UserProvider userProvider,
-        JobsDbContext dbContext,
-        ILogger<ScrapeHandler> logger)
-    {
-        _mediator = mediator;
-        _userProvider = userProvider;
-        _dbContext = dbContext;
-        _logger = logger;
-    }
 
     [TickerFunction("ScrapeJobs")]
     public async Task ScrapeJobs(TickerFunctionContext<ScrapeRequest> context, CancellationToken cancellationToken)
     {
-        _dbContext.CurrentUserName = context.Request.Owner;
-        _userProvider.UserName = context.Request.Owner;
+        dbContext.CurrentUserName = context.Request.Owner;
+        userProvider.UserName = context.Request.Owner;
 
-        var config = await _dbContext.ScraperConfigs.FirstOrDefaultAsync(cancellationToken);
+        var config = await dbContext.ScraperConfigs.FirstOrDefaultAsync(cancellationToken);
         if (config is null)
             return;
 
@@ -55,17 +46,19 @@ public sealed partial class ScrapeHandler
 
         LogScrapedNewOffersFromLists(newOffersCount);
 
-        var detailsCount = await ScrapeDetails(config.Sources, cancellationToken);
-        if (detailsCount == -1)
+        var detailUrls = await ScrapeDetails(config.Sources, cancellationToken);
+        if (detailUrls is null)
             throw new ApplicationException("Scrape semaphore is locked");
 
-        _logger.LogInformation("Scraping completed successfully");
+        logger.LogInformation("Scraping completed successfully");
+
+        await MarkOffersAndScheduleAiSummary(detailUrls);
     }
 
     public async Task<int> ScrapeLists(IEnumerable<SourceConfig> sources,
         CancellationToken cancellationToken = default)
     {
-        using var userLogScope = _logger.BeginScope("Scraping lists for user {UserName}", _userProvider.UserName);
+        using var userLogScope = logger.BeginScope("Scraping lists for user {UserName}", userProvider.UserName);
 
         var offersCount = 0;
         var entered = await ScrapeSemaphore.WaitAsync(TimeSpan.FromMinutes(3), cancellationToken);
@@ -92,7 +85,7 @@ public sealed partial class ScrapeHandler
                 var command = listCommands[idx];
                 LogScrapingListPages(idx + 1, listCommands.Length);
 
-                var result = await _mediator.SendWithRetry(command, _logger, cancellationToken: cancellationToken);
+                var result = await mediator.SendWithRetry(command, logger, cancellationToken: cancellationToken);
                 offersCount += result.ScrapedOffersCount;
             }
         }
@@ -104,15 +97,15 @@ public sealed partial class ScrapeHandler
         return offersCount;
     }
 
-    public async Task<int> ScrapeDetails(IEnumerable<SourceConfig> sources,
+    public async Task<string[]?> ScrapeDetails(IEnumerable<SourceConfig> sources,
         CancellationToken cancellationToken = default)
     {
-        using var userLogScope = _logger.BeginScope("Scraping details for user {UserName}", _userProvider.UserName);
+        using var userLogScope = logger.BeginScope("Scraping details for user {UserName}", userProvider.UserName);
 
-        var offersCount = 0;
+        var offersScraped = new List<string>();
         var entered = await ScrapeSemaphore.WaitAsync(TimeSpan.FromMinutes(10), cancellationToken);
         if (!entered)
-            return -1;
+            return null;
 
         try
         {
@@ -136,8 +129,8 @@ public sealed partial class ScrapeHandler
                 var command = detailsCommands[idx]!;
                 LogScrapingDetails(idx + 1, detailsCommands.Length);
 
-                var result = await _mediator.SendWithRetry(command, _logger, cancellationToken: cancellationToken);
-                offersCount += result.ScrapedOffersCount;
+                var result = await mediator.SendWithRetry(command, logger, cancellationToken: cancellationToken);
+                offersScraped.AddRange(result.OffersUrls);
             }
         }
         finally
@@ -145,7 +138,25 @@ public sealed partial class ScrapeHandler
             ScrapeSemaphore.Release();
         }
 
-        return offersCount;
+        return offersScraped.ToArray();
+    }
+
+    private async Task MarkOffersAndScheduleAiSummary(string[] offerUrls)
+    {
+        if (dbContext.AiSummaryConfigs.All(x => x.AiSummaryEnabled == false))
+            return;
+
+        // mark offers to ai summary
+        var offers = await dbContext.UserOffers
+            .Where(uo => offerUrls.Contains(uo.OfferUrl))
+            .ToArrayAsync();
+
+        foreach (var offer in offers)
+            offer.AiSummaryStatus = AiSummaryStatus.Marked;
+
+        dbContext.ScheduleAiSummary(DateTime.UtcNow.AddMinutes(1));
+
+        await dbContext.SaveChangesAsync();
     }
 
     [LoggerMessage(LogLevel.Information, "Scraping list pages of source {index}/{commandsCount}")]
@@ -154,8 +165,8 @@ public sealed partial class ScrapeHandler
     [LoggerMessage(LogLevel.Information, "Scraping details pages of source {index}/{commandsCount}")]
     partial void LogScrapingDetails(int index, int commandsCount);
 
-    [LoggerMessage(LogLevel.Information, "Scraped new {NewOffersCount} list jobs. Scraping details")]
-    partial void LogScrapedNewOffersFromLists(int NewOffersCount);
+    [LoggerMessage(LogLevel.Information, "Scraped new {newOffersCount} list jobs. Scraping details")]
+    partial void LogScrapedNewOffersFromLists(int newOffersCount);
 
     [LoggerMessage(LogLevel.Information, "Scraping in progress for user {UserName}")]
     partial void LogScrapingInProgress(string UserName);

@@ -5,8 +5,10 @@ namespace JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 
 public abstract record ScrapeCommand(SourceConfig Source) : IRequest<ScrapeResponse>;
 
-public record ScrapeResponse(int ScrapedOffersCount = 0)
+public record ScrapeResponse(string[] OffersUrls)
 {
-    public ScrapeResponse() : this(0)
+    public ScrapeResponse() : this([])
     { }
+
+    public int ScrapedOffersCount => OffersUrls?.Length ?? 0;
 }
