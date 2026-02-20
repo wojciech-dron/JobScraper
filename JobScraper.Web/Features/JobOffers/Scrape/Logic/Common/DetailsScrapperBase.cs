@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 
-public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IRequestHandler<TScrapeCommand, ScrapeResponse>
+public abstract partial class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IRequestHandler<TScrapeCommand, ScrapeResponse>
     where TScrapeCommand : ScrapeCommand
 {
     public DetailsScrapperBase(IOptions<AppSettings> config,
@@ -19,8 +19,9 @@ public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IReque
     {
         if (!IsEnabled)
         {
-            Logger.LogWarning("Scraper is disabled. Please configure {DataOrigin} origin in scraper configuration.",
+            Logger.LogWarning("Scraper is disabled. Please configure {DataOrigin} origin in scraper configuration",
                 DataOrigin);
+
             return new ScrapeResponse();
         }
 
@@ -30,7 +31,7 @@ public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IReque
             .Where(j => j.Details.DetailsScrapeStatus != DetailsScrapeStatus.Scraped)
             .ToListAsync(cancellationToken);
 
-        Logger.LogInformation("Found {Count} jobs to scrape details", userOffers.Count);
+        LogFoundJobsToScrapeDetails(Logger, userOffers.Count);
 
         foreach (var userOffer in userOffers)
         {
@@ -45,6 +46,7 @@ public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IReque
                 jobOffer.DetailsScrapeStatus = DetailsScrapeStatus.Scraped;
 
                 userOffer.ProcessKeywords(ScrapeConfig);
+                userOffer.AiSummaryStatus = AiSummaryStatus.Marked;
 
                 await DbContext.SaveChangesAsync(cancellationToken);
             }
@@ -63,8 +65,11 @@ public abstract class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IReque
             }
         }
 
-        return new ScrapeResponse(ScrapedOffersCount: userOffers.Count);
+        return new ScrapeResponse([..userOffers.Select(uo => uo.OfferUrl)]);
     }
 
     public abstract Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer);
+
+    [LoggerMessage(LogLevel.Information, "Found {count} jobs to scrape details")]
+    static partial void LogFoundJobsToScrapeDetails(ILogger<ScrapperBase> logger, int count);
 }

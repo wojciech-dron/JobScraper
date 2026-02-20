@@ -7,7 +7,8 @@ using Microsoft.Extensions.Options;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 
-public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHandler<TScrapeCommand, ScrapeResponse>
+public abstract partial class ListScraperBase<TScrapeCommand>
+    : ScrapperBase, IRequestHandler<TScrapeCommand, ScrapeResponse>
     where TScrapeCommand : ScrapeCommand
 {
     public ListScraperBase(IOptions<AppSettings> config,
@@ -19,9 +20,10 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
     {
         if (!IsEnabled)
         {
-            Logger.LogWarning("Scraper is disabled. Please configure {DataOrigin} origin in scraper configuration.",
+            Logger.LogWarning("Scraper is disabled. Please configure {DataOrigin} origin in scraper configuration",
                 DataOrigin);
-            return new ScrapeResponse(ScrapedOffersCount: 0);
+
+            return new ScrapeResponse();
         }
 
         if (scrape.Source.DataOrigin != DataOrigin)
@@ -30,27 +32,30 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
         if (string.IsNullOrEmpty(scrape.Source.SearchUrl))
             throw new InvalidOperationException($"Search url is empty. Please provide a valid search url for {DataOrigin} origin");
 
-        Logger.LogInformation("Scraping {DataOrigin} jobs list...", DataOrigin);
+        LogScrapingJobsList(Logger, DataOrigin);
 
-        var newJobsCount = 0;
+        var userOffersUrls = new List<string>();
 
         await foreach (var jobs in ScrapeJobs(scrape.Source).WithCancellation(cancellationToken))
         {
-            Logger.LogInformation("Syncing {DataOrigin} jobs...", DataOrigin);
-            newJobsCount += await SyncJobsFromList(jobs, cancellationToken);
+            LogSyncingJobs(Logger, DataOrigin);
+            var newUserOffers = await SyncJobsFromList(jobs, cancellationToken);
+
+            userOffersUrls.AddRange(newUserOffers);
         }
 
         Dispose();
 
-        return new ScrapeResponse(ScrapedOffersCount: newJobsCount);
+        return new ScrapeResponse([.. userOffersUrls]);
     }
 
     public abstract IAsyncEnumerable<List<JobOffer>> ScrapeJobs(SourceConfig sourceConfig);
 
-    public async Task<int> SyncJobsFromList(List<JobOffer> jobs, CancellationToken cancellationToken)
+    /// <returns>Added new user offers</returns>
+    public async Task<string[]> SyncJobsFromList(List<JobOffer> jobs, CancellationToken cancellationToken)
     {
         if (jobs.Count == 0)
-            return 0;
+            return [];
 
         var companies = jobs
             .Select(j => j.CompanyName)
@@ -83,7 +88,7 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
                     Name = name,
                 }).ToArray();
 
-            Logger.LogInformation("Saving {CompaniesCount} new companies", companiesToAdd.Length);
+            LogSavingNewCompanies(Logger, companiesToAdd.Length);
 
             await DbContext.Companies.AddRangeAsync(companiesToAdd, cancellationToken);
             await DbContext.SaveChangesAsync(cancellationToken);
@@ -120,7 +125,7 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
         return jobsToAdd;
     }
 
-    private async Task<int> AddNewUserOffers(List<JobOffer> jobs, CancellationToken cancellationToken)
+    private async Task<string[]> AddNewUserOffers(List<JobOffer> jobs, CancellationToken cancellationToken)
     {
         var keys = jobs.Select(jo => jo.OfferUrl);
 
@@ -136,11 +141,22 @@ public abstract class ListScraperBase<TScrapeCommand> : ScrapperBase, IRequestHa
             .Select(jo => new UserOffer(jo).ProcessKeywords(ScrapeConfig))
             .ToArray();
 
-        Logger.LogInformation("Saving {JobsCount} new user offers", userOffersToAdd.Length);
+        LogSavingUserOffers(Logger, userOffersToAdd.Length);
 
         await DbContext.AddRangeAsync(userOffersToAdd, cancellationToken);
         await DbContext.SaveChangesAsync(cancellationToken);
 
-        return userOffersToAdd.Length;
+        return userOffersToAdd.Select(x => x.OfferUrl).ToArray();
     }
+
+    [LoggerMessage(LogLevel.Information, "Scraping {dataOrigin} jobs list...")]
+    static partial void LogScrapingJobsList(ILogger<ScrapperBase> logger, DataOrigin dataOrigin);
+
+    [LoggerMessage(LogLevel.Information, "Syncing {dataOrigin} jobs...")]
+    static partial void LogSyncingJobs(ILogger<ScrapperBase> logger, DataOrigin dataOrigin);
+
+    [LoggerMessage(LogLevel.Information, "Saving {jobsCount} new user offers")]
+    static partial void LogSavingUserOffers(ILogger<ScrapperBase> logger, int jobsCount);
+    [LoggerMessage(LogLevel.Information, "Saving {CompaniesCount} new companies")]
+    static partial void LogSavingNewCompanies(ILogger<ScrapperBase> logger, int CompaniesCount);
 }

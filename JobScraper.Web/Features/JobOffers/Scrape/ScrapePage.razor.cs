@@ -113,9 +113,9 @@ public partial class ScrapePage
 
             var newOffersCount = await scrapeHandler.ScrapeLists(sources, cts.Token);
             PushNotification("Scraping details...");
-            var offerDetailsScrapedCount = await scrapeHandler.ScrapeDetails(sources, cts.Token);
+            var result = await scrapeHandler.ScrapeDetails(sources, cts.Token);
 
-            PushScrapeFinishNotif(newOffersCount, offerDetailsScrapedCount);
+            PushScrapeFinishNotif(newOffersCount, result?.Length ?? 0);
         }
         catch (Exception ex)
         {
