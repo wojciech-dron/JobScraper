@@ -106,6 +106,10 @@ th {
     max-width: 250px;
 }
 
+.collapse {
+    display: none;
+}
+
 .footer {
     position: fixed;
     left: 250px;
