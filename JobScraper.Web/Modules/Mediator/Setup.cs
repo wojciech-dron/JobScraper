@@ -1,4 +1,5 @@
-﻿using Mediator;
+﻿using JobScraper.Web.Modules.Mediator.Behaviours;
+using Mediator;
 
 namespace JobScraper.Web.Modules.Mediator;
 
@@ -14,7 +15,7 @@ public static class Setup
             options.GenerateTypesAsInternal = true;
             options.NotificationPublisherType = typeof(ForeachAwaitPublisher);
             options.Assemblies = [typeof(Setup)];
-            options.PipelineBehaviors = [];
+            options.PipelineBehaviors = [typeof(LoggingBehaviour<,>)];
             options.StreamPipelineBehaviors = [];
         });
 
