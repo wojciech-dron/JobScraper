@@ -1,4 +1,5 @@
 ﻿using ErrorOr;
+using JobScraper.Web.Integration.AiProvider;
 using Mediator;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
@@ -14,7 +15,7 @@ public class SummarizeOfferContent
         string CvContent,
         string OfferContent,
         string UserRequirements,
-        string ProviderName
+        string ProviderName = AiProvidersConfig.MainProvider
     ) : IRequest<ErrorOr<Response>>;
 
     public record Response(string? AiSummary, List<ChatItem> ChatHistory);
@@ -56,7 +57,7 @@ public class SummarizeOfferContent
                 }
             } while (ShouldRetry(finalContent, retryCount++));
 
-            return new Response(finalContent?.Replace(FailSignal, ""), chatHistory);
+            return new Response(finalContent?.Replace(DoneSignal, ""), chatHistory);
         }
 
         private static bool ShouldRetry(string? lastContent, int retryCount)

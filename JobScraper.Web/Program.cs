@@ -37,6 +37,7 @@ if (!app.Environment.IsDevelopment())
 app.UseExceptionHandler("/Error", true);
 app.UseBlazor();
 app.UseJobs();
+app.UseIntegrationServices();
 
 
 app.Run();

@@ -141,16 +141,6 @@
 
             </div>
             <div class="col-md-6">
-
-                @if (!string.IsNullOrEmpty(_offer.AiSummary))
-                {
-                    <h4 style="color: #FFC2B2">Ai Summary:</h4>
-                    <span style="white-space: pre-line">
-                        @_offer.AiSummary
-                    </span>
-                }
-
-                <h4>Description:</h4>
                 @if (_offer.OfferUrl.StartsWith("http"))
                 {
                     <a href="@_offer.OfferUrl" target="_blank">
@@ -165,6 +155,17 @@
                     <a href="@_application.ApplyUrl" target="_blank">Apply page</a>
                     <br/>
                 }
+
+                @if (!string.IsNullOrEmpty(_offer.AiSummary))
+                {
+                    <h4 style="color: #FFC2B2">Ai Summary:</h4>
+                    <span style="white-space: pre-line">
+                        @_offer.AiSummary
+                    </span>
+                }
+
+                <h4>Description:</h4>
+
                 <span style="white-space: pre-line">
                     @_details.Description
                 </span>

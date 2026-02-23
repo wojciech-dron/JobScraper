@@ -4,6 +4,7 @@ using JobScraper.Web.Modules.Persistence;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Serilog.Context;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 
@@ -18,6 +19,9 @@ public abstract partial class ListScraperBase<TScrapeCommand>
 
     public async ValueTask<ScrapeResponse> Handle(TScrapeCommand scrape, CancellationToken cancellationToken = default)
     {
+        using var userNameScope = LogContext.PushProperty("UserName", DbContext.CurrentUserName);
+        using var dataOriginScope = LogContext.PushProperty("DataOrigin", DataOrigin);
+
         if (!IsEnabled)
         {
             Logger.LogWarning("Scraper is disabled. Please configure {DataOrigin} origin in scraper configuration",

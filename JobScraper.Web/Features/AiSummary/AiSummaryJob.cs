@@ -1,9 +1,11 @@
-﻿using JobScraper.Web.Common.Entities;
+﻿using System.Diagnostics;
+using JobScraper.Web.Common.Entities;
 using JobScraper.Web.Features.JobOffers.Scrape;
 using JobScraper.Web.Modules.Persistence;
 using JobScraper.Web.Modules.Services;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
+using Serilog.Context;
 using TickerQ.Utilities;
 using TickerQ.Utilities.Base;
 using TickerQ.Utilities.Entities;
@@ -23,8 +25,12 @@ public sealed partial class AiSummaryJob(
     [TickerFunction(FunctionName)]
     public async Task AiSummaryJobs(TickerFunctionContext<SummaryRequest> context, CancellationToken cancellationToken)
     {
+        using var activity = new Activity(FunctionName).Start();
+
         dbContext.CurrentUserName = context.Request.Owner;
         userProvider.UserName = context.Request.Owner;
+
+        using var userNameScope = LogContext.PushProperty("UserName", userProvider.UserName);
 
         var config = await dbContext.AiSummaryConfigs.FirstOrDefaultAsync(cancellationToken);
         if (config is not { AiSummaryEnabled: true })
@@ -56,6 +62,9 @@ public sealed partial class AiSummaryJob(
         UserOffer userOffer,
         CancellationToken cancellationToken)
     {
+        using var offerUrlScope = LogContext.PushProperty("OfferUrl", userOffer.OfferUrl);
+        LogSummaryOfferStart(logger, userOffer.OfferUrl);
+
         var arguments = new SummarizeOfferContent.Request(
             config.CvContent,
             userOffer.Details.Description ?? "",
@@ -82,6 +91,8 @@ public sealed partial class AiSummaryJob(
 
     [LoggerMessage(LogLevel.Information, "Job offer {JobUrl} summary completed")]
     static partial void LogJobOfferSummaryCompleted(ILogger<ScrapeHandler> logger, string JobUrl);
+    [LoggerMessage(LogLevel.Information, "Summarizing offer {OfferUrl}")]
+    static partial void LogSummaryOfferStart(ILogger<ScrapeHandler> logger, string OfferUrl);
 }
 
 public static class AiSummaryJobExtensions

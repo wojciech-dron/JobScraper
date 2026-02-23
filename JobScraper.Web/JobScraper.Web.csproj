@@ -79,10 +79,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Modules\Ai\"/>
-  </ItemGroup>
-
-  <ItemGroup>
     <_ContentIncludedByDefault Remove="Features\JobOffers\AiSummary\AiSummaryConfigPage.razor"/>
     <_ContentIncludedByDefault Remove="Features\JobOffers\AiSummary\_Imports.razor"/>
   </ItemGroup>

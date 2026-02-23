@@ -17,20 +17,20 @@ public static class JobOfferExtensions
 
     public static UserOffer ProcessKeywords(this UserOffer userOffer, ScraperConfig config)
     {
-        userOffer.MyKeywords = config.MyKeywords
+        var myKeywords = config.MyKeywords
             .Where(keyword => ContainKeyword(userOffer.Details, keyword))
-            .ToList();
+            .ToArray();
 
         if (ShouldStar(userOffer, config))
             userOffer.HideStatus = HideStatus.Starred;
 
         var avoidKeywords = config.AvoidKeywords
             .Where(keyword => ContainKeyword(userOffer.Details, keyword))
-            .ToList();
+            .ToArray();
 
-        userOffer.MyKeywords.AddRange(avoidKeywords);
+        userOffer.MyKeywords = [..myKeywords, ..avoidKeywords];
 
-        if (ShouldHide(userOffer, avoidKeywords))
+        if (ShouldHide(userOffer, avoidKeywords, myKeywords))
             userOffer.HideStatus = HideStatus.Hidden;
 
         return userOffer;
@@ -47,12 +47,15 @@ public static class JobOfferExtensions
         return offer.MyKeywords.Count > 0;
     }
 
-    private static bool ShouldHide(UserOffer offer, List<string> avoidKeywords)
+    private static bool ShouldHide(UserOffer offer, string[] avoidKeywords, string[] myKeywords)
     {
         if (offer.HideStatus is not HideStatus.Regular)
             return false;
 
-        if (avoidKeywords.Count == 0)
+        if (myKeywords.Length > 0)
+            return false;
+
+        if (avoidKeywords.Length == 0)
             return false;
 
         return true;
