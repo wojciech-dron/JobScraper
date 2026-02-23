@@ -13,7 +13,7 @@
 
 <h1>Job offers</h1>
 
-<div id="table-container" class="overflow-auto h-100">
+<div id="table-container">
     <QuickGrid @ref="@grid" Items="offers" Pagination="@pagination" class="table small-padding-table">
         <TemplateColumn SortBy="@(GridSort<UserOffer>.ByAscending(p => p.Application == null))" Title="Apply">
             <HeaderTemplate>
