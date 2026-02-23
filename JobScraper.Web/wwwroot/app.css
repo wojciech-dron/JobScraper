@@ -97,6 +97,7 @@ th {
     #table-container {
         max-height: none;
         overflow-y: visible;
+        margin-bottom: 0;
     }
 }
 
