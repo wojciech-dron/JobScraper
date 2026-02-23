@@ -1,4 +1,5 @@
-﻿using JobScraper.Web.Common.Entities;
+﻿using System.Diagnostics;
+using JobScraper.Web.Common.Entities;
 using JobScraper.Web.Features.AiSummary;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Indeed;
@@ -12,6 +13,7 @@ using JobScraper.Web.Modules.Persistence;
 using JobScraper.Web.Modules.Services;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
+using Serilog.Context;
 using TickerQ.Utilities.Base;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape;
@@ -25,14 +27,18 @@ public sealed partial class ScrapeHandler(
     ILogger<ScrapeHandler> logger
 )
 {
-
+    public const string FunctionName = "ScrapeJobs";
     public static readonly SemaphoreSlim ScrapeSemaphore = new(1, 1);
 
-    [TickerFunction("ScrapeJobs")]
+    [TickerFunction(FunctionName)]
     public async Task ScrapeJobs(TickerFunctionContext<ScrapeRequest> context, CancellationToken cancellationToken)
     {
+        using var activity = new Activity(FunctionName).Start();
+
         dbContext.CurrentUserName = context.Request.Owner;
         userProvider.UserName = context.Request.Owner;
+
+        using var userNameScope = LogContext.PushProperty("UserName", userProvider.UserName);
 
         var config = await dbContext.ScraperConfigs.FirstOrDefaultAsync(cancellationToken);
         if (config is null)
@@ -52,13 +58,13 @@ public sealed partial class ScrapeHandler(
 
         logger.LogInformation("Scraping completed successfully");
 
-        await MarkOffersAndScheduleAiSummary(detailUrls);
+        await ScheduleAiSummary();
     }
 
     public async Task<int> ScrapeLists(IEnumerable<SourceConfig> sources,
         CancellationToken cancellationToken = default)
     {
-        using var userLogScope = logger.BeginScope("Scraping lists for user {UserName}", userProvider.UserName);
+        using var userNameScope = LogContext.PushProperty("UserName", userProvider.UserName);
 
         var offersCount = 0;
         var entered = await ScrapeSemaphore.WaitAsync(TimeSpan.FromMinutes(3), cancellationToken);
@@ -100,7 +106,7 @@ public sealed partial class ScrapeHandler(
     public async Task<string[]?> ScrapeDetails(IEnumerable<SourceConfig> sources,
         CancellationToken cancellationToken = default)
     {
-        using var userLogScope = logger.BeginScope("Scraping details for user {UserName}", userProvider.UserName);
+        using var userNameScope = LogContext.PushProperty("UserName", userProvider.UserName);
 
         var offersScraped = new List<string>();
         var entered = await ScrapeSemaphore.WaitAsync(TimeSpan.FromMinutes(10), cancellationToken);
@@ -148,13 +154,11 @@ public sealed partial class ScrapeHandler(
         return offersScraped.ToArray();
     }
 
-    private async Task MarkOffersAndScheduleAiSummary(string[] offerUrls)
+    private async Task ScheduleAiSummary()
     {
         var aiSummaryEnabled = dbContext.AiSummaryConfigs.Any(x => x.AiSummaryEnabled == true);
         if (!aiSummaryEnabled)
             return;
-
-        await MarkOffersForAiSummary(offerUrls);
 
         dbContext.ScheduleAiSummary(DateTime.UtcNow.AddMinutes(1));
 

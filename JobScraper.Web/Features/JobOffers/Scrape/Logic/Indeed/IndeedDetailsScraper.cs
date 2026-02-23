@@ -9,7 +9,7 @@ namespace JobScraper.Web.Features.JobOffers.Scrape.Logic.Indeed;
 
 public class IndeedDetailsScraper
 {
-    public record Command(SourceConfig Source) : ScrapeCommand(Source);
+    public record Command(SourceConfig Source) : ScrapeDetailsCommand(Source);
 
     public class Handler : DetailsScrapperBase<Command>
     {
@@ -23,8 +23,6 @@ public class IndeedDetailsScraper
 
         public override async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
         {
-            Logger.LogInformation("Scraping job details for {OfferUrl}", jobOffer.OfferUrl);
-
             var page = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: ScrapeConfig.WaitForDetailsSeconds);
             await page.WaitForTimeoutAsync(ScrapeConfig.WaitForDetailsSeconds * 1000); // Wait for the page to load
 

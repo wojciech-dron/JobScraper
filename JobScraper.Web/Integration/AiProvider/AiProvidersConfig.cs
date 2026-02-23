@@ -1,6 +1,7 @@
 namespace JobScraper.Web.Integration.AiProvider;
 
-public class AiProvidersConfig : Dictionary<string, ProviderConfig>
+public class AiProvidersConfig()
+    : Dictionary<string, ProviderConfig>(StringComparer.OrdinalIgnoreCase)
 {
     public const string SectionBase = "Integration:AiProviders";
 
