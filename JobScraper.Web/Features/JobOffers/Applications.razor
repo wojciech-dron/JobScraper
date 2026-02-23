@@ -81,7 +81,12 @@
         </PropertyColumn>
         <PropertyColumn Property="@(p => p.ExpectedSalary)" Title="ExpectedSalary" Sortable="true"/>
         <PropertyColumn Property="@(p => p.ExpectedSalaryCurrency)" Title="Currency"/>
-        <PropertyColumn Property="@(p => p.Comments)" Sortable="true"/>
+        <TemplateColumn class="col-1 text-truncate" Title="Comments"
+                        SortBy="@(GridSort<Application>.ByAscending(p => p.Comments))">
+            <ChildContent>
+                <span title="@context.Comments">@context.Comments</span>
+            </ChildContent>
+        </TemplateColumn>
         <PropertyColumn Property="@(p => p.AppliedAt)" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
         <PropertyColumn Property="@(p => p.RespondedAt)" Format="yyyy-MM-dd" Sortable="true"/>
         <PropertyColumn class="col-1" Property="@(p => p.Offer.Details.Origin)" Sortable="true">
