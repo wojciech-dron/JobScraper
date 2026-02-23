@@ -10,7 +10,7 @@
     <span class="navbar-toggler-icon"></span>
 </button>
 
-<div class="@($"nav-scrollable flex-column {NavMenuCssClass}")" @onclick="CollapseMenu">
+<div class="@($"nav-scrollable flex-column {NavMenuCssClass}")">
     <nav class="nav flex-column flex-grow-1">
         <AuthorizeView>
             <Authorized>
@@ -97,18 +97,12 @@
     private string? currentUrl;
 
     // Controls nav menu collapse state
-    private bool collapseNavMenu = true;
+    private bool collapseNavMenu;
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : "d-flex";
 
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
-    }
-
-    private void CollapseMenu()
-    {
-        // Close menu after clicking a nav item (useful on mobile)
-        collapseNavMenu = true;
     }
 
     protected override void OnInitialized()
