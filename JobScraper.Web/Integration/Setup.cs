@@ -1,5 +1,5 @@
 ﻿using JobScraper.Web.Integration.AiProvider;
-using Microsoft.AspNetCore.HttpLogging;
+using JobScraper.Web.Integration.DelegatingHandlers;
 using Microsoft.Extensions.Options;
 
 namespace JobScraper.Web.Integration;
@@ -8,8 +8,15 @@ public static class Setup
 {
     public static WebApplicationBuilder AddIntegrationServices(this WebApplicationBuilder builder)
     {
+        builder.Services.AddTransient<LoggingDelegatingHandler>();
+
+        builder.Services.AddHttpClient()
+            .ConfigureHttpClientDefaults(clientBuilder =>
+            {
+                clientBuilder.AddHttpMessageHandler<LoggingDelegatingHandler>();
+            });
+
         builder.AddAiProviders();
-        builder.AddLoggingForHttpClients();
 
         return builder;
     }
@@ -26,32 +33,6 @@ public static class Setup
             builder.AddAiProvider(provider.Key);
     }
 
-    private static WebApplicationBuilder AddLoggingForHttpClients(this WebApplicationBuilder builder)
-    {
-        var loggingFields = HttpLoggingFields.RequestMethod
-          | HttpLoggingFields.RequestPath
-          | HttpLoggingFields.ResponseStatusCode
-          | HttpLoggingFields.Duration;
 
-        if (builder.Configuration.GetValue<bool>("Integration:LogHttpPayloads"))
-            loggingFields |= HttpLoggingFields.RequestBody | HttpLoggingFields.ResponseBody;
-
-        builder.Services.AddHttpLogging(o =>
-        {
-            o.CombineLogs = true;
-            o.RequestBodyLogLimit = 1024  * 16;
-            o.ResponseBodyLogLimit = 1024 * 16;
-            o.LoggingFields = loggingFields;
-        });
-
-        return builder;
-    }
-
-
-    public static WebApplication UseIntegrationServices(this WebApplication app)
-    {
-        app.UseHttpLogging();
-
-        return app;
-    }
+    public static WebApplication UseIntegrationServices(this WebApplication app) => app;
 }

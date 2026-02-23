@@ -34,6 +34,7 @@ await app.Services.PrepareDbAsync();
 if (!app.Environment.IsDevelopment())
     app.UseHsts();
 
+app.UseAppLogging();
 app.UseExceptionHandler("/Error", true);
 app.UseBlazor();
 app.UseJobs();
