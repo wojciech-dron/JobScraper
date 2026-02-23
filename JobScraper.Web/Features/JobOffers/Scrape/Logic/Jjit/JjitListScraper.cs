@@ -131,6 +131,8 @@ public class JjitListScraper
             var period = SalaryPeriod.Month;
             if (rawSalary.EndsWith("/h"))
                 period = SalaryPeriod.Hour;
+            if (rawSalary.EndsWith("/day"))
+                period = SalaryPeriod.Day;
 
             job.SalaryMinMonth = int.Parse(minMaxMatch.Groups[1].Value).ApplyMonthPeriod(period);
             job.SalaryMaxMonth = int.Parse(minMaxMatch.Groups[2].Value).ApplyMonthPeriod(period);
