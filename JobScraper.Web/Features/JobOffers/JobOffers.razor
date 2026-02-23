@@ -143,7 +143,12 @@
                 </MySelect>
             </HeaderTemplate>
         </PropertyColumn>
-        <PropertyColumn class="col-1" Property="@(p => p.Comments)" Sortable="true"/>
+        <TemplateColumn class="col-1 text-truncate" Title="Comments"
+                        SortBy="@(GridSort<UserOffer>.ByAscending(p => p.Comments))">
+            <ChildContent>
+                <span title="@context.Comments">@context.Comments</span>
+            </ChildContent>
+        </TemplateColumn>
         <TemplateColumn class="text-truncate" Title="Location"
                         SortBy="@(GridSort<UserOffer>.ByAscending(p => p.Details.Location))">
             <HeaderTemplate>
