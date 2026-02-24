@@ -1,15 +1,39 @@
-﻿version: '3.8'
-
-services:
-  jobscraper.web:
-    image: jobscraper.web:latest
-    build:
-      context: .
-      dockerfile: JobScraper.Web/Dockerfile
+﻿services:
+  job-scraper:
+    image: combi71/jobscraper.web:latest
+    container_name: job-scraper
+    restart: always
     ports:
       - "12986:8080"
     volumes:
-      - data:/home/app/data
+      - ~/JobScraper/Data:/home/app/data
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      # OpenTelemetry exporter settings
+      - OTELENDPOINT=http://localhost:4317/
+      - OTELPROTOCOL=grpc
+      # Chrome settings for playwright
+      - APPSETTINGS__CDPENDPOINTURL=http://chrome:3000
+      # TickerQ Dashboard settings
+      - APPSETTINGS__TICKERQ__DASHBOARD__BASEPATH=/tickerq-dashboard
+      - APPSETTINGS__TICKERQ__DASHBOARD__USER=admin
+      - APPSETTINGS__TICKERQ__DASHBOARD__PASSWORD=${TICKER_PASSWORD}
+      # you can use any other openAi compatible provider here
+      - INTEGRATION__AIPROVIDERS__MAIN__VISIBLE=true
+      - INTEGRATION__AIPROVIDERS__MAIN__BASEURL=https://openrouter.ai/api/v1/
+      - INTEGRATION__AIPROVIDERS__MAIN__MODELID=arcee-ai/trinity-large-preview:free
+      - INTEGRATION__AIPROVIDERS__MAIN__APIKEY=${OPENROUTER_APIKEY}
+    networks:
+      - jobs-network
 
-volumes:
-  data:
+  chrome:
+    image: browserless/chrome:latest
+    container_name: chrome
+    restart: always
+    ports:
+      - "9222:3000"
+    networks:
+      - jobs-network
+
+networks:
+  jobs-network:

@@ -40,9 +40,9 @@ I appreciate any feedback ;)
 
 Site is available at https://jobscraper.wojciechdron.net/
 
-Example login:
+Demo login:
 test@email.com
-WxV79RZgjzsTgW#
+JobScraper1@#
 
 [Configuration and scraping](https://drive.google.com/file/d/1D-sGQ3w9u8nb9_HW_olHNEMGFR9nUWQm/view)
 
@@ -57,6 +57,36 @@ docker run -d --name job-scraper -p 12986:8080 -v jobscraper_data:/home/app/data
 ```
 
 Sorry for its size, probably preinstalled playwright with browser.
+
+## Quick deployment with Docker Compose
+
+To run the application with its full stack (including a remote browser for
+scraping and optional AI features), you can use Docker Compose.
+
+1. **Copy compose.yaml to a new directory for deployment config**:
+
+2. **Prepare configuration**:
+   Copy `.env.example` to `.env` and fill in the required values:
+    - `TICKER_PASSWORD`: Password for the TickerQ dashboard.
+    - `OPENROUTER_APIKEY`: Your API key for AI features (OpenRouter).
+
+   You can also use other OpenAi compatible providers.
+
+3. **Start the services**:
+   ```bash
+   docker compose up -d
+   ```
+
+This will start:
+
+- **job-scraper**: The main application available at http://localhost:12986.
+- **chrome**: A browserless Chrome instance used for scraping, avoiding the need
+  for a local browser installation.
+
+**Data Persistence**:
+By default, the application data is stored in the `~/JobScraper/Data` folder on
+the host (mapped to `/home/app/data` in the container), as configured in
+`compose.yaml`. You can adjust the host path in `compose.yaml` if needed.
 
 ## Local development
 
@@ -91,37 +121,6 @@ cd JobScraper.Web
 dotnet run
 ```
 
-## Docker
-
-You can also build and run the project using Docker.
-
-Clone the repository.
-
-```bash
-git clone https://github.com/wojciech-dron/JobScraper.git
-cd JobScraper
-```
-
-Navigate to the project directory in your terminal and run docker compose.
-
-```bash
-docker-compose up -d
-```
-
-OR
-
-You can also build and run the project using Docker.
-
-```bash
-docker build -t jobscraper.web -f Jobscraper.Web/Dockerfile .
-```
-
-Then run the following command to start the container.
-
-```bash
-docker run -d --name jobscraper.web -p 12986:8080 -v jobscraper_data:/home/app/data jobscraper.web
-```
-
 ## Troubleshooting
 
 ### Docker file access/permissions issues
@@ -130,16 +129,13 @@ If you encounter issues with file access or permissions when running the
 application with Docker, particularly related to the volume mount for data
 persistence, try setting appropriate permissions on the host directory.
 
-For example, if using the named volume `jobscraper_data`, ensure the directory
+For example, if using the data volume, ensure the directory
 has proper permissions:
 
 ```bash
-chmod -R 755 jobscraper_data
+chmod -R 755 ~/JobScraper/Data/
 ```
 
 This ensures that the Docker container can read and write to the data directory
 properly.
 
-<span style="color: green">**Recommended:**</span> Be nice to people's servers
-by not lowering the `secondsToWait` variable too low. <font size="1">(keep
-yourself from being banned from the site)</font>
