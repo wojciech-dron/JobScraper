@@ -7,6 +7,7 @@ using JobScraper.Web.Modules.Jobs;
 using JobScraper.Web.Modules.Logging;
 using JobScraper.Web.Modules.Mediator;
 using JobScraper.Web.Modules.Persistence;
+using JobScraper.Web.Modules.QuestPdf;
 using JobScraper.Web.Modules.Security;
 using JobScraper.Web.Modules.Services;
 using JobScraper.Web.Modules.Settings;
@@ -25,6 +26,7 @@ builder.ConfigureSecurity();
 builder.AddScrapeServices();
 builder.Services.AddUserProvider();
 builder.AddIntegrationServices();
+builder.AddQuestPdf();
 
 
 var app = builder.Build();
