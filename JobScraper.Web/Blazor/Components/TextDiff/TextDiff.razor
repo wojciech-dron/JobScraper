@@ -16,12 +16,16 @@
             @if (diff is not null)
             {
                 <div class="diff-pane">
-                    <TextDiffPane Model="diff.OldText" PanePosition="@PanePosition.Left"
-                                  VisibleLines="@visibleLines"></TextDiffPane>
+                    <TextDiffPane Model="diff.OldText"
+                                  PanePosition="@PanePosition.Left"
+                                  VisibleLines="@visibleLines"
+                                  OnShowHiddenLines="ShowHiddenLines"/>
                 </div>
                 <div class="diff-pane">
-                    <TextDiffPane Model="diff.NewText" PanePosition="@PanePosition.Right"
-                                  VisibleLines="@visibleLines"></TextDiffPane>
+                    <TextDiffPane Model="diff.NewText"
+                                  PanePosition="@PanePosition.Right"
+                                  VisibleLines="@visibleLines"
+                                  OnShowHiddenLines="ShowHiddenLines"/>
                 </div>
             }
         </div>
@@ -190,5 +194,19 @@
     private void ToggleCollapse()
     {
         isCollapsed = !isCollapsed;
+    }
+
+    private void ShowHiddenLines((int Start, int Count) range)
+    {
+        if (visibleLines == null)
+            return;
+
+        var rangeEnd = Math.Min(range.Start + range.Count, visibleLines.Length);
+        for (var i = range.Start; i < rangeEnd; i++)
+        {
+            visibleLines[i] = true;
+        }
+
+        StateHasChanged();
     }
 }

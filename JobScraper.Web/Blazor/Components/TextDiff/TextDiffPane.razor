@@ -12,7 +12,10 @@
                     if (i == 0 || VisibleLines[i - 1])
                     {
                         var hiddenCount = 0;
-                        for (var j = i; j < Model.Lines.Count && !VisibleLines[j]; j++)
+                        var lineIdx = i;
+
+                        // count next hidden lines
+                        for (var j = lineIdx; j < Model.Lines.Count && !VisibleLines[j]; j++)
                         {
                             hiddenCount++;
                         }
@@ -20,7 +23,11 @@
                         <tr class="diff-hidden-summary">
                             <td class="line-number">...</td>
                             <td class="line">
-                                <span class="hidden-count">@hiddenCount exact lines hidden</span>
+                                <button type="button" class="show-hidden-button hidden-count"
+                                        @onclick="() => OnShowHiddenLines.InvokeAsync((lineIdx, hiddenCount))"
+                                        title="Click here to show hidden lines">
+                                    <span>@hiddenCount exact lines hidden (show)</span>
+                                </button>
                             </td>
                         </tr>
                     }
@@ -44,7 +51,8 @@
 </div>
 
 @code {
-    [Parameter][EditorRequired] public DiffPaneModel Model { get; set; } = default!;
+    [Parameter] [EditorRequired] public DiffPaneModel Model { get; set; } = default!;
     [Parameter] public PanePosition PanePosition { get; set; }
     [Parameter] public bool[]? VisibleLines { get; set; }
+    [Parameter] public EventCallback<(int Start, int Count)> OnShowHiddenLines { get; set; }
 }
