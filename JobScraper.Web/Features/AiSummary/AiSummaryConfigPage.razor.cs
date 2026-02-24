@@ -183,5 +183,5 @@ public class AiSummaryViewModelValidator : AbstractValidator<AiSummaryViewModel>
             () => RuleFor(x => x.TestOfferContent).NotEmpty());
     }
 
-    private bool BeAvailable(string providerName) => _config.AvailableProviders.Contains(providerName);
+    private bool BeAvailable(string providerName) => _config.ContainsKey(providerName);
 }

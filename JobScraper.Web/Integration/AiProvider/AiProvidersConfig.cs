@@ -7,7 +7,10 @@ public class AiProvidersConfig()
 
     public const string MainProvider = "Main";
 
-    public string[] AvailableProviders => this.Where(x => x.Value.Visible).Select(x => x.Key).ToArray();
+    public string[] AvailableProviders => this
+        .Where(x => x.Value.Visible)
+        .Select(x => x.Key)
+        .ToArray();
 }
 
 public class ProviderConfig

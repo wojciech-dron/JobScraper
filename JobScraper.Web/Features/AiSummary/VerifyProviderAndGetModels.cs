@@ -20,7 +20,7 @@ public class VerifyProviderAndGetModels
     {
         public async ValueTask<ErrorOr<Response>> Handle(Request request, CancellationToken cancellationToken)
         {
-            var providerName = request.ProviderName;
+            var providerName = request.ProviderName.ToUpperInvariant();
             if (!config.Value.TryGetValue(providerName, out var settings))
                 return Error.Failure(description: $"Provider '{providerName}' not found in configuration");
 
