@@ -58,34 +58,32 @@ public class GenerateCvPdfFromMarkdown
                             // Split document into "header" blocks (to be next to image) and "body" blocks.
                             // Let's take the first N blocks for the header (Title, Profile heading, and Profile text).
                             // This avoids the whole document being constrained to the side of the image.
-                            var blocksBesideImage = mdDocument.Take(layoutConfig.TextBlocksAlignedToImage).ToArray();
+                            var blocksBesideImage = mdDocument.Take(layoutConfig.TextBlocksAlignedWithImage).ToArray();
 
                             mainColumn.Item().Row(row =>
                             {
+                                // insert image as second item in row
+                                if (content.Image is { Length: > 0 })
+                                    row.AutoItem()
+                                        .PaddingRight(layoutConfig.ImageMinSpaceFromText)
+                                        .Height(layoutConfig.ImageHeight)
+                                        .Border(layoutConfig.ImageBorderThickness)
+                                        .BorderColor(layoutConfig.ImageBorderColor)
+                                        .CornerRadius(layoutConfig.ImageBorderRadius)
+                                        .Image(content.Image)
+                                        .FitArea();
+
+                                // add the first blocks as the first item in the row
                                 row.RelativeItem().Column(column =>
                                 {
                                     foreach (var block in blocksBesideImage)
                                         RenderBlock(column, block, layoutConfig);
                                 });
 
-                                // insert image
-                                if (content.Image is { Length: > 0 })
-                                    row.AutoItem().AlignRight()
-                                        .PaddingLeft(layoutConfig.ImagePaddingLeft)
-                                        // force a square container to avoid extra vertical whitespace
-                                        .Height(layoutConfig.ImageHeight)
-                                        .Width(layoutConfig.ImageWidth)
-                                        // draw circular border
-                                        .Border(layoutConfig.ImageBorderThickness)
-                                        .BorderColor(layoutConfig.ImageBorderColor)
-                                        .CornerRadius(layoutConfig.ImageBorderRadius)
-                                        // scale image to fill the square area
-                                        .Image(content.Image)
-                                        .FitArea();
                             });
 
 
-                            var bodyBlocks = mdDocument.Skip(layoutConfig.TextBlocksAlignedToImage).ToArray();
+                            var bodyBlocks = mdDocument.Skip(layoutConfig.TextBlocksAlignedWithImage).ToArray();
 
                             foreach (var block in bodyBlocks)
                                 RenderBlock(mainColumn, block, layoutConfig);

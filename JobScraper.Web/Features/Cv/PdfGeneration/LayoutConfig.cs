@@ -7,17 +7,16 @@ public class LayoutConfig
     // general
     public string FontFamily { get; set; } = Fonts.Verdana;
     public float MarginCm { get; set; } = 0.8f;
-    public string PageColor { get; set; } = Colors.Grey.Lighten5;
-    public string UrlColor { get; set; } = Colors.Indigo.Darken4;
+    public string PageColor { get; set; } = Colors.Grey.Lighten2;
+    public string UrlColor { get; set; } = Colors.Black;
 
     // image
-    public float ImageWidth { get; set; } = 115;
     public float ImageHeight { get; set; } = 150;
-    public float ImagePaddingLeft { get; set; } = 15;
+    public float ImageMinSpaceFromText { get; set; } = 20;
     public float ImageBorderRadius { get; set; } = 15;
     public float ImageBorderThickness { get; set; } = 1;
     public string ImageBorderColor { get; set; } = Colors.Grey.Lighten1;
-    public int TextBlocksAlignedToImage { get; set; } = 7;
+    public int TextBlocksAlignedWithImage { get; set; } = 8;
 
     // font sizes & headers
     public float DefaultFontSize { get; set; } = 8.6f;
