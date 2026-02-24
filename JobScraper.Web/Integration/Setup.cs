@@ -30,7 +30,7 @@ public static class Setup
             .Value;
 
         foreach (var provider in providers)
-            builder.AddAiProvider(provider.Key);
+            builder.AddAiProvider(provider.Key.ToUpperInvariant());
     }
 
 
