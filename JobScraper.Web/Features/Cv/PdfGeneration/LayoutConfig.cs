@@ -7,7 +7,7 @@ public class LayoutConfig
     // general
     public string FontFamily { get; set; } = Fonts.Verdana;
     public float MarginCm { get; set; } = 0.8f;
-    public string PageColor { get; set; } = Colors.White;
+    public string PageColor { get; set; } = Colors.Grey.Lighten5;
     public string UrlColor { get; set; } = Colors.Indigo.Darken4;
 
     // image
@@ -16,18 +16,24 @@ public class LayoutConfig
     public float ImagePaddingLeft { get; set; } = 15;
     public float ImageBorderRadius { get; set; } = 15;
     public float ImageBorderThickness { get; set; } = 1;
-    public string ImageBorderColor { get; set; } = Colors.Grey.Lighten2;
+    public string ImageBorderColor { get; set; } = Colors.Grey.Lighten1;
     public int TextBlocksAlignedToImage { get; set; } = 7;
 
     // font sizes & headers
     public float DefaultFontSize { get; set; } = 8.6f;
-    public float H1FontSize { get; set; } = 15;
-    public string H1FontColor { get; set; } = Colors.Indigo.Darken4;
+    public float H1FontSize { get; set; } = 18;
+    public string H1FontColor { get; set; } = Colors.Black;
     public float H2FontSize { get; set; } = 13;
     public float H3FontSize { get; set; } = 12;
     public float H4FontSize { get; set; } = 10;
     public float HeadingFontSizeDefault { get; set; } = 9;
     public string HeadingFontColorDefault { get; set; } = Colors.Black;
+
+    // header underline
+    public float HeaderUnderlineMaxLevel { get; set; } = 2;
+    public float HeaderUnderlinePaddingTop { get; set; } = 2f;
+    public string HeaderUnderlineColor { get; set; } = Colors.Black;
+    public float HeaderUnderlineThickness { get; set; } = 1f;
 
     // disclaimer
     public float DisclaimerFontSize { get; set; } = 7;
