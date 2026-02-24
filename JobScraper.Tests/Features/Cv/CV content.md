@@ -1,4 +1,4 @@
-# .NET Developer
+# Adam Kowalski - .NET Developer
 
 ## Profil
 
@@ -7,8 +7,6 @@ rozproszonych. Specjalista w zakresie projektowania architektury, optymalizacji
 wydajności oraz wdrażania procesów CI/CD. Skupiony na dostarczaniu wartości
 biznesowej poprzez pragmatyczne rozwiązania technologiczne. Pasjonat technologii
 self-hosted.
-
----
 
 ## Umiejętności
 
@@ -28,8 +26,6 @@ CSS
 **Metodologie:** DDD (Domain-Driven Design), Vertical Slice Architecture (VSA),
 SOLID, Saga Pattern, REST API, Camunda
 
----
-
 ## Doświadczenie Zawodowe
 
 ### Fullstack .NET Developer | Software House
@@ -48,8 +44,6 @@ SOLID, Saga Pattern, REST API, Camunda
 - Konfiguracja pełnego stosu obserwowalności z użyciem OpenTelemetry, co
   zredukowało czas diagnozowania błędów.
 
----
-
 ### Fullstack .NET Developer | Software Development Agency
 
 **07.2022 – 01.2024**
@@ -64,8 +58,6 @@ SOLID, Saga Pattern, REST API, Camunda
 - Tworzenie wewnętrznych bibliotek NuGet i szablonów projektowych, co
   przyśpieszyło tworzenie o ok. 50%.
 
----
-
 ### Fullstack .NET Developer | E-commerce & EOD Solutions Provider
 
 **03.2021 – 06.2022**
@@ -79,8 +71,6 @@ SOLID, Saga Pattern, REST API, Camunda
 - **Osiągnięcie:** Poprawa synchronizacji repozytoriów dla dedykowanych
   serwisów, redukując konflikty o 50%.
 
----
-
 ### .NET Developer | HealthTech Startup
 
 **12.2019 – 03.2021**
@@ -92,8 +82,6 @@ SOLID, Saga Pattern, REST API, Camunda
   deweloperów).
 - Refaktoryzacja architektury aplikacji, redukując złożoność o 30%.
 
----
-
 ### Stażysta (IoT Developer) | IoT Solutions Company
 
 **08.2019 – 11.2019**
@@ -101,14 +89,10 @@ SOLID, Saga Pattern, REST API, Camunda
 - Tworzenie oprogramowania (Linux, Qt, QML, GitLab) na urządzenia IoT oraz
   montaż prototypów.
 
----
-
 ## Edukacja
 
 **Politechnika (Uczelnia Techniczna)**
 2016 – 2020 | mgr inż. Elektronika i Telekomunikacja
-
----
 
 ## Języki i Zainteresowania
 
