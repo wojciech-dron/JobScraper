@@ -137,13 +137,11 @@ public class GenerateCvPdfFromMarkdown
                             });
 
                             // decorative underline for section headings
-                            if (heading.Level is 1 or 2)
+                            if (heading.Level <= layoutConfig.HeaderUnderlineMaxLevel)
                                 col.Item()
-                                    .PaddingTop(2)
-                                    .LineHorizontal(2f)
-                                    .LineColor(heading.Level == 1
-                                        ? layoutConfig.H1FontColor
-                                        : layoutConfig.ThematicBreakColor);
+                                    .PaddingTop(layoutConfig.HeaderUnderlinePaddingTop)
+                                    .LineHorizontal(layoutConfig.HeaderUnderlineThickness)
+                                    .LineColor(layoutConfig.HeaderUnderlineColor);
                         }));
                     break;
 
