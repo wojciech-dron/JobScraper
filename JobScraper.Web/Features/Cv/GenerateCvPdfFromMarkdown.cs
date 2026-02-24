@@ -70,7 +70,7 @@ public class GenerateCvPdfFromMarkdown
 
                                 // insert image
                                 if (content.Image is { Length: > 0 })
-                                    row.ConstantItem(layoutConfig.ImageHeight)
+                                    row.AutoItem().AlignRight()
                                         .PaddingLeft(layoutConfig.ImagePaddingLeft)
                                         // force a square container to avoid extra vertical whitespace
                                         .Height(layoutConfig.ImageHeight)
@@ -113,7 +113,7 @@ public class GenerateCvPdfFromMarkdown
                     column.Item()
                         .PaddingTop(heading.Level == 1 ? 0 : layoutConfig.HeadingPaddingTop)
                         .PaddingBottom(layoutConfig.HeadingPaddingBottom)
-                        .Column(col =>
+                        .Row(row => row.AutoItem().Column(col =>
                         {
                             col.Item().Text(text =>
                             {
@@ -140,17 +140,17 @@ public class GenerateCvPdfFromMarkdown
                             if (heading.Level is 1 or 2)
                                 col.Item()
                                     .PaddingTop(2)
-                                    .LineHorizontal(2f / heading.Level)
+                                    .LineHorizontal(2f)
                                     .LineColor(heading.Level == 1
                                         ? layoutConfig.H1FontColor
                                         : layoutConfig.ThematicBreakColor);
-                        });
+                        }));
                     break;
 
                 case ParagraphBlock paragraph:
                     column.Item()
                         .PaddingBottom(layoutConfig.ParagraphPaddingBottom)
-                        .Text(text => RenderInlines(text, paragraph.Inline));
+                        .Text(text => RenderInlines(text, paragraph.Inline, layoutConfig));
                     break;
 
                 case ListBlock listBlock:
@@ -220,7 +220,7 @@ public class GenerateCvPdfFromMarkdown
             }
         }
 
-        private void RenderInlines(TextDescriptor text, ContainerInline? container)
+        private void RenderInlines(TextDescriptor text, ContainerInline? container, LayoutConfig layoutConfig)
         {
             if (container == null)
                 return;
@@ -246,7 +246,7 @@ public class GenerateCvPdfFromMarkdown
                         break;
                     case LinkInline link:
                         text.Span(GetInlineText(link))
-                            .FontColor(Colors.Blue.Medium)
+                            .FontColor(layoutConfig.UrlColor)
                             .Underline();
                         break;
                     default:

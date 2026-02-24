@@ -1,5 +1,12 @@
 # Adam Kowalski - .NET Developer
 
+**Telefon:** +48 608 228 288 **Email:** adam.kowalski@example.com **Adres:**
+Rzeszów, Polska
+
+**LinkedIn:** https://www.linkedin.com/in/adam-kowalski-7227721a2/
+
+**GitHub:** https://github.com/adam-kowalski
+
 ## Profil
 
 Programista .NET z 6-letnim doświadczeniem w budowaniu systemów analitycznych i
