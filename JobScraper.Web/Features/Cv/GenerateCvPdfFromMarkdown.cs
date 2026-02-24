@@ -113,24 +113,37 @@ public class GenerateCvPdfFromMarkdown
                     column.Item()
                         .PaddingTop(heading.Level == 1 ? 0 : layoutConfig.HeadingPaddingTop)
                         .PaddingBottom(layoutConfig.HeadingPaddingBottom)
-                        .Text(text =>
+                        .Column(col =>
                         {
-                            var fontSize = heading.Level switch
+                            col.Item().Text(text =>
                             {
-                                1 => layoutConfig.H1FontSize,
-                                2 => layoutConfig.H2FontSize,
-                                3 => layoutConfig.H3FontSize,
-                                4 => layoutConfig.H4FontSize,
-                                _ => layoutConfig.HeadingFontSizeDefault,
-                            };
+                                var fontSize = heading.Level switch
+                                {
+                                    1 => layoutConfig.H1FontSize,
+                                    2 => layoutConfig.H2FontSize,
+                                    3 => layoutConfig.H3FontSize,
+                                    4 => layoutConfig.H4FontSize,
+                                    _ => layoutConfig.HeadingFontSizeDefault,
+                                };
 
-                            var headerColor = heading.Level == 1
-                                ? layoutConfig.H1FontColor
-                                : layoutConfig.HeadingFontColorDefault;
+                                var headerColor = heading.Level == 1
+                                    ? layoutConfig.H1FontColor
+                                    : layoutConfig.HeadingFontColorDefault;
 
-                            text.Span(GetLeafText(heading))
-                                .FontSize(fontSize).Bold()
-                                .FontColor(headerColor);
+                                text.Span(GetLeafText(heading))
+                                    .FontSize(fontSize)
+                                    .Bold()
+                                    .FontColor(headerColor);
+                            });
+
+                            // decorative underline for section headings
+                            if (heading.Level is 1 or 2)
+                                col.Item()
+                                    .PaddingTop(2)
+                                    .LineHorizontal(2f / heading.Level)
+                                    .LineColor(heading.Level == 1
+                                        ? layoutConfig.H1FontColor
+                                        : layoutConfig.ThematicBreakColor);
                         });
                     break;
 
@@ -148,7 +161,8 @@ public class GenerateCvPdfFromMarkdown
                                 .Row(row =>
                                 {
                                     row.ConstantItem(layoutConfig.ListBulletWidth)
-                                        .Text(layoutConfig.ListBulletText);
+                                        .Text(layoutConfig.ListBulletText)
+                                        .FontColor(Colors.Grey.Darken2);
 
                                     row.RelativeItem().Column(itemColumn =>
                                     {
@@ -163,6 +177,39 @@ public class GenerateCvPdfFromMarkdown
                         .PaddingVertical(layoutConfig.ThematicBreakPaddingVertical)
                         .LineHorizontal(layoutConfig.ThematicBreakThickness)
                         .LineColor(layoutConfig.ThematicBreakColor);
+                    break;
+
+                case CodeBlock codeBlock:
+                    column.Item()
+                        .PaddingVertical(4)
+                        .Background(Colors.Grey.Lighten4)
+                        .Padding(8)
+                        .Border(0.5f)
+                        .BorderColor(Colors.Grey.Lighten2)
+                        .CornerRadius(4)
+                        .Text(GetLeafText(codeBlock))
+                        .FontFamily(Fonts.Consolas)
+                        .FontSize(layoutConfig.DefaultFontSize - 0.5f);
+                    break;
+
+
+                case QuoteBlock quote:
+                    column.Item()
+                        .Row(r =>
+                        {
+                            r.ConstantItem(3)
+                                .Background(Colors.Indigo.Lighten2);
+
+                            r.RelativeItem()
+                                .Background(Colors.Grey.Lighten5)
+                                .PaddingLeft(8)
+                                .Padding(6)
+                                .Column(qc =>
+                                {
+                                    foreach (var sub in quote)
+                                        RenderBlock(qc, sub, layoutConfig);
+                                });
+                        });
                     break;
 
                 default:
@@ -196,6 +243,11 @@ public class GenerateCvPdfFromMarkdown
                         break;
                     case not null when inline.GetType().Name == "SoftlineBreakInline":
                         text.Span(" ");
+                        break;
+                    case LinkInline link:
+                        text.Span(GetInlineText(link))
+                            .FontColor(Colors.Blue.Medium)
+                            .Underline();
                         break;
                     default:
                         text.Span(GetInlineText(inline));

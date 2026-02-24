@@ -47,5 +47,5 @@ public class LayoutConfig
 
     public float ThematicBreakPaddingVertical { get; set; } = 10;
     public float ThematicBreakThickness { get; set; } = 1;
-    public string ThematicBreakColor { get; set; } = Colors.Grey.Lighten2;
+    public string ThematicBreakColor { get; set; } = Colors.Grey.Lighten1;
 }
