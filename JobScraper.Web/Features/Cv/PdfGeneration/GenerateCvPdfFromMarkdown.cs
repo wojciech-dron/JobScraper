@@ -8,7 +8,7 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using Unit = QuestPDF.Infrastructure.Unit;
 
-namespace JobScraper.Web.Features.Cv;
+namespace JobScraper.Web.Features.Cv.PdfGeneration;
 
 [SuppressMessage("Performance", "CA1822:Mark members as static")]
 [SuppressMessage("ReSharper", "CognitiveComplexity")]

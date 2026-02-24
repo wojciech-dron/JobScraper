@@ -1,16 +1,16 @@
 ﻿using System.Text;
-using JobScraper.Web.Features.Cv;
+using JobScraper.Web.Features.Cv.PdfGeneration;
 using QuestPDF;
 using QuestPDF.Infrastructure;
 using Shouldly;
 
-namespace JobScraper.Tests.Features.Cv;
+namespace JobScraper.Tests.Features.Cv.PdfGeneration;
 
 public class GenerateCvPdfFromMarkdownTests
 {
-    public const string TestDisclaimer = "Wyrażam zgodę na przetwarzanie moich danych osobowych dla potrzeb niezbędnych " +
-        "do realizacji procesu rekrutacji zgodnie z Rozporządzeniem Parlamentu Europejskiego i Rady (UE) 2016/679 "       +
-        "z dnia 27 kwietnia 2016 r. w sprawie ochrony osób fizycznych w związku z przetwarzaniem danych osobowych "       +
+    private const string TestDisclaimer = "Wyrażam zgodę na przetwarzanie moich danych osobowych dla potrzeb niezbędnych " +
+        "do realizacji procesu rekrutacji zgodnie z Rozporządzeniem Parlamentu Europejskiego i Rady (UE) 2016/679 "        +
+        "z dnia 27 kwietnia 2016 r. w sprawie ochrony osób fizycznych w związku z przetwarzaniem danych osobowych "        +
         "i w sprawie swobodnego przepływu takich danych oraz uchylenia dyrektywy 95/46/WE (RODO).";
 
     public GenerateCvPdfFromMarkdownTests()
@@ -31,9 +31,9 @@ public class GenerateCvPdfFromMarkdownTests
             currentDir = currentDir.Parent;
 
         var projectDir = Path.Combine(currentDir!.FullName, "JobScraper.Tests");
-        var markdownPath = Path.Combine(projectDir, "Features", "Cv", "CV content.md");
-        var outputPath = Path.Combine(projectDir, "Features", "Cv", "CV_output.pdf");
-        var imagePath = Path.Combine(projectDir, "Features", "Cv", "image.jpg");
+        var markdownPath = Path.Combine(projectDir, "Features", "Cv", "PdfGeneration", "CV content.md");
+        var outputPath = Path.Combine(projectDir, "Features", "Cv", "PdfGeneration", "CV_output.pdf");
+        var imagePath = Path.Combine(projectDir, "Features", "Cv", "PdfGeneration", "image.jpg");
 
         if (!File.Exists(markdownPath))
         {

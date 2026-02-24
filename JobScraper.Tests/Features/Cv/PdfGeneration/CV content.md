@@ -1,4 +1,4 @@
-# Adam Kowalski - .NET Developer
+# Adam Kowalski - Senior .NET Developer
 
 **Telefon:** +48 608 228 288 **Email:** adam.kowalski@example.com **Adres:**
 Rzeszów, Polska
