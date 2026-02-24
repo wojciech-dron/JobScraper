@@ -30,4 +30,4 @@ Write-Host "Pushing tag: $tagName..." -ForegroundColor Cyan
 docker tag jobscraper.web "combi71/jobscraper.web:$tagName"
 docker push "combi71/jobscraper.web:$tagName"
 
-Write-Host "Deployment complete!" -ForegroundColor Green
+Write-Host "Push complete!" -ForegroundColor Green
