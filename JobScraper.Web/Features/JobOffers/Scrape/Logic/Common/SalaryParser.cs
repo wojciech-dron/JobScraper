@@ -22,7 +22,8 @@ public partial class SalaryParser
 
         rawSalary = rawSalary
             .Replace("\u00a0", "")
-            .Replace("-", "–");
+            .Replace("–", "-")
+            .Replace("-", "-");
 
         // Extract numbers from the salary string
         var numbers = ExtractNumbers(rawSalary);
@@ -73,7 +74,7 @@ public partial class SalaryParser
         // First, check if there's a range with '–' character
         if (input.Contains('-'))
         {
-            var parts = input.Split('–');
+            var parts = input.Split('-');
             if (parts.Length >= 2)
             {
                 // Extract the first number (before '–')
