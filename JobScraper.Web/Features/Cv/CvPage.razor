@@ -1,0 +1,14 @@
+﻿@page "/Cv/{Id:int}"
+@using JobScraper.Web.Blazor.Components.TextDiff
+@using JobScraper.Web.Features.Cv.Components
+
+<TextDiff HideUnchangedLines="true" CollapseContent="true" OldText="@OldText" NewText="@NewText"/>
+
+
+@code {
+    private readonly string OldText = TestData.BaseCv;
+    private readonly string NewText = TestData.ModifiedCv;
+
+    [Parameter]
+    public int Id { get; set; }
+}
