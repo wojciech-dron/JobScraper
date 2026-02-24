@@ -1,4 +1,5 @@
-﻿using ErrorOr;
+﻿using System.Diagnostics.CodeAnalysis;
+using ErrorOr;
 using Markdig;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
@@ -9,51 +10,94 @@ using Unit = QuestPDF.Infrastructure.Unit;
 
 namespace JobScraper.Web.Features.Cv;
 
+[SuppressMessage("Performance", "CA1822:Mark members as static")]
+[SuppressMessage("ReSharper", "CognitiveComplexity")]
 public class GenerateCvPdfFromMarkdown
 {
-    public record Command(string CvContent, LayoutConfig Config) : IRequest<ErrorOr<byte[]>>;
+    public record Command(
+        CvContent Content,
+        LayoutConfig LayoutConfig
+    ) : IRequest<ErrorOr<byte[]>>;
+
+    public record CvContent(
+        string Markdown,
+        byte[]? Image = null,
+        string? Disclaimer = null
+    );
 
     public class Handler : IRequestHandler<Command, ErrorOr<byte[]>>
     {
         public ValueTask<ErrorOr<byte[]>> Handle(Command request, CancellationToken cancellationToken)
         {
-            ArgumentException.ThrowIfNullOrWhiteSpace(request.CvContent);
+            var content = request.Content;
+            ArgumentNullException.ThrowIfNull(content);
+            ArgumentException.ThrowIfNullOrWhiteSpace(content.Markdown);
+
+            var layoutConfig = request.LayoutConfig;
+            ArgumentNullException.ThrowIfNull(layoutConfig);
 
             var pipeline = new MarkdownPipelineBuilder().UseAdvancedExtensions().Build();
-            var mdDocument = Markdown.Parse(request.CvContent, pipeline);
+            var mdDocument = Markdown.Parse(content.Markdown, pipeline);
 
             var pdfDocument = Document.Create(container =>
             {
                 container.Page(page =>
                 {
                     page.Size(PageSizes.A4);
-                    page.Margin(1, Unit.Centimetre);
-                    page.PageColor(Colors.White);
-                    page.DefaultTextStyle(x => x.FontSize(11).FontFamily(Fonts.Verdana));
+                    page.Margin(layoutConfig.MarginCm, Unit.Centimetre);
+                    page.PageColor(layoutConfig.PageColor);
+                    page.DefaultTextStyle(x =>
+                        x.FontSize(layoutConfig.DefaultFontSize)
+                            .FontFamily(layoutConfig.FontFamily)
+                            .LineHeight(layoutConfig.LineHeight));
 
-                    page.Content().PaddingTop(10).Column(mainColumn =>
-                    {
-                        // Split document into "header" blocks (to be next to image) and "body" blocks.
-                        // Let's take the first 3 blocks for the header (Title, Profile heading, and Profile text).
-                        // This avoids the whole document being constrained to the side of the image.
-                        var headerBlocks = mdDocument.Take(3).ToList();
-                        var bodyBlocks = mdDocument.Skip(3).ToList();
-
-                        mainColumn.Item().Row(row =>
+                    page.Content()
+                        .PaddingTop(layoutConfig.HeaderPaddingTop)
+                        .Column(mainColumn =>
                         {
-                            row.RelativeItem().Column(column =>
+                            // Split document into "header" blocks (to be next to image) and "body" blocks.
+                            // Let's take the first N blocks for the header (Title, Profile heading, and Profile text).
+                            // This avoids the whole document being constrained to the side of the image.
+                            var blocksBesideImage = mdDocument.Take(layoutConfig.TextBlocksAlignedToImage).ToArray();
+
+                            mainColumn.Item().Row(row =>
                             {
-                                foreach (var block in headerBlocks)
-                                    RenderBlock(column, block);
+                                row.RelativeItem().Column(column =>
+                                {
+                                    foreach (var block in blocksBesideImage)
+                                        RenderBlock(column, block, layoutConfig);
+                                });
+
+                                // insert image
+                                if (content.Image is { Length: > 0 })
+                                    row.ConstantItem(layoutConfig.ImageHeight)
+                                        .PaddingLeft(layoutConfig.ImagePaddingLeft)
+                                        // force a square container to avoid extra vertical whitespace
+                                        .Height(layoutConfig.ImageHeight)
+                                        .Width(layoutConfig.ImageWidth)
+                                        // draw circular border
+                                        .Border(layoutConfig.ImageBorderThickness)
+                                        .BorderColor(layoutConfig.ImageBorderColor)
+                                        .CornerRadius(layoutConfig.ImageBorderRadius)
+                                        // scale image to fill the square area
+                                        .Image(content.Image)
+                                        .FitArea();
                             });
 
-                            // row.ConstantItem(100).PaddingLeft(10).Image(imagePath);
+
+                            var bodyBlocks = mdDocument.Skip(layoutConfig.TextBlocksAlignedToImage).ToArray();
+
+                            foreach (var block in bodyBlocks)
+                                RenderBlock(mainColumn, block, layoutConfig);
                         });
 
-                        foreach (var block in bodyBlocks)
-                            mainColumn.Item().Column(column => RenderBlock(column, block));
-                    });
-
+                    if (!string.IsNullOrWhiteSpace(content.Disclaimer))
+                        page.Footer()
+                            .PaddingBottom(layoutConfig.FooterPaddingBottom)
+                            .AlignCenter()
+                            .Text(content.Disclaimer)
+                            .FontSize(layoutConfig.DisclaimerFontSize)
+                            .FontColor(layoutConfig.DisclaimerColor);
                 });
             });
 
@@ -61,50 +105,64 @@ public class GenerateCvPdfFromMarkdown
             return ValueTask.FromResult<ErrorOr<byte[]>>(result);
         }
 
-
-        private void RenderBlock(ColumnDescriptor column, Block block)
+        private void RenderBlock(ColumnDescriptor column, Block block, LayoutConfig layoutConfig)
         {
             switch (block)
             {
                 case HeadingBlock heading:
-                    column.Item().PaddingTop(heading.Level == 1 ? 0 : 10).PaddingBottom(5).Text(text =>
-                    {
-                        float fontSize = heading.Level switch
+                    column.Item()
+                        .PaddingTop(heading.Level == 1 ? 0 : layoutConfig.HeadingPaddingTop)
+                        .PaddingBottom(layoutConfig.HeadingPaddingBottom)
+                        .Text(text =>
                         {
-                            1 => 24,
-                            2 => 18,
-                            3 => 14,
-                            _ => 12,
-                        };
-                        text.Span(GetLeafText(heading)).FontSize(fontSize).Bold()
-                            .FontColor(heading.Level == 1 ? Colors.Blue.Medium : Colors.Black);
-                    });
+                            var fontSize = heading.Level switch
+                            {
+                                1 => layoutConfig.H1FontSize,
+                                2 => layoutConfig.H2FontSize,
+                                3 => layoutConfig.H3FontSize,
+                                4 => layoutConfig.H4FontSize,
+                                _ => layoutConfig.HeadingFontSizeDefault,
+                            };
+
+                            var headerColor = heading.Level == 1
+                                ? layoutConfig.H1FontColor
+                                : layoutConfig.HeadingFontColorDefault;
+
+                            text.Span(GetLeafText(heading))
+                                .FontSize(fontSize).Bold()
+                                .FontColor(headerColor);
+                        });
                     break;
 
                 case ParagraphBlock paragraph:
-                    column.Item().PaddingBottom(5).Text(text =>
-                    {
-                        RenderInlines(text, paragraph.Inline);
-                    });
+                    column.Item()
+                        .PaddingBottom(layoutConfig.ParagraphPaddingBottom)
+                        .Text(text => RenderInlines(text, paragraph.Inline));
                     break;
 
                 case ListBlock listBlock:
                     foreach (var item in listBlock)
                         if (item is ListItemBlock listItem)
-                            column.Item().PaddingLeft(15).Row(row =>
-                            {
-                                row.ConstantItem(15).Text("•");
-                                row.RelativeItem().Column(itemColumn =>
+                            column.Item()
+                                .PaddingLeft(layoutConfig.ListPaddingLeft)
+                                .Row(row =>
                                 {
-                                    foreach (var subBlock in listItem)
-                                        RenderBlock(itemColumn, subBlock);
-                                });
-                            });
+                                    row.ConstantItem(layoutConfig.ListBulletWidth)
+                                        .Text(layoutConfig.ListBulletText);
 
+                                    row.RelativeItem().Column(itemColumn =>
+                                    {
+                                        foreach (var subBlock in listItem)
+                                            RenderBlock(itemColumn, subBlock, layoutConfig);
+                                    });
+                                });
                     break;
 
                 case ThematicBreakBlock:
-                    column.Item().PaddingVertical(10).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
+                    column.Item()
+                        .PaddingVertical(layoutConfig.ThematicBreakPaddingVertical)
+                        .LineHorizontal(layoutConfig.ThematicBreakThickness)
+                        .LineColor(layoutConfig.ThematicBreakColor);
                     break;
 
                 default:
@@ -133,11 +191,11 @@ public class GenerateCvPdfFromMarkdown
                         break;
                     case LineBreakInline:
                         break;
-                    case not null when inline.GetType().Name == "SoftlineBreakInline":
-                        text.Span(" ");
-                        break;
                     case HtmlInline html:
                         text.Span(html.Tag);
+                        break;
+                    case not null when inline.GetType().Name == "SoftlineBreakInline":
+                        text.Span(" ");
                         break;
                     default:
                         text.Span(GetInlineText(inline));
@@ -147,13 +205,17 @@ public class GenerateCvPdfFromMarkdown
 
         private string GetLeafText(LeafBlock leaf)
         {
-            if (leaf.Inline == null) return "";
+            if (leaf.Inline == null)
+                return "";
 
             return GetInlineText(leaf.Inline);
         }
 
-        private string GetInlineText(Inline inline)
+        private string GetInlineText(Inline? inline)
         {
+            if (inline is null)
+                return "";
+
             var sw = new StringWriter();
             RenderInlineToString(sw, inline);
             return sw.ToString();
@@ -161,16 +223,18 @@ public class GenerateCvPdfFromMarkdown
 
         private void RenderInlineToString(StringWriter sw, Inline inline)
         {
-            if (inline is LiteralInline literal) sw.Write(literal.Content.ToString());
-            else if (inline.GetType().Name == "SoftlineBreakInline") sw.Write(" ");
-            else if (inline is HtmlInline html) sw.Write(html.Tag);
+            if (inline is LiteralInline literal)
+                sw.Write(literal.Content.ToString());
+
+            else if (inline.GetType().Name == "SoftlineBreakInline")
+                sw.Write(" ");
+
+            else if (inline is HtmlInline html)
+                sw.Write(html.Tag);
+
             else if (inline is ContainerInline container)
                 foreach (var sub in container)
                     RenderInlineToString(sw, sub);
         }
     }
-
 }
-
-public class LayoutConfig
-{ }
