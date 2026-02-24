@@ -23,12 +23,12 @@ public class DiffStats
             LineModificationCount = newText.Lines.Count(x => x.Type == ChangeType.Modified);
 
             WordAdditionCount = newText.Lines
-                .Where(line => line.SubPieces?.Any() == true)
+                .Where(line => line.SubPieces?.Count > 0)
                 .SelectMany(line => line.SubPieces!)
                 .Count(piece => piece.Type == ChangeType.Inserted);
 
             WordModificationCount = newText.Lines
-                .Where(line => line.SubPieces?.Any() == true)
+                .Where(line => line.SubPieces?.Count > 0)
                 .SelectMany(line => line.SubPieces!)
                 .Count(piece => piece.Type == ChangeType.Modified);
         }
@@ -38,7 +38,7 @@ public class DiffStats
             LineDeletionCount = oldText.Lines.Count(x => x.Type == ChangeType.Deleted);
 
             WordDeletionCount = oldText.Lines
-                .Where(line => line.SubPieces?.Any() == true)
+                .Where(line => line.SubPieces?.Count > 0)
                 .SelectMany(line => line.SubPieces!)
                 .Count(piece => piece.Type == ChangeType.Deleted);
         }
