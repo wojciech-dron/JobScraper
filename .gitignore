@@ -268,4 +268,4 @@ __pycache__/
 /JobScraper.Web/appsettings.Development.json
 /Data/
 .roo/
-/JobScraper.Tests/Features/Cv/CV_output.pdf
+/JobScraper.Tests/Features/Cv/PdfGeneration/CV_output.pdf

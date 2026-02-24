@@ -25,13 +25,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Features\Cv\CV content.md">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <ProjectReference Include="..\JobScraper.Web\JobScraper.Web.csproj"/>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\JobScraper.Web\JobScraper.Web.csproj"/>
+    <None Update="Features\Cv\PdfGeneration\CV content.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
