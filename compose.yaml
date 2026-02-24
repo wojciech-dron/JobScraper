@@ -9,16 +9,16 @@
       - ~/JobScraper/Data:/home/app/data
     environment:
       - ASPNETCORE_URLS=http://+:8080
-      # OpenTelemetry exporter settings
-      - OTELENDPOINT=http://localhost:4317/
-      - OTELPROTOCOL=grpc
       # Chrome settings for playwright
       - APPSETTINGS__CDPENDPOINTURL=http://chrome:3000
-      # TickerQ Dashboard settings
+      # (optional) OpenTelemetry exporter settings
+      - OTELENDPOINT=http://localhost:4317/
+      - OTELPROTOCOL=grpc
+      # (optional) TickerQ Dashboard settings
       - APPSETTINGS__TICKERQ__DASHBOARD__BASEPATH=/tickerq-dashboard
       - APPSETTINGS__TICKERQ__DASHBOARD__USER=admin
       - APPSETTINGS__TICKERQ__DASHBOARD__PASSWORD=${TICKER_PASSWORD}
-      # you can use any other openAi compatible provider here
+      # (optional) you can use any other OpenAi compatible provider here
       - INTEGRATION__AIPROVIDERS__MAIN__VISIBLE=true
       - INTEGRATION__AIPROVIDERS__MAIN__BASEURL=https://openrouter.ai/api/v1/
       - INTEGRATION__AIPROVIDERS__MAIN__MODELID=arcee-ai/trinity-large-preview:free
