@@ -13,7 +13,7 @@ public partial class NoFluffJobsListScraper
 {
     public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
-    public partial class Handler : ListScraperBase<Command>
+    public partial class Handler : ListScraperBaseHandler<Command>
     {
 
         protected override DataOrigin DataOrigin => DataOrigin.NoFluffJobs;

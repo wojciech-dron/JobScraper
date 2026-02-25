@@ -5,18 +5,18 @@ using JobScraper.Web.Integration;
 using JobScraper.Web.Modules.Auth;
 using JobScraper.Web.Modules.Jobs;
 using JobScraper.Web.Modules.Logging;
-using JobScraper.Web.Modules.Mediator;
 using JobScraper.Web.Modules.Persistence;
 using JobScraper.Web.Modules.QuestPdf;
 using JobScraper.Web.Modules.Security;
 using JobScraper.Web.Modules.Services;
 using JobScraper.Web.Modules.Settings;
+using JobScraper.Web.Modules.Wolverine;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddScraperSettings();
 builder.AddBlazor();
-builder.AddMediatorModule();
+builder.AddWolverineFxModule();
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 builder.AddAuthServices();
 builder.AddLogging();

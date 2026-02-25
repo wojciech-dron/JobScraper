@@ -1,21 +1,22 @@
 ﻿using System.Diagnostics;
+using ErrorOr;
 using JobScraper.Web.Common.Entities;
 using JobScraper.Web.Features.JobOffers.Scrape;
 using JobScraper.Web.Modules.Persistence;
 using JobScraper.Web.Modules.Services;
-using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Serilog.Context;
 using TickerQ.Utilities;
 using TickerQ.Utilities.Base;
 using TickerQ.Utilities.Entities;
+using Wolverine;
 
 namespace JobScraper.Web.Features.AiSummary;
 
 public record struct SummaryRequest(string Owner);
 
 public sealed partial class AiSummaryJob(
-    IMediator mediator,
+    IMessageBus messageBus,
     UserProvider userProvider,
     JobsDbContext dbContext,
     ILogger<ScrapeHandler> logger)
@@ -72,14 +73,21 @@ public sealed partial class AiSummaryJob(
             config.ProviderName
         );
 
-        var result = await mediator.Send(arguments, cancellationToken);
-
-        if (result.IsError)
-            userOffer.AiSummaryStatus = AiSummaryStatus.Error;
-        else
+        try
         {
-            userOffer.AiSummary = result.Value.AiSummary;
-            userOffer.AiSummaryStatus = AiSummaryStatus.Generated;
+            var result = await messageBus.InvokeAsync<ErrorOr<SummarizeOfferContent.Response>>(arguments, cancellationToken);
+
+            if (result.IsError)
+                userOffer.AiSummaryStatus = AiSummaryStatus.Error;
+            else
+            {
+                userOffer.AiSummary = result.Value.AiSummary;
+                userOffer.AiSummaryStatus = AiSummaryStatus.Generated;
+            }
+        }
+        catch (Exception)
+        {
+            userOffer.AiSummaryStatus = AiSummaryStatus.Error;
         }
     }
 

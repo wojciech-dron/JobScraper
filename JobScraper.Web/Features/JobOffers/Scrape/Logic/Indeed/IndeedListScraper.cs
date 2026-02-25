@@ -10,7 +10,7 @@ public class IndeedListScraper
 {
     public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
-    public class Handler : ListScraperBase<Command>
+    public class Handler : ListScraperBaseHandler<Command>
     {
         protected override DataOrigin DataOrigin => DataOrigin.Indeed;
         public Handler(IOptions<AppSettings> config,

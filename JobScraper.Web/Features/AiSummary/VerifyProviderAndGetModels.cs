@@ -13,7 +13,7 @@ public class VerifyProviderAndGetModels
 
     public record Response(ModelsDto[] Models);
 
-    internal class Handler(
+    public class Handler(
         IHttpClientFactory clientFactory,
         IOptions<AiProvidersConfig> config
     ) : IRequestHandler<Request, ErrorOr<Response>>

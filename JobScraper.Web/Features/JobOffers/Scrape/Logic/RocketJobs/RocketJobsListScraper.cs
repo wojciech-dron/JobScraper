@@ -13,7 +13,7 @@ public partial class RocketJobsListScraper
 {
     public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
-    public partial class Handler : ListScraperBase<Command>
+    public partial class Handler : ListScraperBaseHandler<Command>
     {
 
         protected override DataOrigin DataOrigin => DataOrigin.RocketJobs;
@@ -146,6 +146,6 @@ public partial class RocketJobsListScraper
         );
 
         [LoggerMessage(LogLevel.Information, "{dataOrigin} - scrapping complete")]
-        static partial void LogDataOriginScrappingComplete(ILogger<ScrapperBase> logger, DataOrigin dataOrigin);
+        static partial void LogDataOriginScrappingComplete(ILogger<ScrapperBaseHandler> logger, DataOrigin dataOrigin);
     }
 }

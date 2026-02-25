@@ -1,17 +1,16 @@
 ﻿using JobScraper.Web.Features.JobOffers.Scrape.Logic.Extensions;
 using JobScraper.Web.Modules.Persistence;
-using Mediator;
 using Microsoft.EntityFrameworkCore;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape.Logic.Functions;
 
 public class RefreshKeywordsOnOffers
 {
-    public record Command : IRequest<Result>;
+    public record Command;
 
     public record Result(int ChangeCount = 0);
 
-    public class Handler : IRequestHandler<Command, Result>
+    public class Handler
     {
         private readonly JobsDbContext _dbContext;
         public Handler(JobsDbContext dbContext) => _dbContext = dbContext;

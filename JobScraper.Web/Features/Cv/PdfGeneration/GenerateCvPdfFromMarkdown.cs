@@ -3,7 +3,6 @@ using ErrorOr;
 using Markdig;
 using Markdig.Syntax;
 using Markdig.Syntax.Inlines;
-using Mediator;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using Unit = QuestPDF.Infrastructure.Unit;
@@ -17,7 +16,7 @@ public class GenerateCvPdfFromMarkdown
     public record Command(
         CvContent Content,
         LayoutConfig LayoutConfig
-    ) : IRequest<ErrorOr<byte[]>>;
+    );
 
     public record CvContent(
         string Markdown,
@@ -25,7 +24,7 @@ public class GenerateCvPdfFromMarkdown
         string? Disclaimer = null
     );
 
-    public class Handler : IRequestHandler<Command, ErrorOr<byte[]>>
+    public class Handler
     {
         public ValueTask<ErrorOr<byte[]>> Handle(Command request, CancellationToken cancellationToken)
         {

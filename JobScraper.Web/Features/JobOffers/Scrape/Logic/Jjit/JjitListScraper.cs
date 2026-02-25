@@ -13,7 +13,7 @@ public class JjitListScraper
 {
     public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
-    public class Handler : ListScraperBase<Command>
+    public class Handler : ListScraperBaseHandler<Command>
     {
 
         protected override DataOrigin DataOrigin => DataOrigin.JustJoinIt;

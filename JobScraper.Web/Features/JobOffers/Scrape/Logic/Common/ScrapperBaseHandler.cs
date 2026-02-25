@@ -9,10 +9,9 @@ using Polly.Retry;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 
-public abstract class ScrapperBase : IDisposable
+public abstract class ScrapperBaseHandler : IDisposable
 {
-
-    private static readonly string[] UserAgentStrings =
+    private static readonly string[] _userAgentStrings =
     [
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.2227.0 Safari/537.36",
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
@@ -22,24 +21,24 @@ public abstract class ScrapperBase : IDisposable
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
     ];
 
-    public static readonly AsyncRetryPolicy<JobOffer> RetryPolicy =
-        Policy<JobOffer>.Handle<Exception>()
-            .WaitAndRetryAsync(1, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
     protected readonly AppSettings AppSettings;
     protected readonly JobsDbContext DbContext;
-    protected readonly ILogger<ScrapperBase> Logger;
+    protected readonly ILogger<ScrapperBaseHandler> Logger;
     protected readonly ScraperConfig ScrapeConfig;
     protected readonly SourceConfig Source;
     private IBrowser? _browser;
     private IPlaywright? _playwright;
 
     protected abstract DataOrigin DataOrigin { get; }
+    public static readonly AsyncRetryPolicy<JobOffer> RetryPolicy =
+        Policy<JobOffer>.Handle<Exception>()
+            .WaitAndRetryAsync(1, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
     public bool IsEnabled { get; }
     public string BaseUrl { get; }
 
-    public ScrapperBase(IOptions<AppSettings> appSettings,
-        ILogger<ScrapperBase> logger,
+    public ScrapperBaseHandler(IOptions<AppSettings> appSettings,
+        ILogger<ScrapperBaseHandler> logger,
         JobsDbContext dbContext)
     {
         AppSettings = appSettings.Value;
@@ -98,7 +97,7 @@ public abstract class ScrapperBase : IDisposable
 
         return await _browser.NewPageAsync(new BrowserNewPageOptions
         {
-            UserAgent = UserAgentStrings[Random.Shared.Next() % UserAgentStrings.Length],
+            UserAgent = _userAgentStrings[Random.Shared.Next() % _userAgentStrings.Length],
         });
     }
 

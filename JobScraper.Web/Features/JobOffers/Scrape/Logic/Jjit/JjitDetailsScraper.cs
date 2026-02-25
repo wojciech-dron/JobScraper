@@ -11,7 +11,7 @@ public class JjitDetailsScraper
 {
     public record Command(SourceConfig Source) : ScrapeDetailsCommand(Source);
 
-    public class Handler : DetailsScrapperBase<Command>
+    public class Handler : DetailsScrapperBaseHandler<Command>
     {
 
         protected override DataOrigin DataOrigin => DataOrigin.JustJoinIt;

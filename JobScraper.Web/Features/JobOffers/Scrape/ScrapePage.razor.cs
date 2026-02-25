@@ -4,12 +4,12 @@ using JobScraper.Web.Common.Entities;
 using JobScraper.Web.Features.AiSummary;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Functions;
 using JobScraper.Web.Modules.Persistence;
-using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using TickerQ.Utilities;
 using TickerQ.Utilities.Entities;
+using Wolverine;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape;
 
@@ -155,8 +155,8 @@ public partial class ScrapePage(
         try
         {
             using var scope = serviceProvider.CreateScope();
-            var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-            var result = await mediator.Send(new RefreshKeywordsOnOffers.Command());
+            var mediator = scope.ServiceProvider.GetRequiredService<IMessageBus>();
+            var result = await mediator.InvokeAsync<RefreshKeywordsOnOffers.Result>(new RefreshKeywordsOnOffers.Command());
 
             PushNotification($"Refreshing offers finished successfully with {result.ChangeCount} updates.");
         }

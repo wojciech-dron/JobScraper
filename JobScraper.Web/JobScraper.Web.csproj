@@ -61,6 +61,9 @@
     <PackageReference Include="TickerQ" Version="10.1.1"/>
     <PackageReference Include="TickerQ.Dashboard" Version="10.1.1"/>
     <PackageReference Include="TickerQ.EntityFrameworkCore" Version="10.1.1"/>
+    <PackageReference Include="WolverineFx" Version="5.16.2"/>
+    <PackageReference Include="WolverineFx.EntityFrameworkCore" Version="5.16.2"/>
+    <PackageReference Include="WolverineFx.Sqlite" Version="5.16.2"/>
   </ItemGroup>
 
   <ItemGroup>
