@@ -5,7 +5,7 @@ namespace JobScraper.Web.Modules.Extensions;
 
 public static class WolverineExtensions
 {
-    public static async Task<TResponse> InvokeWithRetryAsync<TResponse>(this IMessageBus mediator,
+    public static async Task<TResponse> InvokeWithRetryAsync<TResponse>(this IMessageBus messageBus,
         object request,
         ILogger? logger = null,
         int retryAttempts = 1,
@@ -17,7 +17,7 @@ public static class WolverineExtensions
         try
         {
             return await retryPolicy.ExecuteAsync(async () =>
-                await mediator.InvokeAsync<TResponse>(request, cancellationToken));
+                await messageBus.InvokeAsync<TResponse>(request, cancellationToken));
         }
         catch (Exception e)
         {
