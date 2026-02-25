@@ -5,7 +5,8 @@ namespace JobScraper.Web.Modules.Mediator;
 
 public static class Setup
 {
-    /// <remarks> Must be here because of source generation </remarks>
+    /// <remarks> Must be here because of source generation. </remarks>
+    /// <remarks> Leave for now for fast fallback. </remarks>
     public static WebApplicationBuilder AddMediatorModule(this WebApplicationBuilder builder)
     {
         builder.Services.AddMediator(options =>

@@ -1,6 +1,5 @@
 ﻿using ErrorOr;
 using JobScraper.Web.Integration.AiProvider;
-using Mediator;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Agents.Chat;
@@ -16,14 +15,14 @@ public class SummarizeOfferContent
         string OfferContent,
         string UserRequirements,
         string ProviderName = AiProvidersConfig.MainProvider
-    ) : IRequest<ErrorOr<Response>>;
+    );
 
     public record Response(string? AiSummary, List<ChatItem> ChatHistory);
 
-    internal class Handler(
+    public class Handler(
         IServiceProvider serviceProvider,
         ILoggerFactory loggerFactory
-    ) : IRequestHandler<Request, ErrorOr<Response>>
+    )
     {
         private const string DoneSignal = "[DONE]";
         private const string FailSignal = "[FAIL]";
@@ -38,22 +37,15 @@ public class SummarizeOfferContent
             var chatHistory = new List<ChatItem>();
             do
             {
-                try
-                {
-                    var chat = PrepareAgentsChat(request);
-                    chat.AddChatMessage(message);
+                var chat = PrepareAgentsChat(request);
+                chat.AddChatMessage(message);
 
-                    var asyncResponse = chat.InvokeAsync(cancellationToken);
+                var asyncResponse = chat.InvokeAsync(cancellationToken);
 
-                    await foreach (var response in asyncResponse)
-                    {
-                        chatHistory.Add(new ChatItem(response.AuthorName, response.Content));
-                        finalContent = response.Content;
-                    }
-                }
-                catch (Exception)
+                await foreach (var response in asyncResponse)
                 {
-                    // ignored
+                    chatHistory.Add(new ChatItem(response.AuthorName, response.Content));
+                    finalContent = response.Content;
                 }
             } while (ShouldRetry(finalContent, retryCount++));
 
@@ -79,7 +71,7 @@ public class SummarizeOfferContent
 
         private AgentGroupChat PrepareAgentsChat(Request request)
         {
-            var kernel = serviceProvider.GetRequiredKeyedService<Kernel>(request.ProviderName);
+            var kernel = serviceProvider.GetRequiredKeyedService<Kernel>(request.ProviderName.ToUpperInvariant());
 
             var analystAgent = new ChatCompletionAgent
             {

@@ -1,22 +1,19 @@
 ﻿using JobScraper.Web.Common.Entities;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Extensions;
 using JobScraper.Web.Modules.Persistence;
-using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Serilog.Context;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 
-public abstract partial class ListScraperBase<TScrapeCommand>
-    : ScrapperBase, IRequestHandler<TScrapeCommand, ScrapeResponse>
+public abstract partial class ListScraperBaseHandler<TScrapeCommand>(
+    IOptions<AppSettings> config,
+    ILogger<ListScraperBaseHandler<TScrapeCommand>> logger,
+    JobsDbContext dbContext
+) : ScrapperBaseHandler(config, logger, dbContext)
     where TScrapeCommand : ScrapeCommand
 {
-    public ListScraperBase(IOptions<AppSettings> config,
-        ILogger<ListScraperBase<TScrapeCommand>> logger,
-        JobsDbContext dbContext) : base(config, logger, dbContext)
-    { }
-
     public async ValueTask<ScrapeResponse> Handle(TScrapeCommand scrape, CancellationToken cancellationToken = default)
     {
         using var userNameScope = LogContext.PushProperty("UserName", DbContext.CurrentUserName);
@@ -154,13 +151,13 @@ public abstract partial class ListScraperBase<TScrapeCommand>
     }
 
     [LoggerMessage(LogLevel.Information, "Scraping {dataOrigin} jobs list...")]
-    static partial void LogScrapingJobsList(ILogger<ScrapperBase> logger, DataOrigin dataOrigin);
+    static partial void LogScrapingJobsList(ILogger<ScrapperBaseHandler> logger, DataOrigin dataOrigin);
 
     [LoggerMessage(LogLevel.Information, "Syncing {dataOrigin} jobs...")]
-    static partial void LogSyncingJobs(ILogger<ScrapperBase> logger, DataOrigin dataOrigin);
+    static partial void LogSyncingJobs(ILogger<ScrapperBaseHandler> logger, DataOrigin dataOrigin);
 
     [LoggerMessage(LogLevel.Information, "Saving {jobsCount} new user offers")]
-    static partial void LogSavingUserOffers(ILogger<ScrapperBase> logger, int jobsCount);
+    static partial void LogSavingUserOffers(ILogger<ScrapperBaseHandler> logger, int jobsCount);
     [LoggerMessage(LogLevel.Information, "Saving {CompaniesCount} new companies")]
-    static partial void LogSavingNewCompanies(ILogger<ScrapperBase> logger, int CompaniesCount);
+    static partial void LogSavingNewCompanies(ILogger<ScrapperBaseHandler> logger, int CompaniesCount);
 }

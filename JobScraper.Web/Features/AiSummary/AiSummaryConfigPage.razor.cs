@@ -1,23 +1,24 @@
 ﻿using BlazorBootstrap;
 using Blazored.FluentValidation;
+using ErrorOr;
 using Facet;
 using Facet.Extensions;
 using FluentValidation;
 using JobScraper.Web.Common.Entities;
 using JobScraper.Web.Integration.AiProvider;
 using JobScraper.Web.Modules.Persistence;
-using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using Riok.Mapperly.Abstractions;
 using TickerQ.Utilities.Enums;
+using Wolverine;
 
 namespace JobScraper.Web.Features.AiSummary;
 
 public partial class AiSummaryConfigPage(
     JobsDbContext dbContext,
-    IMediator mediator,
+    IMessageBus messageBus,
     IJSRuntime js)
 {
     private readonly CancellationTokenSource _cts = new();
@@ -69,7 +70,7 @@ public partial class AiSummaryConfigPage(
     {
         isWorking = true;
 
-        var result = await mediator.Send(
+        var result = await messageBus.InvokeAsync<ErrorOr<VerifyProviderAndGetModels.Response>>(
             new VerifyProviderAndGetModels.Request(form.ProviderName),
             _cts.Token);
 
@@ -102,7 +103,7 @@ public partial class AiSummaryConfigPage(
             UserRequirements: form.UserRequirements ?? "",
             ProviderName: form.ProviderName);
 
-        var result = await mediator.Send(request, _cts.Token);
+        var result = await messageBus.InvokeAsync<ErrorOr<SummarizeOfferContent.Response>>(request, _cts.Token);
 
         if (result.IsError)
             PushNotification(result.FirstError.Description);

@@ -11,17 +11,17 @@ using JobScraper.Web.Features.JobOffers.Scrape.Logic.RocketJobs;
 using JobScraper.Web.Modules.Extensions;
 using JobScraper.Web.Modules.Persistence;
 using JobScraper.Web.Modules.Services;
-using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Serilog.Context;
 using TickerQ.Utilities.Base;
+using Wolverine;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape;
 
 public record struct ScrapeRequest(string Owner);
 
 public sealed partial class ScrapeHandler(
-    IMediator mediator,
+    IMessageBus messageBus,
     UserProvider userProvider,
     JobsDbContext dbContext,
     ILogger<ScrapeHandler> logger
@@ -91,7 +91,9 @@ public sealed partial class ScrapeHandler(
                 var command = listCommands[idx];
                 LogScrapingListPages(idx + 1, listCommands.Length);
 
-                var result = await mediator.SendWithRetry(command, logger, cancellationToken: cancellationToken);
+                var result = await messageBus.InvokeWithRetryAsync<ScrapeResponse>(command,
+                    logger,
+                    cancellationToken: cancellationToken);
                 offersCount += result.ScrapedOffersCount;
             }
         }
@@ -135,7 +137,10 @@ public sealed partial class ScrapeHandler(
                 var command = detailsCommands[idx]!;
                 LogScrapingDetails(idx + 1, detailsCommands.Length);
 
-                var result = await mediator.SendWithRetry(command, logger, cancellationToken: cancellationToken);
+                var result = await messageBus.InvokeWithRetryAsync<ScrapeResponse>(command,
+                    logger,
+                    cancellationToken: cancellationToken);
+
                 offersScraped.AddRange(result.OffersUrls);
             }
 

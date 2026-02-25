@@ -2,22 +2,20 @@
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Extensions;
 using JobScraper.Web.Modules.Extensions;
 using JobScraper.Web.Modules.Persistence;
-using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Serilog.Context;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 
-public abstract partial class DetailsScrapperBase<TScrapeCommand> : ScrapperBase, IRequestHandler<TScrapeCommand, ScrapeResponse>
+public abstract partial class DetailsScrapperBaseHandler<TScrapeCommand>(
+    IOptions<AppSettings> config,
+    ILogger<DetailsScrapperBaseHandler<TScrapeCommand>> logger,
+    JobsDbContext dbContext
+) : ScrapperBaseHandler(config, logger, dbContext)
     where TScrapeCommand : ScrapeDetailsCommand
 {
-    public DetailsScrapperBase(IOptions<AppSettings> config,
-        ILogger<DetailsScrapperBase<TScrapeCommand>> logger,
-        JobsDbContext dbContext) : base(config, logger, dbContext)
-    { }
-
-    public virtual async ValueTask<ScrapeResponse> Handle(TScrapeCommand command, CancellationToken cancellationToken = default)
+    public async ValueTask<ScrapeResponse> Handle(TScrapeCommand command, CancellationToken cancellationToken = default)
     {
         using var userNameScope = LogContext.PushProperty("UserName", DbContext.CurrentUserName);
         using var dataOriginScope = LogContext.PushProperty("DataOrigin", DataOrigin);
@@ -78,8 +76,8 @@ public abstract partial class DetailsScrapperBase<TScrapeCommand> : ScrapperBase
     public abstract Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer);
 
     [LoggerMessage(LogLevel.Information, "Found {count} jobs to scrape details")]
-    static partial void LogFoundJobsToScrapeDetails(ILogger<ScrapperBase> logger, int count);
+    static partial void LogFoundJobsToScrapeDetails(ILogger<ScrapperBaseHandler> logger, int count);
 
     [LoggerMessage(LogLevel.Information, "Scraping {dataOrigin} job details for {offerUrl}")]
-    static partial void LogScrapingJobDetails(ILogger<ScrapperBase> logger, DataOrigin dataOrigin, string offerUrl);
+    static partial void LogScrapingJobDetails(ILogger<ScrapperBaseHandler> logger, DataOrigin dataOrigin, string offerUrl);
 }
