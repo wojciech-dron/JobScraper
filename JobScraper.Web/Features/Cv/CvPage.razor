@@ -1,14 +1,24 @@
 ﻿@page "/Cv/{Id:int}"
-@using JobScraper.Web.Blazor.Components.TextDiff
+@using BlazorMonaco.Editor
 @using JobScraper.Web.Features.Cv.Components
+@inject IJSRuntime jsRuntime
 
-<TextDiff HideUnchangedLines="true" CollapseContent="true" OldText="@OldText" NewText="@NewText"/>
-
+<CvDiffEditor @ref="_diffEditor" OriginalContent="@OriginalContent" ModifiedContent="@ModifiedContent" />
 
 @code {
-    private readonly string OldText = TestData.BaseCv;
-    private readonly string NewText = TestData.ModifiedCv;
+    private readonly string OriginalContent = TestData.BaseCv;
+    private string ModifiedContent = TestData.ModifiedCv;
+    private CvDiffEditor? _diffEditor;
 
     [Parameter]
     public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Global.SetTheme(jsRuntime, "vs-dark");
+    }
+
+    public async Task<string?> GetModifiedValue() => _diffEditor is not null
+        ? await _diffEditor.GetModifiedValue()
+        : null;
 }
