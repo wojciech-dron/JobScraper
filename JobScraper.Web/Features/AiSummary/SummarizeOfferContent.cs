@@ -71,7 +71,7 @@ public class SummarizeOfferContent
 
         private AgentGroupChat PrepareAgentsChat(Request request)
         {
-            var kernel = serviceProvider.GetRequiredKeyedService<Kernel>(request.ProviderName.ToUpperInvariant());
+            var kernel = serviceProvider.GetAiKernel(request.ProviderName);
 
             var analystAgent = new ChatCompletionAgent
             {

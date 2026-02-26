@@ -1,13 +1,13 @@
-﻿using Polly;
+﻿using ErrorOr;
+using Polly;
 using Wolverine;
 
 namespace JobScraper.Web.Modules.Extensions;
 
 public static class WolverineExtensions
 {
-    public static async Task<TResponse> InvokeWithRetryAsync<TResponse>(this IMessageBus messageBus,
+    public static async Task<ErrorOr<TResponse>> InvokeWithRetryAsync<TResponse>(this IMessageBus messageBus,
         object request,
-        ILogger? logger = null,
         int retryAttempts = 1,
         CancellationToken cancellationToken = default)
         where TResponse : new()
@@ -21,12 +21,7 @@ public static class WolverineExtensions
         }
         catch (Exception e)
         {
-            if (logger is not null)
-                logger.LogError(e, "Error occurred while sending request: {Request}", request);
-            else
-                Console.WriteLine($"Error occurred while sending request: {request}");
-
-            return new TResponse();
+            return Error.Failure(description: $"Exception occurred while sending request. Message {e.Message}");
         }
     }
 }

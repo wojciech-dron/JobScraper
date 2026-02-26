@@ -92,9 +92,14 @@ public sealed partial class ScrapeHandler(
                 LogScrapingListPages(idx + 1, listCommands.Length);
 
                 var result = await messageBus.InvokeWithRetryAsync<ScrapeResponse>(command,
-                    logger,
                     cancellationToken: cancellationToken);
-                offersCount += result.ScrapedOffersCount;
+
+                if (result.IsError)
+                    logger.LogError("Error occurred while scraping details source {Index}/{CommandsCount}",
+                        idx + 1,
+                        listCommands.Length);
+                else
+                    offersCount += result.Value.ScrapedOffersCount;
             }
         }
         finally
@@ -138,10 +143,15 @@ public sealed partial class ScrapeHandler(
                 LogScrapingDetails(idx + 1, detailsCommands.Length);
 
                 var result = await messageBus.InvokeWithRetryAsync<ScrapeResponse>(command,
-                    logger,
                     cancellationToken: cancellationToken);
 
-                offersScraped.AddRange(result.OffersUrls);
+                if (result.IsError)
+                    logger.LogError("Error occurred while scraping details provider {ProviderNumber} of {TotalProviders}",
+                        idx + 1,
+                        detailsCommands.Length);
+                else
+                    offersScraped.AddRange(result.Value.OffersUrls);
+
             }
 
             var aiSummaryEnabled = dbContext.AiSummaryConfigs.Any(x => x.AiSummaryEnabled == true);

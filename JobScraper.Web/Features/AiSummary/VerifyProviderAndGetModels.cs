@@ -20,11 +20,11 @@ public class VerifyProviderAndGetModels
     {
         public async ValueTask<ErrorOr<Response>> Handle(Request request, CancellationToken cancellationToken)
         {
-            var providerName = request.ProviderName.ToUpperInvariant();
+            var providerName = request.ProviderName;
             if (!config.Value.TryGetValue(providerName, out var settings))
                 return Error.Failure(description: $"Provider '{providerName}' not found in configuration");
 
-            var httpClient = clientFactory.CreateClient(providerName);
+            var httpClient = clientFactory.CreateClient(providerName.NormalizeAiProviderName());
 
             var response = await httpClient.GetAsync("models", cancellationToken);
 

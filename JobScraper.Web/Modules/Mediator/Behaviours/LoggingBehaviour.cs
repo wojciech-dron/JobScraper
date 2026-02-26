@@ -23,7 +23,7 @@ public partial class LoggingBehaviour<TRequest, TResponse>(
 
         var result = await next(message, cancellationToken);
 
-        var elapsedMs = Stopwatch.GetElapsedTime(beginTime).Milliseconds;
+        var elapsedMs = Stopwatch.GetElapsedTime(beginTime).TotalMilliseconds;
         var requestName = typeof(TRequest).FullName;
 
         LogRequest(logger, requestName, elapsedMs);
@@ -32,5 +32,5 @@ public partial class LoggingBehaviour<TRequest, TResponse>(
     }
 
     [LoggerMessage(LogLevel.Information, "Mediator Request: {RequestName} finished in {ElapsedMs}ms")]
-    static partial void LogRequest(ILogger<TRequest> logger, string? requestName, int elapsedMs);
+    static partial void LogRequest(ILogger<TRequest> logger, string? requestName, double elapsedMs);
 }
