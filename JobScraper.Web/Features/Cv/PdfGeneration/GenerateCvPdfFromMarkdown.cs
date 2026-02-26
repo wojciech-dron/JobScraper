@@ -9,6 +9,12 @@ using Unit = QuestPDF.Infrastructure.Unit;
 
 namespace JobScraper.Web.Features.Cv.PdfGeneration;
 
+public record CvContent(
+    string Markdown,
+    byte[]? Image = null,
+    string? Disclaimer = null
+);
+
 [SuppressMessage("Performance", "CA1822:Mark members as static")]
 [SuppressMessage("ReSharper", "CognitiveComplexity")]
 public class GenerateCvPdfFromMarkdown
@@ -16,12 +22,6 @@ public class GenerateCvPdfFromMarkdown
     public record Command(
         CvContent Content,
         LayoutConfig LayoutConfig
-    );
-
-    public record CvContent(
-        string Markdown,
-        byte[]? Image = null,
-        string? Disclaimer = null
     );
 
     public class Handler
