@@ -1,0 +1,22 @@
+﻿@using JobScraper.Web.Common.Models
+@using Microsoft.SemanticKernel.ChatCompletion
+
+<div class="chat-container">
+    <div class="chat-messages p-3 border rounded mb-3">
+        @foreach (var chatItem in Items)
+        {
+            var isUser = chatItem.Role?.Equals(AuthorRole.User.Label, StringComparison.OrdinalIgnoreCase) ?? false;
+            var messageClass = isUser ? "user-message" : "ai-message";
+
+            <div class="message @messageClass">
+                <strong>@chatItem.Role</strong>
+                <pre>@chatItem.Content</pre>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public List<ChatItem> Items { get; set; } = [];
+}

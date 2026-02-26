@@ -1,6 +1,7 @@
 ﻿@page "/ai-summary/config"
 @using BlazorBootstrap
 @using Blazored.FluentValidation
+@using JobScraper.Web.Common.Models
 
 <NavigationLock ConfirmExternalNavigation="@PreventNavigation"
                 OnBeforeInternalNavigation="OnBeforeInternalNavigation"/>
@@ -90,17 +91,7 @@
     @if (chatHistory?.Count > 0)
     {
         <h4>Chat history</h4>
-        <div class="chat-container">
-            <div class="chat-messages p-3 border rounded mb-3">
-                @foreach (var chatItem in chatHistory)
-                {
-                    <div class="message ai-message">
-                        <strong>@chatItem.AuthorName</strong>
-                        <pre>@chatItem.Content</pre>
-                    </div>
-                }
-            </div>
-        </div>
+        <ChatHistory Items="chatHistory"/>
     }
 </EditForm>
 
