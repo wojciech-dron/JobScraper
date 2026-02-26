@@ -1,5 +1,6 @@
 ﻿@using BlazorBootstrap
 @using JobScraper.Web.Common.Entities
+@using JobScraper.Web.Features.Cv
 @using JobScraper.Web.Modules.Auth
 @using JobScraper.Web.Modules.Persistence
 @using JobScraper.Web.Modules.Services
@@ -7,6 +8,11 @@
 @using Microsoft.EntityFrameworkCore
 <Modal @ref="_modal" Title="Offer application" Fullscreen="ModalFullscreen.Always">
     <BodyTemplate>
+        <style>
+            .modal-body button {
+                margin-right: 5px;
+            }
+        </style>
         <div class="row">
             <div class="col-md-3">
                 <h4>
@@ -50,23 +56,23 @@
 
                         @if (_offer.HideStatus != HideStatus.Hidden)
                         {
-                            <button class="btn btn-danger ms-1" @onclick="HideOffer">Hide</button>
+                            <button class="btn btn-danger" @onclick="HideOffer">Hide</button>
                         }
 
                         @if (_offer.HideStatus == HideStatus.Regular)
                         {
-                            <button class="btn btn-warning ms-1" @onclick="StarOffer">Mark as starred</button>
+                            <button class="btn btn-warning" @onclick="StarOffer">Mark as starred</button>
                         }
 
                         @if (_offer.HideStatus == HideStatus.Starred)
                         {
-                            <button class="btn btn-success ms-1" @onclick="RegularOffer">Mark as regular</button>
+                            <button class="btn btn-success" @onclick="RegularOffer">Mark as regular</button>
                         }
                     }
                     <a href="/edit-offer/@Uri.EscapeDataString(_offer.OfferUrl)">
-                        <button class="btn btn-info ms-1">Edit offer</button>
+                        <button class="btn btn-info">Edit offer</button>
                     </a>
-                    <button class="btn btn-secondary ms-1" @onclick="CloseAsync">Close</button>
+                    <button class="btn btn-secondary" @onclick="CloseAsync">Close</button>
                 </div>
             </div>
 
@@ -127,33 +133,39 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-success ms-1"
+                    <button type="submit" class="btn btn-success"
                             @onclick="SaveAsync">@(_isEdit ? "Update" : "Create")</button>
                     @if (_canAiSummary)
                     {
-                        <button type="submit" class="btn btn-primary ms-1" @onclick="MarkForAiSummary">
+                        <button type="submit" class="btn btn-primary" @onclick="MarkForAiSummary">
                             Mark for AI summary
                         </button>
                     }
-                    <button type="button" class="btn btn-secondary ms-1" @onclick="CloseAsync">Close</button>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseAsync">Close</button>
                 </EditForm>
 
             </div>
             <div class="col-md-6">
                 @if (_offer.OfferUrl.StartsWith("http"))
                 {
+                    <button class="btn btn-success" @onclick="ShowPrepareCvModalAsync">Prepare CV for offer</button>
+                }
+
+                @if (_offer.OfferUrl.StartsWith("http"))
+                {
                     <a href="@_offer.OfferUrl" target="_blank">
                         <button class="btn btn-primary">Go to offer page</button>
                     </a>
                 }
-                <br/>
-                <br/>
 
                 @if (!string.IsNullOrEmpty(_application?.ApplyUrl))
                 {
-                    <a href="@_application.ApplyUrl" target="_blank">Apply page</a>
-                    <br/>
+                    <a href="@_application.ApplyUrl" target="_blank">
+                        <button class="btn btn-primary">Go to apply page</button>
+                    </a>
                 }
+
+                <br/>
 
                 @if (!string.IsNullOrEmpty(_offer.AiSummary))
                 {
@@ -173,6 +185,8 @@
     </BodyTemplate>
 </Modal>
 
+<PrepareCvForOfferModal @ref="_prepareCvModal"></PrepareCvForOfferModal>
+
 @inject IDbContextFactory<JobsDbContext> DbContextFactory
 @inject NavigationManager NavigationManager
 @inject IUserProvider UserProvider
@@ -180,6 +194,7 @@
 @code {
     [CascadingParameter] private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
 
+    private PrepareCvForOfferModal _prepareCvModal = null!;
     private bool _isEdit;
     private bool _canAiSummary;
     private bool _aiSummaryRole;
@@ -257,6 +272,8 @@
         await Hide();
     }
 
+    private async Task ShowPrepareCvModalAsync() => await _prepareCvModal.ShowAsync(_offer);
+
     private async Task HideOffer()
     {
         _offer.HideStatus = HideStatus.Hidden;
@@ -307,4 +324,5 @@
     }
 
     public async ValueTask DisposeAsync() => await _context.DisposeAsync();
+
 }

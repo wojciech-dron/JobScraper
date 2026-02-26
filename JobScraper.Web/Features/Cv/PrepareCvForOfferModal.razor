@@ -1,0 +1,71 @@
+﻿@using BlazorBootstrap
+@using JobScraper.Web.Blazor.Components
+@using JobScraper.Web.Common.Entities
+@using JobScraper.Web.Common.Models
+@using JobScraper.Web.Features.Cv.Components
+@using JobScraper.Web.Modules.Persistence
+@using JobScraper.Web.Modules.Services
+@using Microsoft.EntityFrameworkCore
+
+<Modal @ref="_modal" Title="Prepare CV for offer" Fullscreen="ModalFullscreen.Always">
+    <BodyTemplate>
+        <div class="row">
+            <div class="col-md-8">
+                <MarkdownDiffEditor @ref="_diffEditor" OriginalCv="@OriginalContent" ModifiedContent="@ModifiedContent"/>
+            </div>
+
+            <div class="col-md-4">
+                @if (_offer.OfferUrl.StartsWith("http"))
+                {
+                    <a href="@_offer.OfferUrl" target="_blank">
+                        <button class="btn btn-primary">Go to offer page</button>
+                    </a>
+                }
+                <br/>
+                <br/>
+
+                @if (!string.IsNullOrEmpty(_offer.AiSummary))
+                {
+                    <h4 style="color: #FFC2B2">Ai Summary:</h4>
+                    <span style="white-space: pre-line">
+                        @_offer.AiSummary
+                    </span>
+                }
+
+            </div>
+        </div>
+        <div class="row">
+            @if (chatHistory.Count > 0)
+            {
+                <ChatHistory Items="chatHistory"/>
+            }
+        </div>
+    </BodyTemplate>
+</Modal>
+
+
+@code {
+    private Modal _modal = null!;
+    private UserOffer _offer = null!;
+    private MarkdownDiffEditor _diffEditor = null!;
+    private List<ChatItem> chatHistory = [];
+
+    private readonly string OriginalContent = TestData.BaseCv;
+    private readonly string ModifiedContent = TestData.ModifiedCv;
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    public async Task ShowAsync(UserOffer userOffer)
+    {
+        _offer = userOffer;
+        await _modal.ShowAsync();
+    }
+
+
+    private async Task Hide()
+    {
+        await _modal.HideAsync();
+    }
+
+}
