@@ -3,23 +3,24 @@
 @using JobScraper.Web.Common.Entities
 @using JobScraper.Web.Common.Models
 @using JobScraper.Web.Features.Cv.Components
-@using JobScraper.Web.Modules.Persistence
-@using JobScraper.Web.Modules.Services
-@using Microsoft.EntityFrameworkCore
+@using JobScraper.Web.Features.Cv.PdfGeneration
+@using Wolverine
 
 <Modal @ref="_modal" Title="Prepare CV for offer" Fullscreen="ModalFullscreen.Always">
     <BodyTemplate>
-        <div class="row">
-            <div class="col-md-8">
-                <MarkdownDiffEditor @ref="_diffEditor" OriginalCv="@OriginalContent" ModifiedContent="@ModifiedContent"/>
+        <div class="row h-100">
+            <div class="col-md-3">
+                <MarkdownDiffEditor
+                    @ref="_diffEditor"
+                    InitOriginalContent="@OriginalContent"
+                    InitModifiedContent="@ModifiedContent"
+                    Inline />
             </div>
 
-            <div class="col-md-4">
+            <div class="col-md-3">
                 @if (_offer.OfferUrl.StartsWith("http"))
                 {
-                    <a href="@_offer.OfferUrl" target="_blank">
-                        <button class="btn btn-primary">Go to offer page</button>
-                    </a>
+                    <button class="btn btn-primary" @onclick="GenerateCv">Generate CV</button>
                 }
                 <br/>
                 <br/>
@@ -43,6 +44,7 @@
     </BodyTemplate>
 </Modal>
 
+@inject IMessageBus MessageBus
 
 @code {
     private Modal _modal = null!;
@@ -62,6 +64,19 @@
         await _modal.ShowAsync();
     }
 
+    private async Task GenerateCv()
+    {
+        var mdContent = await _diffEditor.GetModifiedValueAsync();
+        if (string.IsNullOrWhiteSpace(mdContent))
+        {
+            return;
+        }
+
+        var cvContent = new CvContent(mdContent);
+        var layoutConfig = new LayoutConfig();
+        var command = new GenerateCvPdfFromMarkdown.Command(cvContent, layoutConfig);
+        var pdfFile = await MessageBus.InvokeAsync<byte[]>(command);
+    }
 
     private async Task Hide()
     {

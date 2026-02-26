@@ -4,7 +4,7 @@
 @using JobScraper.Web.Features.Cv.Components
 @inject IJSRuntime jsRuntime
 
-<MarkdownDiffEditor @ref="_diffEditor" OriginalCv="@OriginalContent" ModifiedContent="@ModifiedContent" />
+<MarkdownDiffEditor @ref="_diffEditor" InitOriginalContent="@OriginalContent" InitModifiedContent="@ModifiedContent" />
 
 @code {
     private readonly string OriginalContent = TestData.BaseCv;
@@ -19,6 +19,6 @@
     }
 
     public async Task<string?> GetModifiedValue() => _diffEditor is not null
-        ? await _diffEditor.GetModifiedValue()
+        ? await _diffEditor.GetModifiedValueAsync()
         : null;
 }
