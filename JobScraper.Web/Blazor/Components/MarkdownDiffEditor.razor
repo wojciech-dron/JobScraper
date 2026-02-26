@@ -4,9 +4,9 @@
 <StandaloneDiffEditor @ref="_diffEditor" Id="@Id" ConstructionOptions="EditorOptions" CssClass="@CssClass"/>
 
 @code {
-    [Parameter] public string Id { get; set; } = "cv-diff-editor";
+    [Parameter] public string Id { get; set; } = "diff-editor";
     [Parameter] public string CssClass { get; set; } = "h-100";
-    [Parameter] public string OriginalContent { get; set; } = string.Empty;
+    [Parameter] public string OriginalCv { get; set; } = string.Empty;
     [Parameter] public string ModifiedContent { get; set; } = string.Empty;
 
     private StandaloneDiffEditor? _diffEditor;
@@ -17,8 +17,10 @@
         ScrollBeyondLastColumn = 5,
     };
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnInitializedAsync()
     {
+        await Global.SetTheme(jsRuntime, "vs-dark");
+
         await UpdateModels();
     }
 
@@ -28,7 +30,7 @@
             return;
 
         var originalModel = await Global.GetModel(jsRuntime, $"{Id}-original") ??
-            await Global.CreateModel(jsRuntime, OriginalContent, "markdown", $"{Id}-original");
+            await Global.CreateModel(jsRuntime, OriginalCv, "markdown", $"{Id}-original");
 
         var modifiedModel = await Global.GetModel(jsRuntime, $"{Id}-modified") ??
             await Global.CreateModel(jsRuntime, ModifiedContent, "markdown", $"{Id}-modified");
