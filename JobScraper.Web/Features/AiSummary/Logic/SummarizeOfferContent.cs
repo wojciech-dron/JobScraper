@@ -1,4 +1,5 @@
 ﻿using ErrorOr;
+using JobScraper.Web.Common.Models;
 using JobScraper.Web.Integration.AiProvider;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
@@ -44,12 +45,13 @@ public class SummarizeOfferContent
 
                 await foreach (var response in asyncResponse)
                 {
-                    chatHistory.Add(new ChatItem(response.AuthorName, response.Content));
+                    chatHistory.Add(ChatItem.From(response));
                     finalContent = response.Content;
                 }
             } while (ShouldRetry(finalContent, retryCount++));
 
-            return new Response(finalContent?.Replace(DoneSignal, ""), chatHistory);
+            var summary = finalContent?.Replace(DoneSignal, "").Trim();
+            return new Response(summary, chatHistory);
         }
 
         private static bool ShouldRetry(string? lastContent, int retryCount)
@@ -80,6 +82,7 @@ public class SummarizeOfferContent
                 Instructions =
                     $"""
                      You are an analyst designed to deeply analyze a job offer in the context of a user's CV and specific requirements.
+                     The order of agents is sequential, you first, then Summarizer.
 
                      Your task is to perform a multi-step reasoning:
                      1. Analyze the job responsibilities and technical requirements from the offer.
@@ -153,36 +156,6 @@ public class SummarizeOfferContent
                 LoggerFactory = loggerFactory,
             };
             return chat;
-        }
-    }
-
-    private class ApprovalTerminationStrategy : TerminationStrategy
-    {
-        public string? FinalAgentName { get; init; }
-        public required string DoneSignal { get; init; }
-        public required string FailSignal { get; init; }
-
-        protected override Task<bool> ShouldAgentTerminateAsync(Agent agent,
-            IReadOnlyList<ChatMessageContent> history,
-            CancellationToken cancellationToken) =>
-            Task.FromResult(ShouldAgentTerminate(agent, history));
-
-        private bool ShouldAgentTerminate(Agent agent, IReadOnlyList<ChatMessageContent> history)
-        {
-            var content = history[^1].Content;
-
-            if (content?.Contains(FailSignal) == true)
-                return true;
-
-            if (agent.Name != FinalAgentName)
-                return false;
-
-            if (string.IsNullOrEmpty(DoneSignal))
-                return true;
-
-            var terminationSignal = content?.Contains(DoneSignal, StringComparison.OrdinalIgnoreCase) == true;
-
-            return terminationSignal;
         }
     }
 }
