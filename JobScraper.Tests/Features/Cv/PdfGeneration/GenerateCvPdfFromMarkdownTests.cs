@@ -45,7 +45,7 @@ public class GenerateCvPdfFromMarkdownTests
 
         var markdown = await File.ReadAllTextAsync(markdownPath);
         var image = await File.ReadAllBytesAsync(imagePath);
-        var content = new GenerateCvPdfFromMarkdown.CvContent(markdown, image, TestDisclaimer);
+        var content = new CvContent(markdown, image, TestDisclaimer);
 
         var command = new GenerateCvPdfFromMarkdown.Command(content, new LayoutConfig());
 
@@ -54,12 +54,13 @@ public class GenerateCvPdfFromMarkdownTests
 
         // Assert
         result.IsError.ShouldBeFalse();
+        var resultBytes = result.Value;
         result.Value.ShouldNotBeNull();
 
-        await File.WriteAllBytesAsync(outputPath, result.Value);
+        await File.WriteAllBytesAsync(outputPath, resultBytes);
 
         File.Exists(outputPath).ShouldBeTrue();
-        var header = Encoding.ASCII.GetString(result.Value.Take(4).ToArray());
+        var header = Encoding.ASCII.GetString([.. resultBytes.Take(4)]);
         header.ShouldBe("%PDF");
     }
 }

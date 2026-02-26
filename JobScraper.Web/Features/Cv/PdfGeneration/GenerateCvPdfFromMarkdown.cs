@@ -98,8 +98,9 @@ public class GenerateCvPdfFromMarkdown
                 });
             });
 
-            var result = pdfDocument.GeneratePdf();
-            return ValueTask.FromResult<ErrorOr<byte[]>>(result);
+            byte[] pdfBytes = pdfDocument.GeneratePdf();
+
+            return ValueTask.FromResult<ErrorOr<byte[]>>(pdfBytes);
         }
 
         private void RenderBlock(ColumnDescriptor column, Block block, LayoutConfig layoutConfig)
