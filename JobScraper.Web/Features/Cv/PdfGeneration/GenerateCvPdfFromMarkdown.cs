@@ -19,14 +19,14 @@ public record CvContent(
 [SuppressMessage("ReSharper", "CognitiveComplexity")]
 public class GenerateCvPdfFromMarkdown
 {
-    public record Command(
+    public record Request(
         CvContent Content,
         LayoutConfig LayoutConfig
     );
 
     public class Handler
     {
-        public ValueTask<ErrorOr<byte[]>> Handle(Command request, CancellationToken cancellationToken)
+        public ValueTask<ErrorOr<byte[]>> Handle(Request request, CancellationToken cancellationToken)
         {
             var content = request.Content;
             ArgumentNullException.ThrowIfNull(content);

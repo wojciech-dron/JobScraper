@@ -4,7 +4,7 @@ using JobScraper.Web.Integration.AiProvider;
 using Mediator;
 using Microsoft.Extensions.Options;
 
-namespace JobScraper.Web.Features.AiSummary;
+namespace JobScraper.Web.Features.AiSummary.Logic;
 
 /// <remarks> Tested with openrouter only </remarks>
 public class VerifyProviderAndGetModels
@@ -41,6 +41,9 @@ public class VerifyProviderAndGetModels
 
             if (models.All(m => m.Id != currentModelId))
                 return Error.Failure(description: $"Model '{currentModelId}' not found in available models");
+
+            if (string.IsNullOrWhiteSpace(settings.ApiKey))
+                return new Response(models);
 
             // verify api key
             httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", settings.ApiKey);

@@ -11,7 +11,7 @@ using TickerQ.Utilities.Base;
 using TickerQ.Utilities.Entities;
 using Wolverine;
 
-namespace JobScraper.Web.Features.AiSummary;
+namespace JobScraper.Web.Features.AiSummary.Logic;
 
 public record struct SummaryRequest(string Owner);
 

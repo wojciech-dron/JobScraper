@@ -2,7 +2,7 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Agents.Chat;
 
-namespace JobScraper.Web.Features.AiSummary;
+namespace JobScraper.Web.Features.AiSummary.Logic;
 #pragma warning disable SKEXP0110
 
 internal class ApprovalTerminationStrategy : TerminationStrategy
@@ -23,7 +23,7 @@ internal class ApprovalTerminationStrategy : TerminationStrategy
         if (content?.Contains(FailSignal) == true)
             return true;
 
-        if (agent.Name != FinalAgentName)
+        if (!string.IsNullOrWhiteSpace(FinalAgentName) && agent.Name != FinalAgentName)
             return false;
 
         if (string.IsNullOrEmpty(DoneSignal))
