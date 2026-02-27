@@ -1,6 +1,5 @@
 .user-message {
     text-align: right;
-    background-color: #f1f1f1;
     padding: 8px;
     border-radius: 5px;
     margin-bottom: 10px;
@@ -8,14 +7,12 @@
 
 .ai-message {
     text-align: left;
-    background-color: #e9ecef;
     padding: 8px;
     border-radius: 5px;
     margin-bottom: 10px;
 }
 
 .placeholder-message {
-    background-color: #f4faf6;
     padding: 8px;
     border-radius: 5px;
     margin-bottom: 10px;
@@ -23,7 +20,9 @@
 
 pre {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    font-size: 1rem;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .chat-container {
@@ -34,7 +33,7 @@ pre {
 
 .chat-messages {
     flex: 1;
-    overflow-y: auto;
+    text-wrap: wrap;
 }
 
 .disclaimer {

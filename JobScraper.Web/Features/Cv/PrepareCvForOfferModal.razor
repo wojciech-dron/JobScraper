@@ -6,42 +6,66 @@
 @using JobScraper.Web.Features.Cv.PdfGeneration
 @using System.IO
 @using ErrorOr
+@using JobScraper.Web.Blazor.Extensions
+@using JobScraper.Web.Features.AiSummary
+@using JobScraper.Web.Features.AiSummary.Logic
 @using Wolverine
+
+<Toasts class="p-3" Messages="toasts" Placement="ToastsPlacement.TopRight"/>
+
 
 <Modal @ref="_modal" Title="Prepare CV for offer" Fullscreen="ModalFullscreen.Always">
     <BodyTemplate>
         <div class="row h-100">
-            <div class="col-md-4">
+            <div class="col-md-3">
+                @if (!string.IsNullOrEmpty(_offer.AiSummary))
+                {
+                    <h4 style="color: #FFC2B2">Ai Summary:</h4>
+                    <span style="white-space: pre-line; font-size: 12px;">
+                        @_offer.AiSummary
+                    </span>
+                }
+            </div>
+
+            <div class="col-md-5">
                 <MarkdownDiffEditor
                     @ref="_diffEditor"
                     InitOriginalContent="@OriginalContent"
                     InitModifiedContent="@ModifiedContent"
-                    Inline />
+                    Inline/>
             </div>
 
             <div class="col-md-4">
-                @if (_offer.OfferUrl.StartsWith("http"))
+                <button class="btn btn-primary"
+                        disabled="@isWorking"
+                        @onclick="GenerateCvPdf">
+                    Generate CV
+                </button>
+                <button class="btn btn-primary"
+                        disabled="@isWorking"
+                        @onclick="PrepareCvContent">
+                    Prepare CV content with AI
+                </button>
+                <button class="btn btn-primary"
+                        @onclick="Test">
+                    Test
+                </button>
+
+                @if (isWorking)
                 {
-                    <button class="btn btn-primary" @onclick="GenerateCv">Generate CV</button>
+                    <div class="spinner-border" role="status">
+                        <span class="sr-only"></span>
+                    </div>
                 }
                 <br/>
                 <br/>
 
-                @if (!string.IsNullOrEmpty(_offer.AiSummary))
+                @if (chatHistory.Count > 0)
                 {
-                    <h4 style="color: #FFC2B2">Ai Summary:</h4>
-                    <span style="white-space: pre-line">
-                        @_offer.AiSummary
-                    </span>
+                    <h4>Agents chat history</h4>
+                    <ChatHistory Items="chatHistory"/>
                 }
-
             </div>
-        </div>
-        <div class="row">
-            @if (chatHistory.Count > 0)
-            {
-                <ChatHistory Items="chatHistory"/>
-            }
         </div>
     </BodyTemplate>
 </Modal>
@@ -51,14 +75,18 @@
 @inject IJSRuntime JS
 
 @code {
+    private IJSObjectReference? _module;
     private Modal _modal = null!;
+
+    private bool isWorking;
     private UserOffer _offer = null!;
     private MarkdownDiffEditor _diffEditor = null!;
-    private List<ChatItem> chatHistory = [];
-    private IJSObjectReference? _module;
+    private List<ChatItem> chatHistory = TestData.Chat;
+    readonly List<ToastMessage> toasts = [];
 
+    private readonly byte[] CvImage = TestData.Image;
     private readonly string OriginalContent = TestData.BaseCv;
-    private readonly string ModifiedContent = TestData.ModifiedCv;
+    private string ModifiedContent = TestData.BaseCv;
     protected override async Task OnInitializedAsync()
     {
     }
@@ -69,21 +97,24 @@
         await _modal.ShowAsync();
     }
 
-    private async Task GenerateCv()
+    private async Task GenerateCvPdf()
     {
         var mdContent = await _diffEditor.GetModifiedValueAsync();
         if (string.IsNullOrWhiteSpace(mdContent))
-        {
             return;
-        }
 
-        var cvContent = new CvContent(mdContent);
+        isWorking = true;
+
+        var cvContent = new CvContent(mdContent, CvImage);
         var layoutConfig = new LayoutConfig();
-        var command = new GenerateCvPdfFromMarkdown.Command(cvContent, layoutConfig);
-        var result = await MessageBus.InvokeAsync<ErrorOr<byte[]>>(command);
+        var request = new GenerateCvPdfFromMarkdown.Request(cvContent, layoutConfig);
+        var result = await MessageBus.InvokeAsync<ErrorOr<byte[]>>(request);
+
+        isWorking = false;
 
         if (result.IsError)
         {
+            toasts.PushMessage("Failed to generate CV PDF", ToastType.Danger);
             return;
         }
 
@@ -94,8 +125,46 @@
 
         _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/downloadFile.js");
         await _module.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+
+        toasts.PushMessage("CV PDF generated successfully");
     }
 
+    private async Task PrepareCvContent()
+    {
+        if (_offer.Details.Description == null)
+            return;
+
+        isWorking = true;
+        toasts.PushMessage("Preparing CV content. It could take a while");
+
+        var request = new AdjustCvContentToOffer.Request(
+            CvContent: OriginalContent,
+            OfferContent: _offer.Details.Description,
+            OfferSummary: _offer.AiSummary);
+
+        var result = await MessageBus.InvokeAsync<AdjustCvContentToOffer.Response>(request);
+
+        isWorking = false;
+        chatHistory = result.ChatHistory;
+
+        if (!result.Success)
+        {
+            toasts.PushMessage("Failed to prepare CV content. Check agents chat history.", ToastType.Warning);
+            return;
+        }
+
+        toasts.PushMessage("CV content prepared successfully");
+
+        chatHistory.RemoveAt(chatHistory.Count - 1); // remove last item because it is CV content
+        ModifiedContent = result.AdjustedCvContent;
+        _ =_diffEditor.SetModifiedModel(ModifiedContent);
+    }
+
+    private async Task Test()
+    {
+        await _diffEditor.SetModifiedModel(ModifiedContent);
+
+    }
     private async Task Hide()
     {
         await _modal.HideAsync();

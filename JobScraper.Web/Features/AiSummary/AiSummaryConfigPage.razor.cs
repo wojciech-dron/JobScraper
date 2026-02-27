@@ -5,6 +5,7 @@ using Facet;
 using Facet.Extensions;
 using FluentValidation;
 using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Features.AiSummary.Logic;
 using JobScraper.Web.Integration.AiProvider;
 using JobScraper.Web.Modules.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -123,7 +124,7 @@ public partial class AiSummaryConfigPage(
 
         var nextScheduledJob = await dbContext.TimeTickers
             .AsNoTracking()
-            .Where(x => x.Function      == AiSummaryJob.FunctionName)
+            .Where(x => x.Function      == Logic.AiSummaryJob.FunctionName)
             .Where(x => x.ExecutionTime > DateTime.UtcNow.AddMinutes(-30)) // check if job is scheduled within last 30 minutes
             .Where(x => x.Status == TickerStatus.Idle   ||
                 x.Status         == TickerStatus.Queued ||

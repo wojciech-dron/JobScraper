@@ -47,7 +47,7 @@ public class GenerateCvPdfFromMarkdownTests
         var image = await File.ReadAllBytesAsync(imagePath);
         var content = new CvContent(markdown, image, TestDisclaimer);
 
-        var command = new GenerateCvPdfFromMarkdown.Command(content, new LayoutConfig());
+        var command = new GenerateCvPdfFromMarkdown.Request(content, new LayoutConfig());
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);

@@ -6,7 +6,7 @@ using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Agents.Chat;
 using Microsoft.SemanticKernel.ChatCompletion;
 
-namespace JobScraper.Web.Features.AiSummary;
+namespace JobScraper.Web.Features.AiSummary.Logic;
 #pragma warning disable SKEXP0110
 
 public class SummarizeOfferContent
@@ -50,7 +50,11 @@ public class SummarizeOfferContent
                 }
             } while (ShouldRetry(finalContent, retryCount++));
 
-            var summary = finalContent?.Replace(DoneSignal, "").Trim();
+            if (finalContent is null || !finalContent.Contains(DoneSignal))
+                return Error.Failure(description: "Failed to summarize offer content");
+
+            var summary = finalContent.Replace(DoneSignal, "").Trim();
+
             return new Response(summary, chatHistory);
         }
 

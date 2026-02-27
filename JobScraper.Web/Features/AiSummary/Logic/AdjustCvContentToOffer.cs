@@ -7,7 +7,7 @@ using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Agents.Chat;
 using Microsoft.SemanticKernel.ChatCompletion;
 
-namespace JobScraper.Web.Features.AiSummary;
+namespace JobScraper.Web.Features.AiSummary.Logic;
 
 #pragma warning disable SKEXP0110
 
@@ -16,26 +16,33 @@ public class AdjustCvContentToOffer
     public record Request(
         string CvContent,
         string OfferContent,
-        string OfferSummary,
-        string UserRequirements,
-        string ProviderName
-    ) : IRequest<ErrorOr<Response>>;
+        string? OfferSummary,
+        string UserRequirements = "",
+        string ProviderName = AiProvidersConfig.MainProvider
+    ) : IRequest<Response>;
 
-    public record Response(string? AdjustedCvContent, List<ChatItem> ChatHistory);
+    public record Response(
+        bool Success,
+        string AdjustedCvContent,
+        List<ChatItem> ChatHistory
+        );
 
-    internal class Handler(
+    public class Handler(
         IServiceProvider serviceProvider,
         ILoggerFactory loggerFactory
-    ) : IRequestHandler<Request, ErrorOr<Response>>
+    ) : IRequestHandler<Request, Response>
     {
         private const string DoneSignal = "[DONE]";
         private const string FailSignal = "[FAIL]";
-        private const int MaxRetries = 5;
+        private const int MaxRetries = 2;
 
-        public async ValueTask<ErrorOr<Response>> Handle(Request request, CancellationToken cancellationToken)
+        private readonly ILogger<Handler> _logger = loggerFactory.CreateLogger<Handler>();
+
+        public async ValueTask<Response> Handle(Request request, CancellationToken cancellationToken)
         {
+            _logger.LogInformation("Adjusting CV content to offer");
+
             var offerMessage = new ChatMessageContent(AuthorRole.User, $"offerContent: {request.OfferContent}");
-            var summaryMessage = new ChatMessageContent(AuthorRole.User, $"offerSummary: {request.OfferSummary}");
 
             string? finalContent = null;
             var retryCount = 0;
@@ -43,7 +50,13 @@ public class AdjustCvContentToOffer
             do
             {
                 var chat = PrepareAgentsChat(request);
-                chat.AddChatMessages([offerMessage, summaryMessage]);
+                chat.AddChatMessage(offerMessage);
+
+                if (request.OfferSummary is not null)
+                {
+                    var summaryMessage = new ChatMessageContent(AuthorRole.User, $"offerSummary: {request.OfferSummary}");
+                    chat.AddChatMessage(summaryMessage);
+                }
 
                 var asyncResponse = chat.InvokeAsync(cancellationToken);
 
@@ -54,8 +67,12 @@ public class AdjustCvContentToOffer
                 }
             } while (ShouldRetry(finalContent, retryCount++));
 
-            var adjustedCv = finalContent?.Replace(DoneSignal, "").Trim();
-            return new Response(adjustedCv, chatHistory);
+            if (finalContent is null || !finalContent.Contains(DoneSignal))
+                return new Response(false, "", chatHistory);
+
+            var adjustedCv = finalContent.Replace(DoneSignal, "").Trim();
+
+            return new Response(true, adjustedCv, chatHistory);
         }
 
         private static bool ShouldRetry(string? lastContent, int retryCount)
@@ -77,7 +94,7 @@ public class AdjustCvContentToOffer
 
         private AgentGroupChat PrepareAgentsChat(Request request)
         {
-            var kernel = serviceProvider.GetRequiredKeyedService<Kernel>(request.ProviderName);
+            var kernel = serviceProvider.GetAiKernel(request.ProviderName);
 
             var analyzerAgent = new ChatCompletionAgent
             {
@@ -87,6 +104,7 @@ public class AdjustCvContentToOffer
                     $"""
                      You are a professional CV analyst. Your goal is to analyze the job offer and the user's CV to find the best alignment.
                      Before any CV editing happens, you must provide a detailed analysis.
+                     User prompts only first messages, do not ask for any more information.
 
                      Your task:
                      - Analyze the 'Job offer content' and 'Requirements for an offer' (if provided).
@@ -103,7 +121,7 @@ public class AdjustCvContentToOffer
                      The original CV content:
                      {request.CvContent}
 
-                     OfferSummary will be provided in first analyst prompt.
+                     OfferSummary will be provided in first analyst prompt and is optional.
 
                      Job offer content will be provided in first user prompt.
                      """,
@@ -119,17 +137,18 @@ public class AdjustCvContentToOffer
                      You are a professional CV editor specializing in tailoring CVs to job offers.
                      You MUST wait for the CvAnalyzer to provide an analysis before you start your work.
                      Use the analysis provided by CvAnalyzer to guide your rewriting.
-
-                     If you are generating final CV, finish it with {DoneSignal}, that ends the conversation.
+                     User prompts only first messages, do not ask for any more information.
+                     Final response should be in markdown format, containing only the final CV content
+                     with appended {DoneSignal}, that ends the conversation.
 
                      Your task is to rewrite the user's CV (provided in markdown).
 
                      Rules:
-                     - DO NOT invent experiences or skills that are not in the original CV, unless user explicitly asks for it.
-                     - DO NOT remove core contact information, unless user explicitly asks for it.
-                     - DO optimize the 'Summary', 'Experience', or 'Skills' sections to highlight relevant matches based on the analysis.
+                     - DO NOT invent experiences or skills that are not in the original CV.
+                     - DO NOT remove core contact information
+                     - DO optimize the 'Summary', 'Experience', or 'Skills' sections to include relevant matches based on the analysis.
                      - DO use terminology from the job offer where appropriate to increase alignment.
-                     - MAINTAIN the original markdown structure.
+                     - MAINTAIN the original markdown structure, keep line length about 90 characters.
                      - In this section, provide concise bullet-points about how the CV was adjusted and what further improvements can be made.
                      - RETURN the COMPLETE adjusted CV in markdown format followed by the summary section.
                      - FINISH your response with {DoneSignal}, which ends the conversation.
@@ -156,7 +175,7 @@ public class AdjustCvContentToOffer
                         Agents = [cvEditorAgent],
                         DoneSignal = DoneSignal,
                         FailSignal = FailSignal,
-                        MaximumIterations = 6,
+                        MaximumIterations = 2,
                     },
                     SelectionStrategy = new SequentialSelectionStrategy(),
                 },
