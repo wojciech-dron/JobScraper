@@ -20,6 +20,7 @@ public record UserOffer : IOwnable, IUpdatable
 
     public JobOffer Details { get; set; } = null!;
     public Application? Application { get; set; }
+    // public CvEntity? Cv { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
 

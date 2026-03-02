@@ -15,7 +15,7 @@
 
 <Toasts class="p-3" Messages="toasts" Placement="ToastsPlacement.TopRight"/>
 
-<div id="resizable-panels" class="d-flex h-100 overflow-hidden">
+<div id="resizable-panels" class="d-flex vh-100 overflow-hidden">
     <div id="ai-panel" class="overflow-auto" style="flex: 0 0 450px; min-width: 200px;">
         @if (!string.IsNullOrEmpty(_offer.AiSummary))
         {
@@ -46,10 +46,12 @@
                 @onclick="PrepareCvContent">
             Prepare CV content with AI
         </button>
-        <button class="btn btn-primary"
-                @onclick="Test">
-            Test
-        </button>
+        @if (_cv.Id > 0)
+        {
+            <a href="/cv/edit/@_cv.Id">
+                <button class="btn btn-success">Manage CV</button>
+            </a>
+        }
 
         @if (isWorking)
         {
@@ -80,6 +82,7 @@
 
     private bool isWorking;
     private UserOffer _offer = null!;
+    private CvEntity _cv = null!;
     private MarkdownDiffEditor _diffEditor = null!;
     private List<ChatItem> chatHistory = TestData.Chat;
     readonly List<ToastMessage> toasts = [];
@@ -92,7 +95,16 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _offer = await DbContext.UserOffers.FirstAsync(x => x.OfferUrl == OfferUrl);
+        _offer = await DbContext.UserOffers
+            .Include(x => x.Details)
+            // .Include(x => x.Cv)
+            .FirstAsync(x => x.OfferUrl == OfferUrl);
+
+        _cv = /*_offer.Cv ??*/ new()
+        {
+            Id = 1,
+            Name = $"{_offer.Details.CompanyName}_{_offer.Details.Title}",
+        };
 
     }
 

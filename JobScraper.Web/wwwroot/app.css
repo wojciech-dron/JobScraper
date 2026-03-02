@@ -16,9 +16,10 @@ a, .btn-link {
     box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
-.content {
-    padding-top: 1.1rem;
-    padding-bottom: 70px;
+@media (max-width: 640.98px) {
+    .content {
+        padding-bottom: 70px;
+    }
 }
 
 h1:focus {
