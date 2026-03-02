@@ -42,7 +42,7 @@
 
 @code {
     readonly List<ToastMessage> toasts = [];
-    private IJSObjectReference? _module;
+    private IJSObjectReference? _downloadModule;
     private MarkdownDiffEditor? _diffEditor;
     private bool isWorking;
 
@@ -107,8 +107,8 @@
         using var stream = new MemoryStream(pdfBytes);
         using var streamRef = new DotNetStreamReference(stream);
 
-        _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/downloadFile.js");
-        await _module.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+        _downloadModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/downloadFile.js");
+        await _downloadModule.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
 
         toasts.PushMessage("CV PDF generated successfully");
     }
