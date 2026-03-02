@@ -60,7 +60,7 @@ public class SummarizeOfferContent
 
         private static bool ShouldRetry(string? lastContent, int retryCount)
         {
-            if (retryCount > MaxRetries) // accept content after max retries
+            if (retryCount >= MaxRetries) // accept content after max retries
                 return false;
 
             if (string.IsNullOrEmpty(lastContent))

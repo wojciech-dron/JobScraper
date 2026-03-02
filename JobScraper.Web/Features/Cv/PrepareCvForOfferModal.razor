@@ -7,7 +7,6 @@
 @using System.IO
 @using ErrorOr
 @using JobScraper.Web.Blazor.Extensions
-@using JobScraper.Web.Features.AiSummary
 @using JobScraper.Web.Features.AiSummary.Logic
 @using Wolverine
 
@@ -87,9 +86,6 @@
     private readonly byte[] CvImage = TestData.Image;
     private readonly string OriginalContent = TestData.BaseCv;
     private string ModifiedContent = TestData.BaseCv;
-    protected override async Task OnInitializedAsync()
-    {
-    }
 
     public async Task ShowAsync(UserOffer userOffer)
     {
@@ -131,6 +127,10 @@
 
     private async Task PrepareCvContent()
     {
+        var cvContent = await _diffEditor.GetModifiedValueAsync();
+        if (string.IsNullOrWhiteSpace(cvContent))
+            return;
+
         if (_offer.Details.Description == null)
             return;
 
@@ -138,7 +138,7 @@
         toasts.PushMessage("Preparing CV content. It could take a while");
 
         var request = new AdjustCvContentToOffer.Request(
-            CvContent: OriginalContent,
+            CvContent: cvContent,
             OfferContent: _offer.Details.Description,
             OfferSummary: _offer.AiSummary);
 
@@ -155,7 +155,9 @@
 
         toasts.PushMessage("CV content prepared successfully");
 
-        chatHistory.RemoveAt(chatHistory.Count - 1); // remove last item because it is CV content
+        if (chatHistory.Count > 0)
+            chatHistory.RemoveAt(chatHistory.Count - 1); // remove last item because it is CV content
+
         ModifiedContent = result.AdjustedCvContent;
         _ =_diffEditor.SetModifiedModel(ModifiedContent);
     }

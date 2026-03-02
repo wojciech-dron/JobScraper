@@ -18,12 +18,15 @@
         ScrollBeyondLastColumn = 5,
         FontSize = 12,
         RenderSideBySide = !Inline,
+        WordWrap = "on",
     };
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await Global.SetTheme(jsRuntime, "vs-dark");
+        if (!firstRender)
+            return;
 
+        await Global.SetTheme(jsRuntime, "vs-dark");
         await InitModels();
     }
 

@@ -7,7 +7,7 @@ public class LayoutConfig
     // general
     public string FontFamily { get; set; } = Fonts.Verdana;
     public float MarginCm { get; set; } = 0.8f;
-    public string PageColor { get; set; } = Colors.Grey.Lighten2;
+    public string PageBackgroundColor { get; set; } = Colors.Grey.Lighten2;
     public string UrlColor { get; set; } = Colors.Black;
 
     // image

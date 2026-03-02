@@ -44,7 +44,7 @@ public class GenerateCvPdfFromMarkdown
                 {
                     page.Size(PageSizes.A4);
                     page.Margin(layoutConfig.MarginCm, Unit.Centimetre);
-                    page.PageColor(layoutConfig.PageColor);
+                    page.PageColor(layoutConfig.PageBackgroundColor);
                     page.DefaultTextStyle(x =>
                         x.FontSize(layoutConfig.DefaultFontSize)
                             .FontFamily(layoutConfig.FontFamily)
@@ -98,7 +98,7 @@ public class GenerateCvPdfFromMarkdown
                 });
             });
 
-            byte[] pdfBytes = pdfDocument.GeneratePdf();
+            var pdfBytes = pdfDocument.GeneratePdf();
 
             return ValueTask.FromResult<ErrorOr<byte[]>>(pdfBytes);
         }
