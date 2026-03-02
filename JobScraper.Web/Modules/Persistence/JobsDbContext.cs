@@ -22,6 +22,7 @@ public class JobsDbContext(DbContextOptions<JobsDbContext> options)
 
     public DbSet<TimeTickerEntity> TimeTickers { get; set; }
     public DbSet<CronTickerEntity> CronTickers { get; set; }
+    // public DbSet<CvEntity> Cvs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

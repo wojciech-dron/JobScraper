@@ -85,20 +85,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <_ContentIncludedByDefault Remove="Features\JobOffers\AiSummary\AiSummaryConfigPage.razor"/>
-    <_ContentIncludedByDefault Remove="Features\JobOffers\AiSummary\_Imports.razor"/>
-    <_ContentIncludedByDefault Remove="Blazor\Components\TextDiff\TextDiff.razor" />
-    <_ContentIncludedByDefault Remove="Blazor\Components\TextDiff\TextDiffLine.razor" />
-    <_ContentIncludedByDefault Remove="Blazor\Components\TextDiff\TextDiffPane.razor" />
-    <_ContentIncludedByDefault Remove="Blazor\Components\TextDiff\_Imports.razor" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <AdditionalFiles Include="Features\AiSummary\AiSummaryConfigPage.razor"/>
-    <AdditionalFiles Include="Features\AiSummary\_Imports.razor"/>
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="Features\Cv\Components\image.jpg">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

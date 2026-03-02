@@ -107,7 +107,7 @@ public static class TestData
     #region ModifiedCv
     public const string ModifiedCv =
         """
-        # Adam Kowalski - Senior Fullstack Developer
+        # Adam Kowalski - Senior .NET Developer
 
         **Telefon:** +48 608 228 288
 

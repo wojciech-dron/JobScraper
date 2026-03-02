@@ -1,0 +1,122 @@
+﻿@page "/Cv/edit/{Id:int}"
+@using BlazorBootstrap
+@using ErrorOr
+@using JobScraper.Web.Blazor.Components
+@using JobScraper.Web.Blazor.Extensions
+@using JobScraper.Web.Common.Entities
+@using JobScraper.Web.Features.Cv.Components
+@using JobScraper.Web.Features.Cv.Helpers
+@using JobScraper.Web.Features.Cv.PdfGeneration
+@using JobScraper.Web.Modules.Persistence
+@using Wolverine
+@using Wolverine.Runtime
+
+<Toasts class="p-3" Messages="toasts" Placement="ToastsPlacement.TopRight"/>
+
+<div class="row h-100">
+    <div class="col-md-9">
+        <MarkdownDiffEditor @ref="_diffEditor"
+                            InitOriginalContent="@OriginalContent"
+                            InitModifiedContent="@ModifiedContent"/>
+    </div>
+
+    <div class="col-md-3">
+        @if (_cv is not null)
+        {
+            <LayoutConfigComponent Config="_cv.LayoutConfig"/>
+        }
+    </div>
+</div>
+
+<button class="btn btn-primary"
+        disabled="@isWorking"
+        @onclick="GenerateCvPdf">
+    Generate CV
+</button>
+
+
+
+@inject IJSRuntime JS
+@inject JobsDbContext DbContext
+@inject IMessageBus MessageBus
+
+@code {
+    readonly List<ToastMessage> toasts = [];
+    private IJSObjectReference? _module;
+    private MarkdownDiffEditor? _diffEditor;
+    private bool isWorking;
+
+    private CompareMode _compareMode = CompareMode.WithOrigin;
+    private CvEntity? _cv;
+    private readonly string OriginalContent = TestData.BaseCv;
+    private readonly string ModifiedContent = TestData.ModifiedCv;
+
+    [Parameter]
+    public int Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // _cv = await DbContext.Cvs.FindAsync(Id) ?? new();
+        _cv = new()
+        {
+            Name = "Test",
+        };
+    }
+
+    public async Task<string?> GetModifiedValue() => _diffEditor is not null
+        ? await _diffEditor.GetModifiedValueAsync()
+        : null;
+
+    private async Task GenerateCvPdf()
+    {
+        if (_cv is null || _diffEditor is null)
+            return;
+
+        var mdContent = await _diffEditor.GetModifiedValueAsync();
+        if (string.IsNullOrWhiteSpace(mdContent))
+            return;
+
+        isWorking = true;
+
+        var cvContent = new CvContent(mdContent, TestData.Image);
+        var request = new GenerateCvPdfFromMarkdown.Request(cvContent, _cv.LayoutConfig);
+
+        ErrorOr<byte[]> result;
+        try
+        {
+            result = await MessageBus.InvokeAsync<ErrorOr<byte[]>>(request);
+        }
+        catch (Exception e)
+        {
+            var errorMessage = e.Message.ToFriendlyErrorMessage();
+            toasts.PushMessage("Failed to generate CV PDF: " + errorMessage, ToastType.Danger);
+            isWorking = false;
+            return;
+        }
+
+        isWorking = false;
+
+        if (result.IsError)
+        {
+            toasts.PushMessage("Failed to generate CV PDF", ToastType.Danger);
+            return;
+        }
+
+        var fileName = $"{_cv.Name}.pdf";
+        var pdfBytes = result.Value;
+        using var stream = new MemoryStream(pdfBytes);
+        using var streamRef = new DotNetStreamReference(stream);
+
+        _module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/downloadFile.js");
+        await _module.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
+
+        toasts.PushMessage("CV PDF generated successfully");
+    }
+
+    private enum CompareMode
+    {
+        None,
+        WithSaved,
+        WithOrigin,
+    }
+}

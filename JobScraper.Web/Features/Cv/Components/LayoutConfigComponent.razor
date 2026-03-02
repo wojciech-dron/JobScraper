@@ -1,0 +1,296 @@
+﻿@using JobScraper.Web.Features.Cv.PdfGeneration
+
+<style>
+    .layout-config-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        align-items: flex-start;
+    }
+    .flex-full {
+        flex-basis: 100%;
+    }
+    .flex-col {
+        flex: 1 1 160px;
+        min-width: 140px;
+    }
+    .layout-config-grid .input-group-text {
+        flex-shrink: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .layout-config-grid .form-control {
+        flex: 1 1 auto;
+        min-width: 55px;
+    }
+    .form-control-color {
+        height: 31px;
+    }
+</style>
+
+<div class="layout-config-grid">
+    <div class="col-12"><h6 class="mb-0 mt-1 fw-bold text-muted small uppercase">General</h6></div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Font Family">Font Family</span>
+            <InputSelect @bind-Value="Config.FontFamily" class="form-control">
+                @foreach (var font in FontOptions)
+                {
+                    <option value="@font">@font</option>
+                }
+            </InputSelect>
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Margin (cm)">Margin (cm)</span>
+            <InputNumber @bind-Value="Config.MarginCm" class="form-control" Step="0.1" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted"
+                  title="Page Background Color">Background</span>
+            <input type="color" class="form-control form-control-color p-0" @bind="Config.PageBackgroundColor" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted"
+                  title="Url Color - Color of links in the CV">Url Color</span>
+            <input type="color" class="form-control form-control-color p-0" @bind="Config.UrlColor" />
+        </div>
+    </div>
+
+    <div class="col-12"><h6 class="mb-0 mt-2 fw-bold text-muted small uppercase">Image</h6></div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted"
+                  title="Aligned Blocks - number of text blocks that will be aligned with image">Aligned Blocks</span>
+            <InputNumber @bind-Value="Config.TextBlocksAlignedWithImage" class="form-control"/>
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Height">Height</span>
+            <InputNumber @bind-Value="Config.ImageHeight" class="form-control" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted"
+                  title="Space From Text - minimal size of the gap between text and image">Space From Text</span>
+            <InputNumber @bind-Value="Config.ImageMinSpaceFromText" class="form-control" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Border Radius">Border Radius</span>
+            <InputNumber @bind-Value="Config.ImageBorderRadius" class="form-control" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Border Thick">Border Thick</span>
+            <InputNumber @bind-Value="Config.ImageBorderThickness" class="form-control" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Border Color">Border Color</span>
+            <input type="color" class="form-control form-control-color p-0" @bind="Config.ImageBorderColor" />
+        </div>
+    </div>
+
+    <div class="col-12"><h6 class="mb-0 mt-2 fw-bold text-muted small uppercase">Font Sizes & Headers</h6></div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Default Size">Default Size</span>
+            <InputNumber @bind-Value="Config.DefaultFontSize" class="form-control" Step="0.1" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="H1">H1</span>
+            <InputNumber @bind-Value="Config.H1FontSize" class="form-control" Step="0.1"/>
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="H1 Color">H1 Color</span>
+            <input type="color" class="form-control form-control-color p-0" @bind="Config.H1FontColor" Step="0.1" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="H2">H2</span>
+            <InputNumber @bind-Value="Config.H2FontSize" class="form-control" Step="0.1"/>
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="H3">H3</span>
+            <InputNumber @bind-Value="Config.H3FontSize" class="form-control" Step="0.1"/>
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="H4">H4</span>
+            <InputNumber @bind-Value="Config.H4FontSize" class="form-control" Step="0.1"/>
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Default Header Size">Default Header Size</span>
+            <InputNumber @bind-Value="Config.HeadingFontSizeDefault" class="form-control" Step="0.1"/>
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Default Header Color">Default Header Color</span>
+            <input type="color" class="form-control form-control-color p-0" @bind="Config.HeadingFontColorDefault" />
+        </div>
+    </div>
+
+    <div class="col-12"><h6 class="mb-0 mt-2 fw-bold text-muted small uppercase">Header Underlines</h6></div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted"
+                  title="Max Level - maximum level of header that will have included underline">Max Level</span>
+            <InputNumber @bind-Value="Config.HeaderUnderlineMaxLevel" class="form-control" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Pad Top">Pad Top</span>
+            <InputNumber @bind-Value="Config.HeaderUnderlinePaddingTop" class="form-control" Step="0.1" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Color">Color</span>
+            <input type="color" class="form-control form-control-color p-0" @bind="Config.HeaderUnderlineColor" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Thick">Thick</span>
+            <InputNumber @bind-Value="Config.HeaderUnderlineThickness" class="form-control" Step="0.1" />
+        </div>
+    </div>
+
+    <div class="col-12"><h6 class="mb-0 mt-2 fw-bold text-muted small uppercase">Disclaimer</h6></div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Size">Size</span>
+            <InputNumber @bind-Value="Config.DisclaimerFontSize" class="form-control" Step="0.1"/>
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Color">Color</span>
+            <input type="color" class="form-control form-control-color p-0" @bind="Config.DisclaimerColor" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Footer Pad Bottom">Footer Pad Bottom</span>
+            <InputNumber @bind-Value="Config.FooterPaddingBottom" class="form-control" />
+        </div>
+    </div>
+
+    <div class="col-12"><h6 class="mb-0 mt-2 fw-bold text-muted small uppercase">Spaces</h6></div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Header Pad Top">Header Pad Top</span>
+            <InputNumber @bind-Value="Config.HeaderPaddingTop" class="form-control" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Line Height">Line Height</span>
+            <InputNumber @bind-Value="Config.LineHeight" class="form-control" Step="0.1" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Heading Pad Top">Heading Pad Top</span>
+            <InputNumber @bind-Value="Config.HeadingPaddingTop" class="form-control" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Heading Pad Bottom">Heading Pad Bottom</span>
+            <InputNumber @bind-Value="Config.HeadingPaddingBottom" class="form-control" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Paragraph Pad Bottom">Paragraph Pad Bottom</span>
+            <InputNumber @bind-Value="Config.ParagraphPaddingBottom" class="form-control" />
+        </div>
+    </div>
+
+    <div class="col-12"><h6 class="mb-0 mt-2 fw-bold text-muted small uppercase">Lists</h6></div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Pad Left">Pad Left</span>
+            <InputNumber @bind-Value="Config.ListPaddingLeft" class="form-control" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Bullet Text">Bullet Text</span>
+            <InputText @bind-Value="Config.ListBulletText" class="form-control" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Bullet Width">Bullet Width</span>
+            <InputNumber @bind-Value="Config.ListBulletWidth" class="form-control" />
+        </div>
+    </div>
+
+    <div class="col-12"><h6 class="mb-0 mt-2 fw-bold text-muted small uppercase">Thematic Break</h6></div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Pad Vert">Pad Vert</span>
+            <InputNumber @bind-Value="Config.ThematicBreakPaddingVertical" class="form-control" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Thick">Thick</span>
+            <InputNumber @bind-Value="Config.ThematicBreakThickness" class="form-control" />
+        </div>
+    </div>
+    <div class="flex-col">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Color">Color</span>
+            <input type="color" class="form-control form-control-color p-0" @bind="Config.ThematicBreakColor" />
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public LayoutConfig Config { get; set; } = new();
+
+    private readonly string[] FontOptions =
+    [
+        "Calibri",
+        "Arial",
+        "Helvetica",
+        "Garamond",
+        "Cambria",
+        "Georgia",
+        "Roboto",
+        "Open Sans",
+        "Lato",
+        "Avenir Next",
+        "Verdana",
+        "Times New Roman",
+        "Courier New",
+    ];
+}
