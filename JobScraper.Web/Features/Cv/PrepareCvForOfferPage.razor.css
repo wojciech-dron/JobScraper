@@ -1,0 +1,30 @@
+
+.gutter {
+  background-color: #2f2f36;
+  transition: background-color 0.2s ease;
+}
+
+.gutter:hover {
+  background-color: #42352e;
+}
+
+#ai-panel,
+#right-panel {
+  min-width: 200px;
+}
+
+#editor-panel {
+  min-width: 400px;
+}
+
+#ai-panel,
+#editor-panel,
+#right-panel {
+  transition: flex-basis 0.1s ease;
+}
+
+#resizable-panels.resizing #ai-panel,
+#resizable-panels.resizing #editor-panel,
+#resizable-panels.resizing #right-panel {
+  transition: none;
+}

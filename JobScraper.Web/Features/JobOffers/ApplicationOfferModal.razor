@@ -148,7 +148,9 @@
             <div class="col-md-6">
                 @if (_offer.OfferUrl.StartsWith("http"))
                 {
-                    <button class="btn btn-success" @onclick="ShowPrepareCvModalAsync">Prepare CV for offer</button>
+                    <a href="/cv/prepare-for-offer/@Uri.EscapeDataString(_offer.OfferUrl)">
+                        <button class="btn btn-success">Prepare CV for offer</button>
+                    </a>
                 }
 
                 @if (_offer.OfferUrl.StartsWith("http"))
@@ -186,7 +188,6 @@
     </BodyTemplate>
 </Modal>
 
-<PrepareCvForOfferModal @ref="_prepareCvModal"></PrepareCvForOfferModal>
 
 @inject IDbContextFactory<JobsDbContext> DbContextFactory
 @inject NavigationManager NavigationManager
@@ -195,7 +196,6 @@
 @code {
     [CascadingParameter] private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
 
-    private PrepareCvForOfferModal _prepareCvModal = null!;
     private bool _isEdit;
     private bool _canAiSummary;
     private bool _aiSummaryRole;
@@ -272,8 +272,6 @@
 
         await Hide();
     }
-
-    private async Task ShowPrepareCvModalAsync() => await _prepareCvModal.ShowAsync(_offer);
 
     private async Task HideOffer()
     {

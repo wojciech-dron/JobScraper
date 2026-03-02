@@ -90,8 +90,4 @@
     </None>
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="wwwroot\styles\" />
-  </ItemGroup>
-
 </Project>
