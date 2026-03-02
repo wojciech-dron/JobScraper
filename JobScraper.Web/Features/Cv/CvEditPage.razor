@@ -1,4 +1,5 @@
-﻿@page "/Cv/edit/{Id:int}"
+﻿@page "/Cv/edit"
+@page "/Cv/edit/{Id:int}"
 @using BlazorBootstrap
 @using ErrorOr
 @using JobScraper.Web.Blazor.Components
@@ -9,13 +10,26 @@
 @using JobScraper.Web.Features.Cv.PdfGeneration
 @using JobScraper.Web.Modules.Persistence
 @using Wolverine
-@using Wolverine.Runtime
 
 <Toasts class="p-3" Messages="toasts" Placement="ToastsPlacement.TopRight"/>
 
-<div class="row h-100">
+<div class="row vh-100 pt-2">
     <div class="col-md-9">
+        <h2>Edit CV</h2>
+        <div class="input-group input-group-sm mb-3">
+            <span class="input-group-text px-1 py-0 small text-muted" title="Bullet Width">Name</span>
+            <TextInput @bind-Value="_cv.Name" class="form-control"/>
+        </div>
+        <button class="btn btn-info btn-sm"
+                @onclick="CompareToOrigin"
+                disabled="@DisableCompareToOrigin">Compare with origin</button>
+
+        <button class="btn btn-info btn-sm"
+                @onclick="CompareToSaved"
+                disabled="@DisableCompareToSaved">Compare with saved</button>
+
         <MarkdownDiffEditor @ref="_diffEditor"
+                            CssClass="h-75 mt-3"
                             InitOriginalContent="@OriginalContent"
                             InitModifiedContent="@ModifiedContent"/>
     </div>
@@ -23,18 +37,16 @@
     <div class="col-md-3">
         @if (_cv is not null)
         {
+            <h5>Layout settings</h5>
             <LayoutConfigComponent Config="_cv.LayoutConfig"/>
         }
+        <button class="btn btn-primary mt-2"
+                disabled="@isWorking"
+                @onclick="GenerateCvPdf">
+            Generate CV
+        </button>
     </div>
 </div>
-
-<button class="btn btn-primary"
-        disabled="@isWorking"
-        @onclick="GenerateCvPdf">
-    Generate CV
-</button>
-
-
 
 @inject IJSRuntime JS
 @inject JobsDbContext DbContext
@@ -46,9 +58,9 @@
     private MarkdownDiffEditor? _diffEditor;
     private bool isWorking;
 
-    private CompareMode _compareMode = CompareMode.WithOrigin;
+    private CompareMode _compareMode = CompareMode.WithSaved;
     private CvEntity? _cv;
-    private readonly string OriginalContent = TestData.BaseCv;
+    private string OriginalContent = TestData.BaseCv;
     private readonly string ModifiedContent = TestData.ModifiedCv;
 
     [Parameter]
@@ -118,5 +130,22 @@
         None,
         WithSaved,
         WithOrigin,
+    }
+
+    public bool DisableCompareToOrigin =>
+        _compareMode is CompareMode.WithOrigin || string.IsNullOrWhiteSpace(_cv?.OriginCv?.MarkdownContent);
+    private void CompareToOrigin()
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(_cv?.OriginCv?.MarkdownContent);
+        _compareMode = CompareMode.WithOrigin;
+        OriginalContent = _cv?.OriginCv?.MarkdownContent!;
+    }
+
+    public bool DisableCompareToSaved => _compareMode is CompareMode.WithSaved;
+    private void CompareToSaved()
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(_cv?.MarkdownContent);
+        _compareMode = CompareMode.WithSaved;
+        OriginalContent = _cv?.MarkdownContent!;
     }
 }
