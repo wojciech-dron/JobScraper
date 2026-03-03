@@ -20,6 +20,7 @@ public class CvEntity : IUpdatable, IOwnable
     public string Disclaimer { get; set; } = "";
     public List<ChatItem>? ChatHistory { get; set; }
 
+    public ImageEntity? Image { get; set; }
     public CvEntity? OriginCv { get; set; }
     public ICollection<CvEntity> DerivedCvs { get; set; } = [];
     public ICollection<UserOffer> Offers { get; set; } = [];
@@ -41,16 +42,21 @@ public class CvEntityModelBuilder : IEntityTypeConfiguration<CvEntity>
         builder.OwnsOne(c => c.LayoutConfig).ToJson();
         builder.OwnsMany(c => c.ChatHistory).ToJson();
 
-        builder.HasMany(c => c.Offers)
-            .WithOne(c => c.Cv)
-            .HasForeignKey("CvId")
-            .OnDelete(DeleteBehavior.ClientSetNull);
+        builder.HasOne(c => c.Image)
+            .WithMany(i => i.Cvs)
+            .HasForeignKey("ImageId");
 
         builder.HasOne(c => c.OriginCv)
             .WithMany(c => c.DerivedCvs)
             .HasForeignKey("OriginCvId")
             .OnDelete(DeleteBehavior.ClientSetNull);
 
+        builder.HasMany(c => c.Offers)
+            .WithOne(c => c.Cv)
+            .HasForeignKey("CvId")
+            .OnDelete(DeleteBehavior.ClientSetNull);
+
+        builder.HasIndex(c => c.CreatedAt);
         builder.HasIndex(c => c.UpdatedAt);
         builder.HasIndex(c => c.IsTemplate);
         builder.HasIndex("OriginCvId");
