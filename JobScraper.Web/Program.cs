@@ -9,6 +9,7 @@ using JobScraper.Web.Modules.Logging;
 using JobScraper.Web.Modules.Persistence;
 using JobScraper.Web.Modules.QuestPdf;
 using JobScraper.Web.Modules.Security;
+using JobScraper.Web.Features.Cv.Logic;
 using JobScraper.Web.Modules.Services;
 using JobScraper.Web.Modules.Settings;
 using JobScraper.Web.Modules.Wolverine;
@@ -28,6 +29,7 @@ builder.AddScrapeServices();
 builder.Services.AddUserProvider();
 builder.AddIntegrationServices();
 builder.AddQuestPdf();
+builder.Services.AddScoped<IAiCvChatService, AiCvChatService>();
 
 
 var app = builder.Build();

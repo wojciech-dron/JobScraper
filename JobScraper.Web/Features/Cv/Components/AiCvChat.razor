@@ -1,0 +1,60 @@
+@using JobScraper.Web.Blazor.Components
+@using JobScraper.Web.Common.Models
+@using JobScraper.Web.Features.Cv.Logic
+
+<div class="d-flex flex-column h-100">
+    @if (ChatHistory.Count > 0)
+    {
+        <h4>AI chat</h4>
+        <div class="flex-grow-1 overflow-auto">
+            <ChatHistory Items="ChatHistory"/>
+        </div>
+    }
+    else
+    {
+        <div class="flex-grow-1 d-flex align-items-center justify-content-center text-muted">
+            <span>Start a conversation or use "Prepare CV content with AI"</span>
+        </div>
+    }
+
+    <div class="mt-2">
+        <div class="input-group input-group-sm">
+            <input type="text"
+                   class="form-control"
+                   placeholder="Ask about CV or request changes..."
+                   @bind="userMessage"
+                   @bind:event="oninput"
+                   @onkeydown="HandleKeyDown"
+                   disabled="@IsWorking"/>
+            <button class="btn btn-primary btn-sm"
+                    @onclick="SendMessage"
+                    disabled="@(IsWorking || string.IsNullOrWhiteSpace(userMessage))">
+                Send
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string userMessage = "";
+
+    [Parameter] public List<ChatItem> ChatHistory { get; set; } = [];
+    [Parameter] public bool IsWorking { get; set; }
+    [Parameter] public EventCallback<string> OnSendMessage { get; set; }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(userMessage) && !IsWorking)
+            await SendMessage();
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(userMessage) || IsWorking)
+            return;
+
+        var message = userMessage;
+        userMessage = "";
+        await OnSendMessage.InvokeAsync(message);
+    }
+}
