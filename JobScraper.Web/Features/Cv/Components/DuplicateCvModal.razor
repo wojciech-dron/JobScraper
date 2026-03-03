@@ -1,14 +1,41 @@
 ﻿@using BlazorBootstrap
 @using ErrorOr
 @using JobScraper.Web.Blazor.Extensions
+@using JobScraper.Web.Common.Entities
 @using JobScraper.Web.Modules.Persistence
+@using Microsoft.EntityFrameworkCore
 @using Wolverine
 
 <Toasts class="p-3" Messages="toasts" Placement="ToastsPlacement.TopRight"/>
 
-<Modal @ref="_modal" Title="Offer application" Fullscreen="ModalFullscreen.SmallDown">
+<Modal @ref="_modal" Title="Create duplicate CV" Fullscreen="ModalFullscreen.SmallDown">
     <BodyTemplate>
         <div class="form-group">
+            @if (ShowCvSelector)
+            {
+                <label for="cv-search">Select source CV:</label>
+                <InputText id="cv-search" @bind-Value="SearchPhrase" class="form-control" placeholder="Search by CV name"/>
+
+                <div class="mt-2">
+                    @if (FilteredCvs.Count == 0)
+                    {
+                        <div class="text-muted">No CVs found</div>
+                    }
+                    else
+                    {
+                        @foreach (var cv in FilteredCvs)
+                        {
+                            <button type="button"
+                                    class="btn @(OriginCvId == cv.Id ? "btn-primary" : "btn-outline-primary") btn-sm me-2 mb-2"
+                                    @onclick="() => OriginCvId = cv.Id">
+                                @cv.Name
+                            </button>
+                        }
+                    }
+                </div>
+
+            }
+
             <label for="new-cv-name">New Cv Name:</label>
             <InputText id="new-cv-name" @bind-Value="@NewCvName" class="form-control"/>
         </div>
@@ -26,16 +53,50 @@
 @code {
     private Modal _modal = default!;
     readonly List<ToastMessage> toasts = [];
+    private List<CvEntity> _cvs = [];
     private bool isWorking;
+    private string SearchPhrase { get; set; } = string.Empty;
+
+    private List<CvEntity> FilteredCvs => _cvs
+        .Where(cv => string.IsNullOrWhiteSpace(SearchPhrase) || cv.Name.Contains(SearchPhrase, StringComparison.OrdinalIgnoreCase))
+        .ToList();
 
     [Parameter] public long OriginCvId { get; set; }
     [Parameter] public string NewCvName { get; set; } = string.Empty;
+    [Parameter] public bool ShowCvSelector { get; set; }
     [Parameter] public EventCallback<long> OnSuccess { get; set; }
+    [Parameter] public string? TargetOfferUrl { get; set; }
 
-    public async Task ShowAsync(long cvId)
+    public async Task ShowAsync(
+        long originCvId = 0,
+        string newCvName = "",
+        string? offerUrl = null)
     {
-        OriginCvId = cvId;
+        if (ShowCvSelector)
+            await LoadCvCandidatesAsync();
+
+        if (originCvId > 0)
+            OriginCvId = originCvId;
+
+        if (!string.IsNullOrWhiteSpace(newCvName))
+            NewCvName = newCvName;
+
+        if (!string.IsNullOrWhiteSpace(offerUrl))
+            TargetOfferUrl = offerUrl;
+
         await _modal.ShowAsync();
+    }
+
+    private async Task LoadCvCandidatesAsync()
+    {
+        _cvs = await DbContext.Cvs
+            .AsNoTracking()
+            .Where(cv => cv.IsTemplate)
+            .OrderBy(c => c.Id)
+            .ToListAsync();
+
+        if (OriginCvId <= 0 && _cvs.Count > 0)
+            OriginCvId = _cvs[0].Id;
     }
 
     public async Task SaveAsync()
@@ -55,7 +116,7 @@
         isWorking = true;
         StateHasChanged();
 
-        var message = new DuplicateCv.Request(OriginCvId, NewCvName);
+        var message = new DuplicateCv.Request(OriginCvId, NewCvName, TargetOfferUrl);
         var response = await MessageBus.InvokeAsync<ErrorOr<DuplicateCv.Response>>(message);
 
         isWorking = false;
