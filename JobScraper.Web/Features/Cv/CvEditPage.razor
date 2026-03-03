@@ -156,7 +156,6 @@
     private CvEntity _cv = null!;
     private string OriginalContent = "";
     private string ModifiedContent = "";
-    private bool HasImage => _cv?.Image is not null;
 
     [Parameter]
     public int Id { get; set; }
@@ -323,7 +322,6 @@
     private async Task DuplicateAsync()
     {
         await SaveAsync();
-        duplicateCvModal.OriginCvId = _cv.Id;
         await duplicateCvModal.ShowAsync(_cv.Id);
     }
 
