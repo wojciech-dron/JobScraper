@@ -15,6 +15,9 @@ public partial class LoggingBehaviour<TRequest, TResponse>(
         MessageHandlerDelegate<TRequest, TResponse> next,
         CancellationToken cancellationToken)
     {
+        var userName = userProvider.UserName;
+        using var userNameScope = LogContext.PushProperty("UserName", userName);
+
         var beginTime = Stopwatch.GetTimestamp();
 
         var result = await next(message, cancellationToken);

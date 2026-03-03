@@ -1,7 +1,6 @@
 ﻿using BlazorBootstrap;
 using Blazored.FluentValidation;
 using JobScraper.Web.Common.Entities;
-using JobScraper.Web.Features.AiSummary;
 using JobScraper.Web.Features.AiSummary.Logic;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Functions;
 using JobScraper.Web.Modules.Persistence;

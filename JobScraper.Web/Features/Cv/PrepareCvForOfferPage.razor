@@ -78,7 +78,6 @@
 @code {
     private IJSObjectReference? _module;
     private IJSObjectReference? _downloadModule;
-    private Modal _modal = null!;
 
     private bool isWorking;
     private UserOffer _offer = null!;
@@ -97,15 +96,14 @@
     {
         _offer = await DbContext.UserOffers
             .Include(x => x.Details)
-            // .Include(x => x.Cv)
+            .Include(x => x.Cv)
             .FirstAsync(x => x.OfferUrl == OfferUrl);
 
-        _cv = /*_offer.Cv ??*/ new()
+        _cv = _offer.Cv ?? new()
         {
             Id = 1,
             Name = $"{_offer.Details.CompanyName}_{_offer.Details.Title}",
         };
-
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -185,16 +183,6 @@
 
         ModifiedContent = result.AdjustedCvContent;
         _ =_diffEditor.SetModifiedModel(ModifiedContent);
-    }
-
-    private async Task Test()
-    {
-        await _diffEditor.SetModifiedModel(ModifiedContent);
-
-    }
-    private async Task Hide()
-    {
-        await _modal.HideAsync();
     }
 
     public async ValueTask DisposeAsync()

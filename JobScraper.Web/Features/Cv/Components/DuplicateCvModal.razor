@@ -1,0 +1,76 @@
+﻿@using BlazorBootstrap
+@using ErrorOr
+@using JobScraper.Web.Blazor.Extensions
+@using JobScraper.Web.Modules.Persistence
+@using Wolverine
+
+<Toasts class="p-3" Messages="toasts" Placement="ToastsPlacement.TopRight"/>
+
+<Modal @ref="_modal" Title="Offer application" Fullscreen="ModalFullscreen.SmallDown">
+    <BodyTemplate>
+        <div class="form-group">
+            <label for="new-cv-name">New Cv Name:</label>
+            <InputText id="new-cv-name" @bind-Value="@NewCvName" class="form-control"/>
+        </div>
+        <button class="btn btn-success mt-2"
+                disabled="@isWorking"
+                @onclick="SaveAsync">
+            Create duplicate
+        </button>
+    </BodyTemplate>
+</Modal>
+
+@inject IMessageBus MessageBus
+@inject JobsDbContext DbContext
+
+@code {
+    private Modal _modal = default!;
+    readonly List<ToastMessage> toasts = [];
+    private bool isWorking;
+
+    [Parameter] public long OriginCvId { get; set; }
+    [Parameter] public string NewCvName { get; set; } = string.Empty;
+    [Parameter] public EventCallback<long> OnSuccess { get; set; }
+
+    public async Task ShowAsync(long cvId)
+    {
+        OriginCvId = cvId;
+        await _modal.ShowAsync();
+    }
+
+    public async Task SaveAsync()
+    {
+        if (OriginCvId <= 0)
+        {
+            toasts.PushMessage("Invalid id of CV to duplicate", ToastType.Warning);
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(NewCvName) || DbContext.Cvs.Any(c => c.Name == NewCvName))
+        {
+            toasts.PushMessage("Cv name cannot be empty or already exists", ToastType.Warning);
+            return;
+        }
+
+        isWorking = true;
+        StateHasChanged();
+
+        var message = new DuplicateCv.Request(OriginCvId, NewCvName);
+        var response = await MessageBus.InvokeAsync<ErrorOr<DuplicateCv.Response>>(message);
+
+        isWorking = false;
+
+        if (response.IsError)
+        {
+            toasts.PushMessage(response.FirstError.Description, ToastType.Warning);
+            return;
+        }
+
+        toasts.PushMessage("Cv duplicated successfully");
+        StateHasChanged();
+
+        await Task.Delay(1000);
+        await _modal.HideAsync();
+        await OnSuccess.InvokeAsync(response.Value.Id);
+    }
+}
