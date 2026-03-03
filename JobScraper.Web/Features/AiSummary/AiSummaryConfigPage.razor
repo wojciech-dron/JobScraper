@@ -7,7 +7,7 @@
 <NavigationLock ConfirmExternalNavigation="@PreventNavigation"
                 OnBeforeInternalNavigation="OnBeforeInternalNavigation"/>
 
-<Toasts class="p-3" Messages="messages" Placement="ToastsPlacement.TopRight"/>
+<Toasts class="p-3" Messages="toasts" Placement="ToastsPlacement.TopRight"/>
 
 <h2>AI Summary</h2>
 
@@ -99,14 +99,8 @@
 @code
 {
     List<ChatItem> chatHistory = [];
-    readonly List<ToastMessage> messages = [];
+    readonly List<ToastMessage> toasts = [];
 
-    private void PushNotification(string message, ToastType toastType = ToastType.Success) =>
-        messages.Insert(0, new ToastMessage
-        {
-            Type = toastType,
-            Message = message,
-        });
 
     private bool PreventNavigation => isWorking;
 

@@ -9,6 +9,7 @@
 @using JobScraper.Web.Features.Cv.Helpers
 @using JobScraper.Web.Features.Cv.PdfGeneration
 @using JobScraper.Web.Modules.Persistence
+@using Microsoft.EntityFrameworkCore
 @using Wolverine
 
 <Toasts class="p-3" Messages="toasts" Placement="ToastsPlacement.TopRight"/>
@@ -45,6 +46,11 @@
                 @onclick="GenerateCvPdf">
             Generate CV
         </button>
+        <button class="btn btn-primary mt-2"
+                disabled="@isWorking"
+                @onclick="SaveChanges">
+            Save changes
+        </button>
     </div>
 </div>
 
@@ -55,6 +61,7 @@
 @code {
     readonly List<ToastMessage> toasts = [];
     private IJSObjectReference? _downloadModule;
+    private readonly CancellationTokenSource _cts = new();
     private MarkdownDiffEditor? _diffEditor;
     private bool isWorking;
 
@@ -77,14 +84,28 @@
         }
         else
         {
-            // _cv = await DbContext.Cvs.FindAsync(Id) ?? new();
+            _cv = await DbContext.Cvs
+                .Include(c => c.OriginCv)
+                .FirstOrDefaultAsync(c => c.Id == Id, _cts.Token);
         }
-
     }
 
-    public async Task<string?> GetModifiedValue() => _diffEditor is not null
-        ? await _diffEditor.GetModifiedValueAsync()
-        : null;
+    public async Task SaveChanges()
+    {
+        if (_diffEditor is null || _cv is null)
+        {
+            toasts.PushMessage("No diff editor or cv available", ToastType.Danger);
+            return;
+        }
+
+        _cv.MarkdownContent = await _diffEditor.GetModifiedValueAsync();
+
+        if (DbContext.Entry(_cv).State == EntityState.Detached)
+            DbContext.Add(_cv);
+
+        await DbContext.SaveChangesAsync(_cts.Token);
+
+    }
 
     private async Task GenerateCvPdf()
     {
@@ -154,5 +175,11 @@
         ArgumentException.ThrowIfNullOrWhiteSpace(_cv?.MarkdownContent);
         _compareMode = CompareMode.WithSaved;
         OriginalContent = _cv?.MarkdownContent!;
+    }
+
+    public void Dispose()
+    {
+        _cts.Cancel();
+        _cts.Dispose();
     }
 }
