@@ -70,7 +70,7 @@
         });
     }
 
-    public async Task<string?> GetModifiedValueAsync() => _diffEditor is not null
+    public async Task<string> GetModifiedValueAsync() => _diffEditor is not null
         ? await _diffEditor.ModifiedEditor.GetValue()
-        : null;
+        : "";
 }

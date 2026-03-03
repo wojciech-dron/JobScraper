@@ -21,6 +21,7 @@ public class CvEntity : IUpdatable, IOwnable
     public List<ChatItem>? ChatHistory { get; set; }
 
     public CvEntity? OriginCv { get; set; }
+    public ICollection<CvEntity> DerivedCvs { get; set; } = [];
     public ICollection<UserOffer> Offers { get; set; } = [];
 }
 
@@ -46,7 +47,7 @@ public class CvEntityModelBuilder : IEntityTypeConfiguration<CvEntity>
             .OnDelete(DeleteBehavior.ClientSetNull);
 
         builder.HasOne(c => c.OriginCv)
-            .WithMany()
+            .WithMany(c => c.DerivedCvs)
             .HasForeignKey("OriginCvId")
             .OnDelete(DeleteBehavior.ClientSetNull);
 

@@ -4,6 +4,7 @@ using ErrorOr;
 using Facet;
 using Facet.Extensions;
 using FluentValidation;
+using JobScraper.Web.Blazor.Extensions;
 using JobScraper.Web.Common.Entities;
 using JobScraper.Web.Features.AiSummary.Logic;
 using JobScraper.Web.Integration.AiProvider;
@@ -64,7 +65,7 @@ public partial class AiSummaryConfigPage(
         await dbContext.SaveChangesAsync();
 
         isWorking = false;
-        PushNotification("Configuration saved successfully.");
+        toasts.PushMessage("Configuration saved successfully.");
     }
 
     private async Task VerifyProvider()
@@ -77,13 +78,13 @@ public partial class AiSummaryConfigPage(
 
         if (result.IsError)
         {
-            PushNotification(result.FirstError.Description, ToastType.Warning);
+            toasts.PushMessage(result.FirstError.Description, ToastType.Warning);
             isWorking = false;
 
             return;
         }
 
-        PushNotification("Provider works fine.");
+        toasts.PushMessage("Provider works fine.");
         isWorking = false;
     }
 
@@ -91,12 +92,12 @@ public partial class AiSummaryConfigPage(
     {
         if (!await validator.ValidateAsync(options => options.IncludeRuleSets("TestOffer")))
         {
-            PushNotification("Provide test offer content.", ToastType.Warning);
+            toasts.PushMessage("Provide test offer content.", ToastType.Warning);
             return;
         }
 
         isWorking = true;
-        PushNotification("AI summary in progress...");
+        toasts.PushMessage("AI summary in progress...");
 
         var request = new SummarizeOfferContent.Request(
             CvContent: form.CvContent,
@@ -107,9 +108,9 @@ public partial class AiSummaryConfigPage(
         var result = await messageBus.InvokeAsync<ErrorOr<SummarizeOfferContent.Response>>(request, _cts.Token);
 
         if (result.IsError)
-            PushNotification(result.FirstError.Description);
+            toasts.PushMessage(result.FirstError.Description);
         else
-            PushNotification("AI summary finished.");
+            toasts.PushMessage("AI summary finished.");
 
         chatHistory = result.Value.ChatHistory;
         isWorking = false;
@@ -135,7 +136,7 @@ public partial class AiSummaryConfigPage(
         var nextExecutionTime = DateTime.UtcNow.AddMinutes(1);
         if (nextScheduledJob is not null && nextScheduledJob.ExecutionTime < nextExecutionTime)
         {
-            PushNotification("Ai summary job is already scheduled, and will be executed in the next minute.", ToastType.Warning);
+            toasts.PushMessage("Ai summary job is already scheduled, and will be executed in the next minute.", ToastType.Warning);
             return;
         }
 
@@ -143,7 +144,7 @@ public partial class AiSummaryConfigPage(
 
         dbContext.ScheduleAiSummary(nextExecutionTime);
         await dbContext.SaveChangesAsync(_cts.Token);
-        PushNotification("Ai summary job scheduled.");
+        toasts.PushMessage("Ai summary job scheduled.");
         isWorking = false;
     }
 
