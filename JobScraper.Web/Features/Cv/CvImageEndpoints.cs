@@ -57,18 +57,14 @@ public static class CvImageEndpoints
     private static async Task<IResult> GetImage(
         HttpContext context,
         long id,
-        [FromServices] JobsDbContext db,
+        [FromServices()] JobsDbContext db,
         CancellationToken cancellationToken)
     {
-        var currentUser = context.User.Identity?.Name;
-        if (string.IsNullOrWhiteSpace(currentUser))
-            return Results.Unauthorized();
-
-        db.CurrentUserName = currentUser;
-
         var image = await db.CvImages.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
         if (image is null)
             return Results.NotFound();
+
+        var currentUser = context.User.Identity?.Name;
 
         if (!string.Equals(image.Owner, currentUser, StringComparison.OrdinalIgnoreCase))
             return Results.Forbid();

@@ -28,9 +28,6 @@ public static class Setup
             options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
         });
 
-        // decorate IDbContextFactory with custom implementation
-        builder.Services.Decorate<IDbContextFactory<JobsDbContext>, UserJobsContextFactory>();
-
         // resolve db context with custom pooled factory
         services.AddScoped(sp => sp.GetRequiredService<IDbContextFactory<JobsDbContext>>().CreateDbContext());
 
@@ -55,4 +52,7 @@ public static class Setup
         if (sourceDirectory is not null)
             Directory.CreateDirectory(sourceDirectory);
     }
+
+
 }
+
