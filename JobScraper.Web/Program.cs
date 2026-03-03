@@ -39,6 +39,7 @@ if (!app.Environment.IsDevelopment())
 
 app.UseAppLogging();
 app.UseExceptionHandler("/Error", true);
+app.UseUserIdentityMiddleware();
 app.UseBlazor();
 app.UseCvFeatures();
 app.UseJobs();
