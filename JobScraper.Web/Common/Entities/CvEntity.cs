@@ -18,7 +18,7 @@ public class CvEntity : IUpdatable, IOwnable
     public string MarkdownContent { get; set; } = "";
     public LayoutConfig LayoutConfig { get; set; } = new();
     public string Disclaimer { get; set; } = "";
-    public List<ChatItem>? ChatHistory { get; set; }
+    public List<ChatItem> ChatHistory { get; set; } = [];
 
     public ImageEntity? Image { get; set; }
     public CvEntity? OriginCv { get; set; }

@@ -9,8 +9,8 @@
 @using Blazored.FluentValidation
 @using ErrorOr
 @using JobScraper.Web.Blazor.Extensions
-@using JobScraper.Web.Features.AiSummary.Logic
 @using JobScraper.Web.Features.Cv.Helpers
+@using JobScraper.Web.Features.Cv.Logic
 @using JobScraper.Web.Modules.Persistence
 @using Microsoft.EntityFrameworkCore
 @using Wolverine
@@ -81,7 +81,7 @@
             @if (_cv.Id > 0)
             {
                 <a href="/cv/edit/@_cv.Id">
-                    <button class="btn btn-primary ms-1 btn-sm">
+                    <button class="btn btn-primary ms-1 btn-sm" disabled="@isWorking">
                         Go to CV page
                     </button>
                 </a>
@@ -117,17 +117,16 @@
         </div>
         <div class="gutter" style="flex: 0 0 5px; cursor: col-resize; background-color: #dee2e6; user-select: none;"></div>
         <div id="right-panel" class="overflow-auto ps-1" style="flex: 0 0 500px; min-width: 200px;">
-            @if (chatHistory.Count > 0)
-            {
-                <h4>AI chat</h4>
-                <ChatHistory Items="chatHistory"/>
-            }
+            <AiCvChat ChatHistory="_cv.ChatHistory"
+                      IsWorking="isWorking"
+                      OnSendMessage="SendChatMessage"/>
         </div>
     </div>
 
 </EditForm>
 
 @implements IAsyncDisposable
+@inject IAiCvChatService AiCvChatService
 @inject IMessageBus MessageBus
 @inject IJSRuntime JS
 @inject JobsDbContext DbContext
@@ -139,7 +138,6 @@
     private UserOffer _offer = null!;
     private CvEntity _cv = null!;
     private MarkdownDiffEditor _diffEditor = null!;
-    private List<ChatItem> chatHistory = TestData.Chat;
     readonly List<ToastMessage> toasts = [];
     private FluentValidationValidator validator = null!;
     private readonly CancellationTokenSource _cts = new();
@@ -160,6 +158,7 @@
 
         ArgumentNullException.ThrowIfNull(_offer.Cv);
         _cv = _offer.Cv;
+        _cv.ChatHistory ??= [];
 
         OriginalContent = _cv.MarkdownContent;
         ModifiedContent = _cv.MarkdownContent;
@@ -231,15 +230,15 @@
         isWorking = true;
         toasts.PushMessage("Preparing CV content. It could take a while");
 
-        var request = new AdjustCvContentToOffer.Request(
+        var request = new AiCvChatRequest(
             CvContent: cvContent,
             OfferContent: _offer.Details.Description,
             OfferSummary: _offer.AiSummary);
 
-        var result = await MessageBus.InvokeAsync<AdjustCvContentToOffer.Response>(request);
+        var result = await AiCvChatService.AdjustCvAsync(request, _cts.Token);
 
         isWorking = false;
-        chatHistory = result.ChatHistory;
+        _cv.ChatHistory = result.ChatHistory;
 
         if (!result.Success)
         {
@@ -249,11 +248,37 @@
 
         toasts.PushMessage("CV content prepared successfully");
 
-        if (chatHistory.Count > 0)
-            chatHistory.RemoveAt(chatHistory.Count - 1); // remove the last item because it is CV content
+        ModifiedContent = result.AdjustedCvContent!;
+        _ = _diffEditor.SetModifiedModel(ModifiedContent);
+    }
 
-        ModifiedContent = result.AdjustedCvContent;
-        _ =_diffEditor.SetModifiedModel(ModifiedContent);
+    private async Task SendChatMessage(string message)
+    {
+        var cvContent = await _diffEditor.GetModifiedValueAsync();
+        if (string.IsNullOrWhiteSpace(cvContent) || _offer.Details.Description == null)
+            return;
+
+        isWorking = true;
+        StateHasChanged();
+
+        var request = new AiCvChatFollowUpRequest(
+            UserMessage: message,
+            CurrentCvContent: cvContent,
+            OfferContent: _offer.Details.Description,
+            OfferSummary: _offer.AiSummary,
+            ExistingChatHistory: _cv.ChatHistory);
+
+        var result = await AiCvChatService.SendMessageAsync(request, _cts.Token);
+
+        _cv.ChatHistory = result.ChatHistory;
+        isWorking = false;
+
+        if (result.AdjustedCvContent is not null)
+        {
+            ModifiedContent = result.AdjustedCvContent;
+            _ = _diffEditor.SetModifiedModel(ModifiedContent);
+            toasts.PushMessage("CV content updated from chat");
+        }
     }
 
 
