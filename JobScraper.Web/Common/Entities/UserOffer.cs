@@ -20,7 +20,7 @@ public record UserOffer : IOwnable, IUpdatable
 
     public JobOffer Details { get; set; } = null!;
     public Application? Application { get; set; }
-    // public CvEntity? Cv { get; set; }
+    public CvEntity? Cv { get; set; }
 
     public DateTime? UpdatedAt { get; set; }
 
@@ -61,11 +61,9 @@ public class UserJobOfferModelBuilder : IEntityTypeConfiguration<UserOffer>
             j.OfferUrl,
         });
         builder.Property(j => j.Owner).HasMaxLength(255);
-        builder.Property(j => j.Owner).HasMaxLength(255);
         builder.Property(j => j.OfferUrl).HasMaxLength(500);
         builder.Property(j => j.Comments).HasMaxLength(500);
         builder.Property(j => j.AiSummary).HasMaxLength(5000);
-        builder.Property(j => j.AiSummaryStatus).HasMaxLength(5000);
         builder.Property(j => j.AiSummaryStatus)
             .HasConversion<string>()
             .HasMaxLength(12)
