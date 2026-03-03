@@ -9,7 +9,11 @@ namespace JobScraper.Web.Features.Cv;
 
 public class DuplicateCv
 {
-    public record Request(long OriginCvId, string NewName) : IRequest<ErrorOr<Response>>;
+    public record Request(
+        long OriginCvId,
+        string CvName,
+        string? OfferUrl = null
+        ) : IRequest<ErrorOr<Response>>;
 
     public record Response(long Id);
 
@@ -27,7 +31,7 @@ public class DuplicateCv
 
             var newCv = new CvEntity
             {
-                Name = request.NewName,
+                Name = request.CvName,
                 Image = originCv.Image,
                 MarkdownContent = originCv.MarkdownContent,
                 LayoutConfig = originCv.LayoutConfig.Clone(),
@@ -40,6 +44,15 @@ public class DuplicateCv
                 return Error.Validation(metadata: validationResult.Errors
                     .Select(x => new KeyValuePair<string, object>(x.PropertyName, x.ErrorMessage))
                     .ToDictionary());
+
+            if (request.OfferUrl is not null)
+            {
+                var offer = await dbContext.UserOffers
+                    .Include(u => u.Details)
+                    .FirstOrDefaultAsync(u => u.OfferUrl == request.OfferUrl, cancellationToken);
+
+                offer?.Cv = newCv;
+            }
 
             dbContext.Add(newCv);
             await dbContext.SaveChangesAsync(cancellationToken);

@@ -323,6 +323,7 @@
     private async Task DuplicateAsync()
     {
         await SaveAsync();
+        duplicateCvModal.OriginCvId = _cv.Id;
         await duplicateCvModal.ShowAsync(_cv.Id);
     }
 
