@@ -6,69 +6,126 @@
 @using JobScraper.Web.Features.Cv.Components
 @using JobScraper.Web.Features.Cv.PdfGeneration
 @using System.IO
+@using Blazored.FluentValidation
 @using ErrorOr
 @using JobScraper.Web.Blazor.Extensions
 @using JobScraper.Web.Features.AiSummary.Logic
+@using JobScraper.Web.Features.Cv.Helpers
 @using JobScraper.Web.Modules.Persistence
 @using Microsoft.EntityFrameworkCore
 @using Wolverine
 
+<Style>
+    .cv-container {
+        display: flex;
+        height: 85vh;
+        overflow: hidden;
+    }
+</Style>
+
+<NavigationLock ConfirmExternalNavigation="@PreventNavigation"
+                OnBeforeInternalNavigation="OnBeforeInternalNavigation"/>
+
 <Toasts class="p-3" Messages="toasts" Placement="ToastsPlacement.TopRight"/>
 
-<div id="resizable-panels" class="d-flex vh-100 overflow-hidden">
-    <div id="ai-panel" class="overflow-auto" style="flex: 0 0 450px; min-width: 200px;">
-        @if (!string.IsNullOrEmpty(_offer.AiSummary))
-        {
-            <h4 style="color: #FFC2B2">Ai Summary:</h4>
-            <span style="white-space: pre-line; font-size: 12px;">
-                @_offer.AiSummary
-            </span>
-        }
-    </div>
-    <div class="gutter" style="flex: 0 0 5px; cursor: col-resize; background-color: #dee2e6; user-select: none;"></div>
-    <div id="editor-panel" style="flex: 1 1 auto; min-width: 400px;">
-        <MarkdownDiffEditor
-            @ref="_diffEditor"
-            InitOriginalContent="@OriginalContent"
-            InitModifiedContent="@ModifiedContent"
-            CssClass="h-100"
-            Inline/>
-    </div>
-    <div class="gutter" style="flex: 0 0 5px; cursor: col-resize; background-color: #dee2e6; user-select: none;"></div>
-    <div id="right-panel" class="overflow-auto ps-1" style="flex: 0 0 500px; min-width: 200px;">
-        <button class="btn btn-primary"
-                disabled="@isWorking"
-                @onclick="GenerateCvPdf">
-            Generate CV
-        </button>
-        <button class="btn btn-primary"
-                disabled="@isWorking"
-                @onclick="PrepareCvContent">
-            Prepare CV content with AI
-        </button>
-        @if (_cv.Id > 0)
-        {
-            <a href="/cv/edit/@_cv.Id">
-                <button class="btn btn-success">Manage CV</button>
-            </a>
-        }
+<h3>Prepare CV for offer</h3>
 
-        @if (isWorking)
-        {
-            <div class="spinner-border" role="status">
-                <span class="sr-only"></span>
+<EditForm Model="@_cv">
+    <FluentValidationValidator @ref="validator"/>
+
+    <div class="row mb-3">
+        <div class="col-md-2">
+            <div class="input-group input-group-sm mb-3">
+                <span class="input-group-text px-1 py-0 small text-muted" title="Bullet Width">Name</span>
+                <TextInput @bind-Value="_cv.Name" class="form-control"/>
             </div>
-        }
-        <br/>
-        <br/>
+        </div>
+        <div class="col-md-2">
+            @if (_cv.OriginCv is not null)
+            {
+                <span>Origin Cv: @_cv.OriginCv.Name</span>
+            }
+        </div>
 
-        @if (chatHistory.Count > 0)
-        {
-            <h4>Agents chat history</h4>
-            <ChatHistory Items="chatHistory"/>
-        }
+        <div class="col-md-4">
+            <button class="btn btn-info btn-sm"
+                    @onclick="CompareToOrigin"
+                    disabled="@DisableCompareToOrigin">
+                Compare with origin
+            </button>
+
+            <button class="btn btn-info btn-sm"
+                    @onclick="CompareToSaved"
+                    disabled="@DisableCompareToSaved">
+                Compare with saved
+            </button>
+        </div>
+
+        <div class="col-md-4">
+            <button class="btn btn-primary btn-sm"
+                    disabled="@isWorking"
+                    @onclick="GenerateCvPdf">
+                Generate CV
+            </button>
+            <button class="btn btn-primary btn-sm"
+                    disabled="@isWorking"
+                    @onclick="PrepareCvContent">
+                Prepare CV content with AI
+            </button>
+            <button class="btn btn-success btn-sm"
+                    disabled="@isWorking"
+                    @onclick="SaveAsync">
+                Save changes
+            </button>
+
+            @if (_cv.Id > 0)
+            {
+                <a href="/cv/edit/@_cv.Id">
+                    <button class="btn btn-primary ms-1 btn-sm">
+                        Go to CV page
+                    </button>
+                </a>
+            }
+
+            @if (isWorking)
+            {
+                <div class="spinner-border" role="status">
+                    <span class="sr-only"></span>
+                </div>
+            }
+        </div>
     </div>
-</div>
+
+    <div id="resizable-panels" class="cv-container">
+        <div id="ai-panel" class="overflow-auto" style="flex: 0 0 450px; min-width: 200px;">
+            @if (!string.IsNullOrEmpty(_offer.AiSummary))
+            {
+                <h4 style="color: #FFC2B2">Ai Summary:</h4>
+                <span style="white-space: pre-line; font-size: 12px;">
+                    @_offer.AiSummary
+                </span>
+            }
+        </div>
+        <div class="gutter" style="flex: 0 0 5px; cursor: col-resize; background-color: #dee2e6; user-select: none;"></div>
+        <div id="editor-panel" style="flex: 1 1 auto; min-width: 400px;">
+            <MarkdownDiffEditor
+                @ref="_diffEditor"
+                InitOriginalContent="@OriginalContent"
+                InitModifiedContent="@ModifiedContent"
+                CssClass="h-100"
+                Inline/>
+        </div>
+        <div class="gutter" style="flex: 0 0 5px; cursor: col-resize; background-color: #dee2e6; user-select: none;"></div>
+        <div id="right-panel" class="overflow-auto ps-1" style="flex: 0 0 500px; min-width: 200px;">
+            @if (chatHistory.Count > 0)
+            {
+                <h4>Agents chat history</h4>
+                <ChatHistory Items="chatHistory"/>
+            }
+        </div>
+    </div>
+
+</EditForm>
 
 @implements IAsyncDisposable
 @inject IMessageBus MessageBus
@@ -78,17 +135,18 @@
 @code {
     private IJSObjectReference? _module;
     private IJSObjectReference? _downloadModule;
-
     private bool isWorking;
     private UserOffer _offer = null!;
     private CvEntity _cv = null!;
     private MarkdownDiffEditor _diffEditor = null!;
     private List<ChatItem> chatHistory = TestData.Chat;
     readonly List<ToastMessage> toasts = [];
+    private FluentValidationValidator validator = null!;
+    private readonly CancellationTokenSource _cts = new();
 
-    private readonly byte[] CvImage = TestData.Image;
-    private readonly string OriginalContent = TestData.BaseCv;
-    private string ModifiedContent = TestData.BaseCv;
+    private CompareMode _compareMode = CompareMode.WithSaved;
+    private string OriginalContent = "";
+    private string ModifiedContent = "";
 
     [Parameter] public string? OfferUrl { get; set; }
 
@@ -96,11 +154,15 @@
     {
         _offer = await DbContext.UserOffers
             .Include(x => x.Details)
-            .Include(x => x.Cv)
+            .Include(x => x.Cv!.OriginCv)
+            .Include(x => x.Cv!.Image)
             .FirstAsync(x => x.OfferUrl == OfferUrl);
 
         ArgumentNullException.ThrowIfNull(_offer.Cv);
         _cv = _offer.Cv;
+
+        OriginalContent = _cv.MarkdownContent;
+        ModifiedContent = _cv.MarkdownContent;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -120,11 +182,23 @@
             return;
 
         isWorking = true;
+        StateHasChanged();
 
-        var cvContent = new CvContent(mdContent, CvImage);
-        var layoutConfig = new LayoutConfig();
-        var request = new GenerateCvPdfFromMarkdown.Request(cvContent, layoutConfig);
-        var result = await MessageBus.InvokeAsync<ErrorOr<byte[]>>(request);
+        var cvContent = new CvContent(mdContent, _cv.Image?.Data);
+        var request = new GenerateCvPdfFromMarkdown.Request(cvContent, _cv.LayoutConfig);
+
+        ErrorOr<byte[]> result;
+        try
+        {
+            result = await MessageBus.InvokeAsync<ErrorOr<byte[]>>(request);
+        }
+        catch (Exception e)
+        {
+            var errorMessage = e.Message.ToFriendlyErrorMessage();
+            toasts.PushMessage("Failed to generate CV PDF: " + errorMessage, ToastType.Danger);
+            isWorking = false;
+            return;
+        }
 
         isWorking = false;
 
@@ -134,7 +208,7 @@
             return;
         }
 
-        var fileName = $"{_offer.Details.CompanyName}_CV.pdf";
+        var fileName = $"{_cv.Name}.pdf";
         var pdfBytes = result.Value;
         using var stream = new MemoryStream(pdfBytes);
         using var streamRef = new DotNetStreamReference(stream);
@@ -176,18 +250,80 @@
         toasts.PushMessage("CV content prepared successfully");
 
         if (chatHistory.Count > 0)
-            chatHistory.RemoveAt(chatHistory.Count - 1); // remove last item because it is CV content
+            chatHistory.RemoveAt(chatHistory.Count - 1); // remove the last item because it is CV content
 
         ModifiedContent = result.AdjustedCvContent;
         _ =_diffEditor.SetModifiedModel(ModifiedContent);
     }
 
+
+    public async Task SaveAsync()
+    {
+        _cv.MarkdownContent = await _diffEditor.GetModifiedValueAsync();
+
+        if (!await validator.ValidateAsync())
+            return;
+
+        if (DbContext.Entry(_cv).State == EntityState.Detached)
+            DbContext.Add(_cv);
+
+        await DbContext.SaveChangesAsync(_cts.Token);
+
+        if (_compareMode == CompareMode.WithSaved)
+        {
+            OriginalContent = _cv.MarkdownContent;
+            await _diffEditor.SetOriginalModel(_cv.MarkdownContent);
+        }
+
+        toasts.PushMessage("CV saved successfully");
+    }
+
+    private enum CompareMode
+    {
+        None,
+        WithSaved,
+        WithOrigin,
+    }
+
+    public bool DisableCompareToOrigin =>
+        _compareMode is CompareMode.WithOrigin || string.IsNullOrWhiteSpace(_cv?.OriginCv?.MarkdownContent);
+    private async Task CompareToOrigin()
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(_cv?.OriginCv?.MarkdownContent);
+        _compareMode = CompareMode.WithOrigin;
+        OriginalContent = _cv?.OriginCv?.MarkdownContent!;
+        await _diffEditor!.SetOriginalModel(_cv!.OriginCv!.MarkdownContent);
+    }
+
+    public bool DisableCompareToSaved => _compareMode is CompareMode.WithSaved;
+    private async Task CompareToSaved()
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(_cv?.MarkdownContent);
+        _compareMode = CompareMode.WithSaved;
+        OriginalContent = _cv?.MarkdownContent!;
+        await _diffEditor!.SetOriginalModel(_cv!.MarkdownContent);
+    }
+
+    private bool PreventNavigation => isWorking || DbContext.Entry(_cv).State == EntityState.Modified;
+
+    private async Task OnBeforeInternalNavigation(LocationChangingContext ctx)
+    {
+        if (!PreventNavigation)
+            return;
+
+        var confirm = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to leave this page?");
+        if (!confirm)
+            ctx.PreventNavigation();
+    }
+
     public async ValueTask DisposeAsync()
     {
+        await _cts.CancelAsync();
+        _cts.Dispose();
+
         if (_downloadModule is not null)
         {
             await _downloadModule.DisposeAsync();
         }
     }
-
 }
