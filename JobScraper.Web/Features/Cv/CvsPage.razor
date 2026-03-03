@@ -1,8 +1,8 @@
 @page "/cv"
+@using BlazorBootstrap
 @using JobScraper.Web.Blazor.Components.MySelect
-@using JobScraper.Web.Common.Entities
 @using JobScraper.Web.Common.Extensions
-@using JobScraper.Web.Modules.Extensions
+@using JobScraper.Web.Features.Cv.Models
 @using JobScraper.Web.Modules.Persistence
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.EntityFrameworkCore
@@ -20,6 +20,7 @@
         <TemplateColumn class="col-1" Title="Actions">
             <ChildContent>
                 <a class="btn btn-secondary btn-sm" href="/cv/edit/@context.Id">Edit</a>
+                <button class="btn btn-danger btn-sm" @onclick="() => DeleteCvAsync(context.Id)">Delete</button>
             </ChildContent>
         </TemplateColumn>
         <PropertyColumn class="col-4" Property="@(c => c.Name)" Sortable="true">
@@ -33,7 +34,7 @@
                        class="form-control form-control-sm"/>
             </HeaderTemplate>
         </PropertyColumn>
-        <TemplateColumn class="col-2" SortBy="@(GridSort<CvEntity>.ByAscending(c => c.OriginCv == null))" Title="Type">
+        <TemplateColumn class="col-2" SortBy="@(GridSort<CvListDto>.ByAscending(c => !c.HasOrigin))" Title="Type">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -49,7 +50,8 @@
                 @(context.IsTemplate ? "Template" : "Dedicated")
             </ChildContent>
         </TemplateColumn>
-        <TemplateColumn class="col-2" SortBy="@(GridSort<CvEntity>.ByAscending(c => c.OriginCv != null))" Title="Origin CV">
+        <TemplateColumn class="col-2" SortBy="@(GridSort<CvListDto>.ByAscending(c => c.HasOrigin))"
+                        Title="Origin CV">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -60,13 +62,18 @@
                        class="form-control form-control-sm"/>
             </HeaderTemplate>
             <ChildContent>
-                @(context.OriginCv?.Name ?? "-")
+                @(context.OriginName)
             </ChildContent>
         </TemplateColumn>
-        <PropertyColumn class="col-2" Property="@(c => c.CreatedAt)" Title="Created" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
-        <PropertyColumn class="col-2" Property="@(c => c.UpdatedAt)" Title="Updated" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
+        <PropertyColumn class="col-2" Property="@(c => c.CreatedAt)" Title="Created" Format="yyyy-MM-dd HH:mm"
+                        Sortable="true"/>
+        <PropertyColumn class="col-2" Property="@(c => c.UpdatedAt)" Title="Updated" Format="yyyy-MM-dd HH:mm"
+                        Sortable="true"/>
     </QuickGrid>
 </div>
+
+<ConfirmDialog @ref="dialog"/>
+
 
 @if (pagination.TotalItemCount is 0)
 {
@@ -94,8 +101,10 @@
 @inject IDbContextFactory<JobsDbContext> DbFactory
 
 @code {
-    QuickGrid<CvEntity> grid = null!;
+    QuickGrid<CvListDto> grid = null!;
     JobsDbContext dbContext = null!;
+    ConfirmDialog dialog = null!;
+
 
     readonly PaginationState pagination = new()
     {
@@ -106,17 +115,37 @@
     public string? OriginFilter { get; set; } = "";
     public bool? IsTemplateFilter { get; set; }
 
-    IQueryable<CvEntity> cvs => dbContext.Cvs
+    IQueryable<CvListDto> cvs => dbContext.Cvs
         .Include(c => c.OriginCv)
-        .WhereIf(!string.IsNullOrWhiteSpace(NameFilter), c => c.Name.ToLower().Contains(NameFilter!.ToLower()))
-        .WhereIf(!string.IsNullOrWhiteSpace(OriginFilter), c => c.OriginCv != null && c.OriginCv.Name.ToLower().Contains(OriginFilter!.ToLower()))
-        .WhereIf(IsTemplateFilter.HasValue, c => c.IsTemplate == IsTemplateFilter)
+        // .WhereIf(!string.IsNullOrWhiteSpace(NameFilter), c => c.Name.ToLower().Contains(NameFilter!.ToLower()))
+        // .WhereIf(!string.IsNullOrWhiteSpace(OriginFilter), c => c.OriginCv != null && c.OriginCv.Name.ToLower().Contains(OriginFilter!.ToLower()))
+        // .WhereIf(IsTemplateFilter.HasValue, c => c.IsTemplate == IsTemplateFilter)
         .OrderByDescending(c => c.UpdatedAt)
-        .ThenByDescending(c => c.CreatedAt);
+        .ThenByDescending(c => c.CreatedAt)
+        .Select(CvListDto.Projection);
 
     protected override async Task OnInitializedAsync()
     {
         dbContext = await DbFactory.CreateDbContextAsync();
+    }
+
+    private async Task DeleteCvAsync(long id)
+    {
+        var confirmation = await dialog.ShowAsync(
+            title: "Are you sure you want to delete this?",
+            message1: "This will delete the record. Once deleted can not be rolled back.",
+            message2: "Do you want to proceed?");
+
+        if (!confirmation)
+            return;
+
+        var cv = await dbContext.Cvs.FindAsync(id);
+        if (cv is null)
+            return;
+
+        dbContext.Remove(cv);
+        await dbContext.SaveChangesAsync();
+        await grid.RefreshDataAsync();
     }
 
     public async ValueTask DisposeAsync() => await dbContext.DisposeAsync();
@@ -127,4 +156,5 @@
         true  => "Template",
         false => "Dedicated",
     };
+
 }

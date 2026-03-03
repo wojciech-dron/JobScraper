@@ -49,12 +49,12 @@ public class CvEntityModelBuilder : IEntityTypeConfiguration<CvEntity>
         builder.HasOne(c => c.OriginCv)
             .WithMany(c => c.DerivedCvs)
             .HasForeignKey("OriginCvId")
-            .OnDelete(DeleteBehavior.ClientSetNull);
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasMany(c => c.Offers)
             .WithOne(c => c.Cv)
             .HasForeignKey("CvId")
-            .OnDelete(DeleteBehavior.ClientSetNull);
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasIndex(c => c.CreatedAt);
         builder.HasIndex(c => c.UpdatedAt);
