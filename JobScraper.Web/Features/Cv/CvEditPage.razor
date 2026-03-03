@@ -68,11 +68,18 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // _cv = await DbContext.Cvs.FindAsync(Id) ?? new();
-        _cv = new()
+        if (Id == 0)
         {
-            Name = "Test",
-        };
+            _cv = new()
+            {
+                Name = "Test",
+            };
+        }
+        else
+        {
+            // _cv = await DbContext.Cvs.FindAsync(Id) ?? new();
+        }
+
     }
 
     public async Task<string?> GetModifiedValue() => _diffEditor is not null
