@@ -18,7 +18,7 @@
 
 <Toasts class="p-3" Messages="toasts" Placement="ToastsPlacement.TopRight"/>
 
-<EditForm Model="@_cv" OnValidSubmit="SaveAsync">
+<EditForm Model="@_cv">
     <FluentValidationValidator @ref="validator"/>
 
     <div class="row vh-100 pt-2">
@@ -44,43 +44,68 @@
                         </InputSelect>
                     </div>
                 </div>
+
                 <div class="col-md-3">
-                    <InputFile class="@(HasImage ? "hide-file-name" : null)"
-                               title="@(HasImage ? _cv.Image!.FileName : null)"
-                               OnChange="UploadImage"
-                               accept="image/*"
-                               disabled="@isWorking"/>
-                    @{
-                        var image = _cv.Image;
-                    }
-                    @if (image is not null)
+                    @if (_cv.OriginCv is not null)
                     {
-                        <div class="mt-2 d-flex flex-column gap-1">
-                            <div class="small">
-                                <a href="@GetImageUrl(image.Id)" target="_blank">@image.FileName</a>
-                            </div>
-                        </div>
+                        <span>Origin Cv: @_cv.OriginCv.Name</span>
                     }
                 </div>
+
+                <div class="col-md-3">
+                    <button class="btn btn-info btn-sm"
+                            @onclick="CompareToOrigin"
+                            disabled="@DisableCompareToOrigin">
+                        Compare with origin
+                    </button>
+
+                    <button class="btn btn-info btn-sm"
+                            @onclick="CompareToSaved"
+                            disabled="@DisableCompareToSaved">
+                        Compare with saved
+                    </button>
+                </div>
+
             </div>
-
-            <button class="btn btn-info btn-sm"
-                    @onclick="CompareToOrigin"
-                    disabled="@DisableCompareToOrigin">Compare with origin</button>
-
-            <button class="btn btn-info btn-sm"
-                    @onclick="CompareToSaved"
-                    disabled="@DisableCompareToSaved">Compare with saved</button>
 
             <MarkdownDiffEditor @ref="_diffEditor"
                                 CssClass="h-75 mt-3"
                                 InitOriginalContent="@OriginalContent"
                                 InitModifiedContent="@ModifiedContent"/>
 
-            <div class="col-md-3 input-group input-group-sm mt-3">
-                <span class="input-group-text px-1 py-0 small text-muted"
-                      title="Disclaimer content positioned on the footer">Disclaimer</span>
-                <TextAreaInput @bind-Value="_cv.Disclaimer" class="form-control"/>
+            <div class="row mt-3">
+                <div class="col-md-8">
+
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text px-1 py-0 small text-muted"
+                              title="Disclaimer content positioned on the footer">Disclaimer</span>
+                        <TextAreaInput @bind-Value="_cv.Disclaimer" class="form-control"/>
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <span>Selected image:</span>
+                    @{
+                        var image = _cv.Image;
+                    }
+                    @if (image is not null)
+                    {
+                        <div class="small">
+                            <a href="@GetImageUrl(image.Id)" target="_blank">@image.FileName</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="small">No image selected</div>
+                    }
+                </div>
+                <div class="col-md-2">
+                    <span>Upload new image:</span>
+
+                    <InputFile OnChange="UploadImage"
+                               accept="image/*"
+                               disabled="@isWorking"/>
+                </div>
             </div>
 
             <ValidationSummary/>
@@ -99,31 +124,29 @@
                     @onclick="SaveAsync">
                 Save changes
             </button>
-
-
-
-
+            @if (_cv.Id > 0)
+            {
+                <button class="btn btn-success mt-2"
+                        disabled="@isWorking"
+                        @onclick="DuplicateAsync">
+                    Create duplicate CV
+                </button>
+            }
         </div>
     </div>
 </EditForm>
+
+<DuplicateCvModal @ref="duplicateCvModal" OnSuccess="OnDuplicateCvSuccess"></DuplicateCvModal>
 
 @inject IJSRuntime JS
 @inject JobsDbContext DbContext
 @inject IMessageBus MessageBus
 @inject NavigationManager NavigationManager
 
-<style>
-    input[type="file"].hide-file-name {
-    }
-
-    input[type="file"].hide-file-name::file-selector-button {
-        color: inherit;
-    }
-</style>
-
 @code {
     private readonly List<ToastMessage> toasts = [];
     private FluentValidationValidator validator = null!;
+    private DuplicateCvModal duplicateCvModal = null!;
     private IJSObjectReference? _downloadModule;
     private readonly CancellationTokenSource _cts = new();
     private MarkdownDiffEditor? _diffEditor;
@@ -131,7 +154,6 @@
 
     private CompareMode _compareMode = CompareMode.WithSaved;
     private CvEntity _cv = null!;
-    private ElementReference? _imageElement;
     private string OriginalContent = "";
     private string ModifiedContent = "";
     private bool HasImage => _cv?.Image is not null;
@@ -155,12 +177,6 @@
                 .Include(c => c.Image)
                 .FirstOrDefaultAsync(c => c.Id == Id, _cts.Token)
             ?? throw new InvalidOperationException($"CV with ID {Id} not found");
-        }
-
-        var image = _cv.Image;
-        if (image is not null)
-        {
-
         }
 
         OriginalContent = _cv.MarkdownContent;
@@ -191,6 +207,7 @@
         }
 
         isWorking = true;
+        StateHasChanged();
 
         try
         {
@@ -240,10 +257,20 @@
         await DbContext.SaveChangesAsync(_cts.Token);
 
         if (_compareMode == CompareMode.WithSaved)
+        {
             OriginalContent = _cv.MarkdownContent;
+            await _diffEditor.SetOriginalModel(_cv.MarkdownContent);
+        }
 
         toasts.PushMessage("CV saved successfully");
-        NavigationManager.NavigateTo($"cv/edit/{_cv.Id}");
+
+        if (Id == 0) // redirect if new cv
+            NavigationManager.NavigateTo($"cv/edit/{_cv.Id}", true);
+    }
+
+    private void OnDuplicateCvSuccess(long duplicatedCvId)
+    {
+        NavigationManager.NavigateTo($"cv/edit/{duplicatedCvId}", true);
     }
 
     private async Task GenerateCvPdf()
@@ -256,6 +283,7 @@
             return;
 
         isWorking = true;
+        StateHasChanged();
 
         var cvContent = new CvContent(mdContent, _cv.Image?.Data);
         var request = new GenerateCvPdfFromMarkdown.Request(cvContent, _cv.LayoutConfig);
@@ -292,6 +320,12 @@
         toasts.PushMessage("CV PDF generated successfully");
     }
 
+    private async Task DuplicateAsync()
+    {
+        await SaveAsync();
+        await duplicateCvModal.ShowAsync(_cv.Id);
+    }
+
     private enum CompareMode
     {
         None,
@@ -301,19 +335,21 @@
 
     public bool DisableCompareToOrigin =>
         _compareMode is CompareMode.WithOrigin || string.IsNullOrWhiteSpace(_cv?.OriginCv?.MarkdownContent);
-    private void CompareToOrigin()
+    private async Task CompareToOrigin()
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(_cv?.OriginCv?.MarkdownContent);
         _compareMode = CompareMode.WithOrigin;
         OriginalContent = _cv?.OriginCv?.MarkdownContent!;
+        await _diffEditor!.SetOriginalModel(_cv!.OriginCv!.MarkdownContent);
     }
 
     public bool DisableCompareToSaved => _compareMode is CompareMode.WithSaved;
-    private void CompareToSaved()
+    private async Task CompareToSaved()
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(_cv?.MarkdownContent);
         _compareMode = CompareMode.WithSaved;
         OriginalContent = _cv?.MarkdownContent!;
+        await _diffEditor!.SetOriginalModel(_cv!.MarkdownContent);
     }
 
     private bool PreventNavigation => isWorking || DbContext.Entry(_cv).State == EntityState.Modified;
@@ -333,4 +369,5 @@
         _cts.Cancel();
         _cts.Dispose();
     }
+
 }
