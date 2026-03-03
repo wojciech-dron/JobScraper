@@ -1,0 +1,130 @@
+@page "/cv"
+@using JobScraper.Web.Blazor.Components.MySelect
+@using JobScraper.Web.Common.Entities
+@using JobScraper.Web.Common.Extensions
+@using JobScraper.Web.Modules.Extensions
+@using JobScraper.Web.Modules.Persistence
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>CVs</PageTitle>
+
+<h1>CVs</h1>
+
+<div class="mb-2">
+    <a class="btn btn-primary" href="cv/edit">Create new CV</a>
+</div>
+
+<div id="table-container">
+    <QuickGrid @ref="@grid" Items="cvs" Pagination="@pagination" class="table small-padding-table">
+        <TemplateColumn class="col-1" Title="Actions">
+            <ChildContent>
+                <a class="btn btn-secondary btn-sm" href="/cv/edit/@context.Id">Edit</a>
+            </ChildContent>
+        </TemplateColumn>
+        <PropertyColumn class="col-4" Property="@(c => c.Name)" Sortable="true">
+            <HeaderTemplate>
+                <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                    <div class="col-title-text">@context.Title</div>
+                    <div class="sort-indicator" aria-hidden="true"></div>
+                </button>
+                <input placeholder="Filter..."
+                       @bind="NameFilter"
+                       class="form-control form-control-sm"/>
+            </HeaderTemplate>
+        </PropertyColumn>
+        <TemplateColumn class="col-2" SortBy="@(GridSort<CvEntity>.ByAscending(c => c.OriginCv == null))" Title="Type">
+            <HeaderTemplate>
+                <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                    <div class="col-title-text">@context.Title</div>
+                    <div class="sort-indicator" aria-hidden="true"></div>
+                </button>
+                <MySelect
+                    @bind-SelectedOption="@IsTemplateFilter"
+                    Options="@BoolFilterHelper.Options"
+                    StringSelector="@TemplateStringSelector"
+                />
+            </HeaderTemplate>
+            <ChildContent>
+                @(context.IsTemplate ? "Template" : "Dedicated")
+            </ChildContent>
+        </TemplateColumn>
+        <TemplateColumn class="col-2" SortBy="@(GridSort<CvEntity>.ByAscending(c => c.OriginCv != null))" Title="Origin CV">
+            <HeaderTemplate>
+                <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                    <div class="col-title-text">@context.Title</div>
+                    <div class="sort-indicator" aria-hidden="true"></div>
+                </button>
+                <input placeholder="Filter..."
+                       @bind="OriginFilter"
+                       class="form-control form-control-sm"/>
+            </HeaderTemplate>
+            <ChildContent>
+                @(context.OriginCv?.Name ?? "-")
+            </ChildContent>
+        </TemplateColumn>
+        <PropertyColumn class="col-2" Property="@(c => c.CreatedAt)" Title="Created" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
+        <PropertyColumn class="col-2" Property="@(c => c.UpdatedAt)" Title="Updated" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
+    </QuickGrid>
+</div>
+
+@if (pagination.TotalItemCount is 0)
+{
+    <div class="d-flex justify-content-center align-items-center">
+        <p>No CVs found. Create your first one :)</p>
+    </div>
+}
+
+<div class="footer">
+    <Paginator State="@pagination">
+        <SummaryTemplate>
+            <div class="d-flex justify-content-between align-items-center w-auto text-nowrap">
+                <span class="pe-1">Page size:</span>
+                <select @bind="pagination.ItemsPerPage">
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                </select>
+                <span class="ps-3">Total: <strong>@pagination.TotalItemCount</strong></span>
+            </div>
+        </SummaryTemplate>
+    </Paginator>
+</div>
+
+@inject IDbContextFactory<JobsDbContext> DbFactory
+
+@code {
+    QuickGrid<CvEntity> grid = null!;
+    JobsDbContext dbContext = null!;
+
+    readonly PaginationState pagination = new()
+    {
+        ItemsPerPage = 50,
+    };
+
+    public string? NameFilter { get; set; } = "";
+    public string? OriginFilter { get; set; } = "";
+    public bool? IsTemplateFilter { get; set; }
+
+    IQueryable<CvEntity> cvs => dbContext.Cvs
+        .Include(c => c.OriginCv)
+        .WhereIf(!string.IsNullOrWhiteSpace(NameFilter), c => c.Name.ToLower().Contains(NameFilter!.ToLower()))
+        .WhereIf(!string.IsNullOrWhiteSpace(OriginFilter), c => c.OriginCv != null && c.OriginCv.Name.ToLower().Contains(OriginFilter!.ToLower()))
+        .WhereIf(IsTemplateFilter.HasValue, c => c.IsTemplate == IsTemplateFilter)
+        .OrderByDescending(c => c.UpdatedAt)
+        .ThenByDescending(c => c.CreatedAt);
+
+    protected override async Task OnInitializedAsync()
+    {
+        dbContext = await DbFactory.CreateDbContextAsync();
+    }
+
+    public async ValueTask DisposeAsync() => await dbContext.DisposeAsync();
+
+    private static string TemplateStringSelector(bool? value) => value switch
+    {
+        null  => "All",
+        true  => "Template",
+        false => "Dedicated",
+    };
+}

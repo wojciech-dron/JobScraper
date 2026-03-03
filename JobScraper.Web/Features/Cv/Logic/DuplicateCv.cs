@@ -5,7 +5,7 @@ using JobScraper.Web.Modules.Persistence;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 
-namespace JobScraper.Web.Features.Cv;
+namespace JobScraper.Web.Features.Cv.Logic;
 
 public class DuplicateCv
 {
