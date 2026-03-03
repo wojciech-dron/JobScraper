@@ -1,5 +1,6 @@
 using FluentValidation;
 using JobScraper.Web.Blazor;
+using JobScraper.Web.Features.Cv;
 using JobScraper.Web.Features.JobOffers.Scrape;
 using JobScraper.Web.Integration;
 using JobScraper.Web.Modules.Auth;
@@ -39,6 +40,7 @@ if (!app.Environment.IsDevelopment())
 app.UseAppLogging();
 app.UseExceptionHandler("/Error", true);
 app.UseBlazor();
+app.UseCvFeatures();
 app.UseJobs();
 app.UseIntegrationServices();
 

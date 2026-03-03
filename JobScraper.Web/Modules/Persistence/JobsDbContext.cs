@@ -23,6 +23,7 @@ public class JobsDbContext(DbContextOptions<JobsDbContext> options)
     public DbSet<TimeTickerEntity> TimeTickers { get; set; }
     public DbSet<CronTickerEntity> CronTickers { get; set; }
     public DbSet<CvEntity> Cvs { get; set; }
+    public DbSet<ImageEntity> CvImages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -35,6 +36,7 @@ public class JobsDbContext(DbContextOptions<JobsDbContext> options)
         modelBuilder.ApplyConfiguration(new ScraperConfigModelBuilder());
         modelBuilder.ApplyConfiguration(new AiSummaryConfigModelBuilder());
         modelBuilder.ApplyConfiguration(new CvEntityModelBuilder());
+        modelBuilder.ApplyConfiguration(new ImageEntityModelBuilder());
         modelBuilder.ApplyConfiguration(new RoleConfiguration());
 
         modelBuilder.ApplyConfiguration(new TimeTickerConfigurations<TimeTickerEntity>(schema: "jobs"));
