@@ -3,6 +3,7 @@
 @using JobScraper.Web.Blazor.Components.MySelect
 @using JobScraper.Web.Common.Extensions
 @using JobScraper.Web.Features.Cv.Models
+@using JobScraper.Web.Modules.Extensions
 @using JobScraper.Web.Modules.Persistence
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.EntityFrameworkCore
@@ -21,7 +22,7 @@
     <QuickGrid @ref="@grid" Items="cvs" Pagination="@pagination" Class="table small-padding-table align-items-center">
         <TemplateColumn class="col-1" Title="Actions">
             <ChildContent>
-                <a class="btn btn-secondary btn-sm" href="/cv/edit/@context.Id">Edit</a>
+                <a class="btn btn-primary btn-sm" href="/cv/edit/@context.Id">Edit</a>
                 <button class="btn btn-danger btn-sm" @onclick="() => DeleteCvAsync(context.Id)">Delete</button>
             </ChildContent>
         </TemplateColumn>
@@ -66,13 +67,13 @@
                 @(context.OriginName)
             </ChildContent>
         </TemplateColumn>
-        <PropertyColumn class="col-1" Property="@(c => c.HasImage)" Title="Has Image"  Sortable="true"/>
         <PropertyColumn class="col-1" Property="@(c => c.OffersCount)" Title="Offers Count"  Sortable="true"/>
         <PropertyColumn class="col-1" Property="@(c => c.DerivedCvsCount)" Title="Derived CVs Count"  Sortable="true"/>
         <PropertyColumn class="col-2" Property="@(c => c.CreatedAt)" Title="Created" Format="yyyy-MM-dd HH:mm"
                         Sortable="true"/>
         <PropertyColumn class="col-2" Property="@(c => c.UpdatedAt)" Title="Updated" Format="yyyy-MM-dd HH:mm"
                         Sortable="true"/>
+        <PropertyColumn class="col-1" Property="@(c => c.HasImage)" Title="Has Image"  Sortable="true"/>
     </QuickGrid>
 </div>
 
@@ -120,11 +121,10 @@
 
     IQueryable<CvListDto> cvs => dbContext.Cvs
         .Include(c => c.OriginCv)
-        // .WhereIf(!string.IsNullOrWhiteSpace(NameFilter), c => c.Name.ToLower().Contains(NameFilter!.ToLower()))
-        // .WhereIf(!string.IsNullOrWhiteSpace(OriginFilter), c => c.OriginCv != null && c.OriginCv.Name.ToLower().Contains(OriginFilter!.ToLower()))
-        // .WhereIf(IsTemplateFilter.HasValue, c => c.IsTemplate == IsTemplateFilter)
-        .OrderByDescending(c => c.UpdatedAt)
-        .ThenByDescending(c => c.CreatedAt)
+        .WhereIf(!string.IsNullOrWhiteSpace(NameFilter), c => c.Name.ToLower().Contains(NameFilter!.ToLower()))
+        .WhereIf(!string.IsNullOrWhiteSpace(OriginFilter), c => c.OriginCv != null && c.OriginCv.Name.ToLower().Contains(OriginFilter!.ToLower()))
+        .WhereIf(IsTemplateFilter.HasValue, c => c.IsTemplate == IsTemplateFilter)
+        .OrderByDescending(c => c.CreatedAt)
         .Select(CvListDto.Projection);
 
     protected override async Task OnInitializedAsync()
