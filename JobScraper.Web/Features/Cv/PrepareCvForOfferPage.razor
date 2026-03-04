@@ -207,7 +207,7 @@
         isWorking = true;
         StateHasChanged();
 
-        var cvContent = new CvContent(mdContent, _cv.Image?.Data);
+        var cvContent = new CvContent(mdContent, _cv.Image?.Data, _cv.Disclaimer);
         var request = new GenerateCvPdfFromMarkdown.Request(cvContent, _cv.LayoutConfig);
 
         ErrorOr<byte[]> result;
