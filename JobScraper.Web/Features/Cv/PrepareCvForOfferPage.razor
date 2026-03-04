@@ -1,18 +1,4 @@
 ﻿@page "/cv/prepare-for-offer/{OfferUrl}"
-@using BlazorBootstrap
-@using JobScraper.Web.Blazor.Components
-@using JobScraper.Web.Common.Entities
-@using JobScraper.Web.Features.Cv.Components
-@using JobScraper.Web.Features.Cv.PdfGeneration
-@using System.IO
-@using Blazored.FluentValidation
-@using ErrorOr
-@using JobScraper.Web.Blazor.Extensions
-@using JobScraper.Web.Features.Cv.Helpers
-@using JobScraper.Web.Features.Cv.Logic
-@using JobScraper.Web.Modules.Persistence
-@using Microsoft.EntityFrameworkCore
-@using Wolverine
 
 <style>
     .cv-container {
@@ -83,7 +69,7 @@
             <button class="btn btn-primary btn-sm"
                     disabled="@isWorking"
                     @onclick="GenerateCvPdf">
-                Generate CV
+                Generate PDF
             </button>
             <button class="btn btn-primary btn-sm"
                     disabled="@isWorking"
@@ -126,7 +112,8 @@
             }
 
         </div>
-        <div class="gutter" style="flex: 0 0 5px; cursor: col-resize; background-color: #dee2e6; user-select: none;"></div>
+        <div class="gutter"
+             style="flex: 0 0 5px; cursor: col-resize; background-color: #dee2e6; user-select: none;"></div>
         <div id="editor-panel" style="flex: 1 1 auto; min-width: 400px;">
             <MarkdownDiffEditor
                 @ref="_diffEditor"
@@ -135,7 +122,8 @@
                 CssClass="h-100"
                 Inline/>
         </div>
-        <div class="gutter" style="flex: 0 0 5px; cursor: col-resize; background-color: #dee2e6; user-select: none;"></div>
+        <div class="gutter"
+             style="flex: 0 0 5px; cursor: col-resize; background-color: #dee2e6; user-select: none;"></div>
         <div id="right-panel" class="overflow-auto ps-1" style="flex: 0 0 500px; min-width: 200px;">
             <AiCvChat ChatHistory="_cv.ChatHistory"
                       IsWorking="isWorking"
@@ -147,6 +135,19 @@
 
 <ConfirmDialog @ref="dialog"/>
 
+@using BlazorBootstrap
+@using Blazored.FluentValidation
+@using ErrorOr
+@using JobScraper.Web.Blazor.Components
+@using JobScraper.Web.Blazor.Extensions
+@using JobScraper.Web.Common.Entities
+@using JobScraper.Web.Features.Cv.Components
+@using JobScraper.Web.Features.Cv.Helpers
+@using JobScraper.Web.Features.Cv.Logic
+@using JobScraper.Web.Features.Cv.PdfGeneration
+@using JobScraper.Web.Modules.Persistence
+@using Microsoft.EntityFrameworkCore
+@using Wolverine
 @implements IAsyncDisposable
 @inject IAiCvChatService AiCvChatService
 @inject IMessageBus MessageBus
@@ -217,7 +218,7 @@
         catch (Exception e)
         {
             var errorMessage = e.Message.ToFriendlyErrorMessage();
-            toasts.PushMessage("Failed to generate CV PDF: " + errorMessage, ToastType.Danger);
+            toasts.PushMessage("Failed to Generate PDF PDF: " + errorMessage, ToastType.Danger);
             isWorking = false;
             return;
         }
@@ -226,7 +227,7 @@
 
         if (result.IsError)
         {
-            toasts.PushMessage("Failed to generate CV PDF", ToastType.Danger);
+            toasts.PushMessage("Failed to Generate PDF PDF", ToastType.Danger);
             return;
         }
 

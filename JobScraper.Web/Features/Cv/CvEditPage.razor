@@ -1,5 +1,6 @@
 ﻿@page "/Cv/edit"
 @page "/Cv/edit/{Id:int}"
+@using System.Text
 @using BlazorBootstrap
 @using Blazored.FluentValidation
 @using ErrorOr
@@ -93,8 +94,9 @@
                     }
                     @if (image is not null)
                     {
-                        <div class="small">
+                        <div class="small d-flex align-items-center">
                             <a href="@GetImageUrl(image.Id)" target="_blank">@image.FileName</a>
+                            <button type="button" class="btn-close ms-2" style="font-size: 0.5rem;" @onclick="() => _cv.Image = null" aria-label="Remove image"></button>
                         </div>
                     }
                     else
@@ -116,32 +118,40 @@
 
         <div class="col-md-3">
             <h5>Layout settings</h5>
-            <LayoutConfigComponent Config="_cv.LayoutConfig"/>
-            <div class="mt-2">
 
-            <button class="btn btn-primary"
-                    disabled="@isWorking"
-                    @onclick="GenerateCvPdf">
-                Generate CV
-            </button>
-            <button class="btn btn-success"
-                    disabled="@isWorking"
-                    @onclick="SaveAsync">
-                Save changes
-            </button>
-            @if (_cv.Id > 0)
-            {
-                <button class="btn btn-success ms-1"
+            <LayoutConfigComponent Config="_cv.LayoutConfig"/>
+
+            <div class="mt-2">
+                <button class="btn btn-success"
                         disabled="@isWorking"
-                        @onclick="DuplicateAsync">
-                    Create duplicate CV
+                        @onclick="SaveAsync">
+                    Save changes
                 </button>
-                <button class="btn btn-danger"
-                        disabled="@isWorking"
-                        @onclick="DeleteCvAsync">
-                    Delete
-                </button>
-            }
+                @if (_cv.Id > 0)
+                {
+                    <button class="btn btn-success ms-1"
+                            disabled="@isWorking"
+                            @onclick="DuplicateAsync">
+                        Create duplicate CV
+                    </button>
+                    <button class="btn btn-danger"
+                            disabled="@isWorking"
+                            @onclick="DeleteCvAsync">
+                        Delete
+                    </button>
+                }
+                <div class="mt-2">
+                    <button class="btn btn-primary"
+                            disabled="@isWorking"
+                            @onclick="GenerateCvPdf">
+                        Generate PDF
+                    </button>
+                    <button class="btn btn-outline-primary"
+                            disabled="@isWorking"
+                            @onclick="DownloadMarkdown">
+                        Download MD
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -177,7 +187,7 @@
     {
         if (Id == 0)
         {
-            _cv = new()
+            _cv = new CvEntity
             {
                 Name = "Test",
             };
@@ -185,15 +195,25 @@
         else
         {
             _cv = await DbContext.Cvs
-                .Include(c => c.OriginCv)
-                .Include(c => c.Image)
-                .FirstOrDefaultAsync(c => c.Id == Id, _cts.Token)
-            ?? throw new InvalidOperationException($"CV with ID {Id} not found");
+                    .Include(c => c.OriginCv)
+                    .Include(c => c.Image)
+                    .FirstOrDefaultAsync(c => c.Id == Id, _cts.Token)
+                ?? throw new InvalidOperationException($"CV with ID {Id} not found");
         }
 
         OriginalContent = _cv.MarkdownContent;
         ModifiedContent = _cv.MarkdownContent;
+
+        if (_diffEditor is not null) // if re-enter page
+            await _diffEditor.SetModels(OriginalContent, ModifiedContent);
     }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_diffEditor is not null) // if re-enter page
+            await _diffEditor.SetModels(OriginalContent, ModifiedContent);
+    }
+
 
     private const long MaxImageBytes = 5 * 1024 * 1024;
 
@@ -305,7 +325,7 @@
         catch (Exception e)
         {
             var errorMessage = e.Message.ToFriendlyErrorMessage();
-            toasts.PushMessage("Failed to generate CV PDF: " + errorMessage, ToastType.Danger);
+            toasts.PushMessage("Failed to Generate PDF PDF: " + errorMessage, ToastType.Danger);
             isWorking = false;
             return;
         }
@@ -314,7 +334,7 @@
 
         if (result.IsError)
         {
-            toasts.PushMessage("Failed to generate CV PDF", ToastType.Danger);
+            toasts.PushMessage("Failed to Generate PDF PDF", ToastType.Danger);
             return;
         }
 
@@ -327,6 +347,24 @@
         await _downloadModule.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
 
         toasts.PushMessage("CV PDF generated successfully");
+    }
+
+    private async Task DownloadMarkdown()
+    {
+        if (_diffEditor is null)
+            return;
+
+        var mdContent = await _diffEditor.GetModifiedValueAsync();
+        if (string.IsNullOrWhiteSpace(mdContent))
+            return;
+
+        var fileName = $"{_cv.Name}.md";
+        var bytes = Encoding.UTF8.GetBytes(mdContent);
+        using var stream = new MemoryStream(bytes);
+        using var streamRef = new DotNetStreamReference(stream);
+
+        _downloadModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/downloadFile.js");
+        await _downloadModule.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
     }
 
     private async Task DuplicateAsync()
