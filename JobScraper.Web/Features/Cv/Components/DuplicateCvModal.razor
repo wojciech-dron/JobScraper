@@ -120,8 +120,6 @@
         var message = new DuplicateCv.Request(OriginCvId, NewCvName, TargetOfferUrl);
         var response = await MessageBus.InvokeAsync<ErrorOr<DuplicateCv.Response>>(message);
 
-        isWorking = false;
-
         if (response.IsError)
         {
             toasts.PushMessage(response.FirstError.Description, ToastType.Warning);

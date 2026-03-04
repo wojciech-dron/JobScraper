@@ -9,21 +9,23 @@
 
 <PageTitle>CVs</PageTitle>
 
-<h1>CVs</h1>
-
-<div class="mb-2">
-    <a class="btn btn-primary" href="cv/edit">Create new CV</a>
+<div class="d-flex justify-content-between align-items-center">
+    <h1>CVs</h1>
+    <div class="ms-2">
+        <a class="btn btn-primary" href="cv/edit">Create new CV</a>
+    </div>
 </div>
 
+
 <div id="table-container">
-    <QuickGrid @ref="@grid" Items="cvs" Pagination="@pagination" class="table small-padding-table">
+    <QuickGrid @ref="@grid" Items="cvs" Pagination="@pagination" Class="table small-padding-table align-items-center">
         <TemplateColumn class="col-1" Title="Actions">
             <ChildContent>
                 <a class="btn btn-secondary btn-sm" href="/cv/edit/@context.Id">Edit</a>
                 <button class="btn btn-danger btn-sm" @onclick="() => DeleteCvAsync(context.Id)">Delete</button>
             </ChildContent>
         </TemplateColumn>
-        <PropertyColumn class="col-4" Property="@(c => c.Name)" Sortable="true">
+        <PropertyColumn class="col-3" Property="@(c => c.Name)" Sortable="true">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -34,7 +36,7 @@
                        class="form-control form-control-sm"/>
             </HeaderTemplate>
         </PropertyColumn>
-        <TemplateColumn class="col-2" SortBy="@(GridSort<CvListDto>.ByAscending(c => !c.HasOrigin))" Title="Type">
+        <TemplateColumn class="col-1" SortBy="@(GridSort<CvListDto>.ByAscending(c => !c.HasOrigin))" Title="Type">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -50,8 +52,7 @@
                 @(context.IsTemplate ? "Template" : "Dedicated")
             </ChildContent>
         </TemplateColumn>
-        <TemplateColumn class="col-2" SortBy="@(GridSort<CvListDto>.ByAscending(c => c.HasOrigin))"
-                        Title="Origin CV">
+        <TemplateColumn class="col-2" SortBy="@(GridSort<CvListDto>.ByAscending(c => c.HasOrigin))" Title="Origin CV">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -65,6 +66,9 @@
                 @(context.OriginName)
             </ChildContent>
         </TemplateColumn>
+        <PropertyColumn class="col-1" Property="@(c => c.HasImage)" Title="Has Image"  Sortable="true"/>
+        <PropertyColumn class="col-1" Property="@(c => c.OffersCount)" Title="Offers Count"  Sortable="true"/>
+        <PropertyColumn class="col-1" Property="@(c => c.DerivedCvsCount)" Title="Derived CVs Count"  Sortable="true"/>
         <PropertyColumn class="col-2" Property="@(c => c.CreatedAt)" Title="Created" Format="yyyy-MM-dd HH:mm"
                         Sortable="true"/>
         <PropertyColumn class="col-2" Property="@(c => c.UpdatedAt)" Title="Updated" Format="yyyy-MM-dd HH:mm"
@@ -104,7 +108,6 @@
     QuickGrid<CvListDto> grid = null!;
     JobsDbContext dbContext = null!;
     ConfirmDialog dialog = null!;
-
 
     readonly PaginationState pagination = new()
     {

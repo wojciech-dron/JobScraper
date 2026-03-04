@@ -105,6 +105,7 @@ public class AdjustCvContentToOffer
                      You are a professional CV analyst. Your goal is to analyze the job offer and the user's CV to find the best alignment.
                      Before any CV editing happens, you must provide a detailed analysis.
                      User prompts only first messages, do not ask for any more information.
+                     If CvEditor returns message only with {DoneSignal}, instruct it to return final CV content with that signal, signal only.
 
                      Your task:
                      - Analyze the 'Job offer content' and 'Requirements for an offer' (if provided).
