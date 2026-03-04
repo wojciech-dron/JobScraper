@@ -29,7 +29,7 @@
             <div class="row">
                 <div class="col-md-3">
                     <div class="input-group input-group-sm mb-3">
-                        <span class="input-group-text px-1 py-0 small text-muted" title="Bullet Width">Name</span>
+                        <span class="input-group-text px-1 py-0 small text-muted" title="Cv name">Name</span>
                         <TextInput @bind-Value="_cv.Name" class="form-control"/>
                     </div>
                 </div>
@@ -314,7 +314,7 @@
         isWorking = true;
         StateHasChanged();
 
-        var cvContent = new CvContent(mdContent, _cv.Image?.Data);
+        var cvContent = new CvContent(mdContent, _cv.Image?.Data, _cv.Disclaimer);
         var request = new GenerateCvPdfFromMarkdown.Request(cvContent, _cv.LayoutConfig);
 
         ErrorOr<byte[]> result;

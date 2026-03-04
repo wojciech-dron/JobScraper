@@ -14,7 +14,7 @@ public class SummarizeOfferContent
     public record Request(
         string CvContent,
         string OfferContent,
-        string UserRequirements,
+        string UserRequirementsForOffer,
         string ProviderName = AiProvidersConfig.MainProvider
     );
 
@@ -98,7 +98,7 @@ public class SummarizeOfferContent
                      If something is wrong or required data is missing (like cv or offer content), return reason and {FailSignal}.
 
                      Requirements for an offer defined by user (optional):
-                     {request.UserRequirements}
+                     {request.UserRequirementsForOffer}
 
                      The CV content:
                      {request.CvContent}
@@ -127,13 +127,14 @@ public class SummarizeOfferContent
                      Final summary must contain sections with concise bullet-points defined below:
                          - Job abstract - most important information and responsibilities of the job
                          - User requirements - if offer matches requirements given by the user
-                         - CV matches - technologies, skills, and responsibilities from offer that are strongly aligned with CV
                          - CV gaps - technologies, skills and responsibilities from offer that are not present in CV
+                         - CV irrelevant - technologies, skills and responsibilities from CV that are not relevant for offer
+                         - CV matches - technologies, skills, and responsibilities from offer that are strongly aligned with CV
                          - Suggestions - what to improve in CV content
                          - Trivia - interesting information, if there is any
 
                      Requirements for an offer defined by user (optional):
-                     {request.UserRequirements}
+                     {request.UserRequirementsForOffer}
 
                      The CV content:
                      {request.CvContent}

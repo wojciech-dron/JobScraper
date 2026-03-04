@@ -102,7 +102,7 @@ public partial class AiSummaryConfigPage(
         var request = new SummarizeOfferContent.Request(
             CvContent: form.CvContent,
             OfferContent: form.TestOfferContent!,
-            UserRequirements: form.UserRequirements ?? "",
+            UserRequirementsForOffer: form.UserRequirements ?? "",
             ProviderName: form.ProviderName);
 
         var result = await messageBus.InvokeAsync<ErrorOr<SummarizeOfferContent.Response>>(request, _cts.Token);
