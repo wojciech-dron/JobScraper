@@ -262,7 +262,7 @@
 
     private async Task PrepareCvForOffer()
     {
-        if (await _context.UserOffers.AnyAsync(o => o.Cv != null))
+        if (await _context.UserOffers.AnyAsync(o => o.OfferUrl == _offer.OfferUrl && o.Cv != null))
         {
             GoToPrepareCvForOfferPage();
             return;
@@ -270,7 +270,7 @@
 
         await _duplicateCvModal.ShowAsync(
             offerUrl: _offer.OfferUrl,
-            newCvName: $"{_offer.Details.CompanyName}_{_offer.Details.Title}");
+            newCvName: $"{_offer.Details.CompanyName} - {_offer.Details.Title}");
     }
 
     private void GoToPrepareCvForOfferPage() =>
