@@ -1,4 +1,8 @@
 ﻿@page "/cv/prepare-for-offer/{OfferUrl}"
+@using BlazorBootstrap
+@using Blazored.FluentValidation
+@using JobScraper.Web.Blazor.Components
+@using JobScraper.Web.Features.Cv.Components
 
 <style>
     .cv-container {
@@ -20,27 +24,27 @@
 <NavigationLock ConfirmExternalNavigation="@PreventNavigation"
                 OnBeforeInternalNavigation="OnBeforeInternalNavigation"/>
 
-<Toasts class="p-3" Messages="toasts" Placement="ToastsPlacement.TopRight"/>
+<Toasts class="p-3" Messages="_toasts" Placement="ToastsPlacement.TopRight"/>
 
 <h3>Prepare CV for offer</h3>
 
-<EditForm Model="@_cv">
+<EditForm Model="@cvEntity">
     <FluentValidationValidator @ref="validator"/>
 
     <div class="row mb-3">
         <div class="col-md-3">
             <div class="input-group input-group-sm mb-3">
                 <span class="input-group-text px-1 py-0 small text-muted" title="Cv name">Name</span>
-                <TextInput @bind-Value="_cv.Name" class="form-control"/>
+                <TextInput @bind-Value="cvEntity.Name" class="form-control"/>
             </div>
         </div>
         <div class="col-md-2">
-            @if (_cv.OriginCv is not null)
+            @if (cvEntity.OriginCv is not null)
             {
                 <button class="btn btn-info btn-sm"
                         disabled="@isWorking"
-                        @onclick="() => GoToCv(_cv.OriginCv.Id)">
-                    Origin Cv: @_cv.OriginCv.Name
+                        @onclick="() => GoToCv(cvEntity.OriginCv.Id)">
+                    Origin Cv: @cvEntity.OriginCv.Name
                 </button>
             }
         </div>
@@ -76,7 +80,7 @@
                     @onclick="PrepareCvContent">
                 Prepare with AI
             </button>
-            <a href="/cv/edit/@_cv.Id">
+            <a href="/cv/edit/@cvEntity.Id">
                 <button class="btn btn-info btn-sm" disabled="@isWorking">
                     Go to CV page
                 </button>
@@ -96,36 +100,34 @@
 
     <div id="resizable-panels" class="cv-container">
         <div id="offer-panel" class="overflow-auto" style="flex: 0 0 450px; min-width: 200px;">
-            @if (!string.IsNullOrEmpty(_offer.AiSummary))
+            @if (!string.IsNullOrEmpty(offer.AiSummary))
             {
                 <h4>Ai Summary:</h4>
                 <span>
-                    @_offer.AiSummary
+                    @offer.AiSummary
                 </span>
             }
-            else
-            {
-                <h4>Description:</h4>
-                <span>
-                    @_offer.Details.Description
-                </span>
-            }
+            
+            <h4>Description:</h4>
+            <span>
+                @offer.Details.Description
+            </span>
 
         </div>
         <div class="gutter"
              style="flex: 0 0 5px; cursor: col-resize; background-color: #dee2e6; user-select: none;"></div>
         <div id="editor-panel" style="flex: 1 1 auto; min-width: 400px;">
             <MarkdownDiffEditor
-                @ref="_diffEditor"
-                InitOriginalContent="@OriginalContent"
-                InitModifiedContent="@ModifiedContent"
+                @ref="diffEditor"
+                InitOriginalContent="@originalContent"
+                InitModifiedContent="@modifiedContent"
                 CssClass="h-100"
                 Inline/>
         </div>
         <div class="gutter"
              style="flex: 0 0 5px; cursor: col-resize; background-color: #dee2e6; user-select: none;"></div>
         <div id="right-panel" class="overflow-auto ps-1" style="flex: 0 0 500px; min-width: 200px;">
-            <AiCvChat ChatHistory="_cv.ChatHistory"
+            <AiCvChat ChatHistory="cvEntity.ChatHistory"
                       IsWorking="isWorking"
                       OnSendMessage="SendChatMessage"/>
         </div>
@@ -134,266 +136,3 @@
 </EditForm>
 
 <ConfirmDialog @ref="dialog"/>
-
-@using BlazorBootstrap
-@using Blazored.FluentValidation
-@using ErrorOr
-@using JobScraper.Web.Blazor.Components
-@using JobScraper.Web.Blazor.Extensions
-@using JobScraper.Web.Common.Entities
-@using JobScraper.Web.Features.Cv.Components
-@using JobScraper.Web.Features.Cv.Helpers
-@using JobScraper.Web.Features.Cv.Logic
-@using JobScraper.Web.Features.Cv.PdfGeneration
-@using JobScraper.Web.Modules.Persistence
-@using Microsoft.EntityFrameworkCore
-@using Wolverine
-@implements IAsyncDisposable
-@inject IAiCvChatService AiCvChatService
-@inject IMessageBus MessageBus
-@inject IJSRuntime JS
-@inject JobsDbContext DbContext
-@inject NavigationManager NavigationManager
-
-@code {
-    private IJSObjectReference? _module;
-    private IJSObjectReference? _downloadModule;
-    private bool isWorking;
-    private UserOffer _offer = null!;
-    private CvEntity _cv = null!;
-    private MarkdownDiffEditor _diffEditor = null!;
-    readonly List<ToastMessage> toasts = [];
-    private FluentValidationValidator validator = null!;
-    private readonly CancellationTokenSource _cts = new();
-    ConfirmDialog dialog = null!;
-
-    private CompareMode _compareMode = CompareMode.WithSaved;
-    private string OriginalContent = "";
-    private string ModifiedContent = "";
-
-    [Parameter] public string? OfferUrl { get; set; }
-
-    protected override async Task OnInitializedAsync()
-    {
-        _offer = await DbContext.UserOffers
-            .Include(x => x.Details)
-            .Include(x => x.Cv!.OriginCv)
-            .Include(x => x.Cv!.Image)
-            .FirstAsync(x => x.OfferUrl == OfferUrl);
-
-        ArgumentNullException.ThrowIfNull(_offer.Cv);
-        _cv = _offer.Cv;
-        _cv.ChatHistory ??= [];
-
-        OriginalContent = _cv.MarkdownContent;
-        ModifiedContent = _cv.MarkdownContent;
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!firstRender)
-            return;
-
-        _module = await JS.InvokeAsync<IJSObjectReference>("import", "./Features/Cv/PrepareCvForOfferPage.razor.js");
-        await _module.InvokeVoidAsync("initPrepareCvResizers");
-    }
-
-    private async Task GenerateCvPdf()
-    {
-        var mdContent = await _diffEditor.GetModifiedValueAsync();
-        if (string.IsNullOrWhiteSpace(mdContent))
-            return;
-
-        isWorking = true;
-        StateHasChanged();
-
-        var cvContent = new CvContent(mdContent, _cv.Image?.Data, _cv.Disclaimer);
-        var request = new GenerateCvPdfFromMarkdown.Request(cvContent, _cv.LayoutConfig);
-
-        ErrorOr<byte[]> result;
-        try
-        {
-            result = await MessageBus.InvokeAsync<ErrorOr<byte[]>>(request);
-        }
-        catch (Exception e)
-        {
-            var errorMessage = e.Message.ToFriendlyErrorMessage();
-            toasts.PushMessage("Failed to Generate PDF PDF: " + errorMessage, ToastType.Danger);
-            isWorking = false;
-            return;
-        }
-
-        isWorking = false;
-
-        if (result.IsError)
-        {
-            toasts.PushMessage("Failed to Generate PDF PDF", ToastType.Danger);
-            return;
-        }
-
-        var fileName = $"{_cv.Name}.pdf";
-        var pdfBytes = result.Value;
-        using var stream = new MemoryStream(pdfBytes);
-        using var streamRef = new DotNetStreamReference(stream);
-
-        _downloadModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/downloadFile.js");
-        await _downloadModule.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
-
-        toasts.PushMessage("CV PDF generated successfully");
-    }
-
-    private async Task PrepareCvContent()
-    {
-        var cvContent = await _diffEditor.GetModifiedValueAsync();
-        if (string.IsNullOrWhiteSpace(cvContent))
-            return;
-
-        if (_offer.Details.Description == null)
-            return;
-
-        isWorking = true;
-        StateHasChanged();
-        toasts.PushMessage("Preparing CV content. It could take a while");
-
-        var request = new AiCvChatRequest(
-            CvContent: cvContent,
-            OfferContent: _offer.Details.Description,
-            OfferSummary: _offer.AiSummary);
-
-        var result = await AiCvChatService.AdjustCvAsync(request, _cts.Token);
-
-        isWorking = false;
-        _cv.ChatHistory = result.ChatHistory;
-
-        if (!result.Success)
-        {
-            toasts.PushMessage("Failed to prepare CV content. Check agents chat history.", ToastType.Warning);
-            return;
-        }
-
-        toasts.PushMessage("CV content prepared successfully");
-
-        ModifiedContent = result.AdjustedCvContent!;
-        _ = _diffEditor.SetModifiedModel(ModifiedContent);
-    }
-
-    private async Task SendChatMessage(string message)
-    {
-        var cvContent = await _diffEditor.GetModifiedValueAsync();
-        if (string.IsNullOrWhiteSpace(cvContent) || _offer.Details.Description == null)
-            return;
-
-        isWorking = true;
-        StateHasChanged();
-
-        var request = new AiCvChatFollowUpRequest(
-            UserMessage: message,
-            CurrentCvContent: cvContent,
-            OfferContent: _offer.Details.Description,
-            OfferSummary: _offer.AiSummary,
-            ExistingChatHistory: _cv.ChatHistory);
-
-        var result = await AiCvChatService.SendMessageAsync(request, _cts.Token);
-
-        _cv.ChatHistory = result.ChatHistory;
-        isWorking = false;
-
-        if (result.AdjustedCvContent is not null)
-        {
-            ModifiedContent = result.AdjustedCvContent;
-            _ = _diffEditor.SetModifiedModel(ModifiedContent);
-            toasts.PushMessage("CV content updated from chat");
-        }
-    }
-
-    public async Task SaveAsync()
-    {
-        _cv.MarkdownContent = await _diffEditor.GetModifiedValueAsync();
-
-        if (!await validator.ValidateAsync())
-            return;
-
-        if (DbContext.Entry(_cv).State == EntityState.Detached)
-            DbContext.Add(_cv);
-
-        await DbContext.SaveChangesAsync(_cts.Token);
-
-        if (_compareMode == CompareMode.WithSaved)
-        {
-            OriginalContent = _cv.MarkdownContent;
-            await _diffEditor.SetOriginalModel(_cv.MarkdownContent);
-        }
-
-        toasts.PushMessage("CV saved successfully");
-    }
-
-    private async Task DeleteCvAsync()
-    {
-        var confirmation = await dialog.ShowAsync(
-            title: "Are you sure you want to delete this?",
-            message1: "This will delete the record. Once deleted can not be rolled back.",
-            message2: "Do you want to proceed?");
-
-        if (!confirmation)
-            return;
-
-        var cv = await DbContext.Cvs.FindAsync(_cv.Id);
-        if (cv is null)
-            return;
-
-        DbContext.Remove(cv);
-        await DbContext.SaveChangesAsync();
-        NavigationManager.NavigateTo($"/?offerUrl={_offer}");
-    }
-
-    private void GoToCv(long duplicatedCvId) => NavigationManager.NavigateTo($"cv/edit/{duplicatedCvId}", true);
-
-    private enum CompareMode
-    {
-        None,
-        WithSaved,
-        WithOrigin,
-    }
-
-    public bool DisableCompareToOrigin =>
-        _compareMode is CompareMode.WithOrigin || string.IsNullOrWhiteSpace(_cv?.OriginCv?.MarkdownContent);
-    private async Task CompareToOrigin()
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(_cv?.OriginCv?.MarkdownContent);
-        _compareMode = CompareMode.WithOrigin;
-        OriginalContent = _cv?.OriginCv?.MarkdownContent!;
-        await _diffEditor!.SetOriginalModel(_cv!.OriginCv!.MarkdownContent);
-    }
-
-    public bool DisableCompareToSaved => _compareMode is CompareMode.WithSaved;
-    private async Task CompareToSaved()
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(_cv?.MarkdownContent);
-        _compareMode = CompareMode.WithSaved;
-        OriginalContent = _cv?.MarkdownContent!;
-        await _diffEditor!.SetOriginalModel(_cv!.MarkdownContent);
-    }
-
-    private bool PreventNavigation => isWorking || DbContext.Entry(_cv).State == EntityState.Modified;
-
-    private async Task OnBeforeInternalNavigation(LocationChangingContext ctx)
-    {
-        if (!PreventNavigation)
-            return;
-
-        var confirm = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to leave this page?");
-        if (!confirm)
-            ctx.PreventNavigation();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await _cts.CancelAsync();
-        _cts.Dispose();
-
-        if (_downloadModule is not null)
-        {
-            await _downloadModule.DisposeAsync();
-        }
-    }
-}

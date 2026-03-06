@@ -1,7 +1,5 @@
 @using JobScraper.Web.Blazor.Components
 @using JobScraper.Web.Common.Models
-@using JobScraper.Web.Features.Cv.Logic
-
 <div class="d-flex flex-column h-100">
     @if (ChatHistory.Count > 0)
     {
@@ -13,26 +11,25 @@
     else
     {
         <div class="flex-grow-1 d-flex align-items-center justify-content-center text-muted">
-            <span>Start a conversation or use "Prepare CV content with AI"</span>
+            @* <span>Start a conversation or use "Prepare CV content with AI"</span> *@
+            <span>Start a conversation about offer and CV"</span>
         </div>
     }
 
-    <div class="mt-2">
+    <form @onsubmit="SendMessage" @onsubmit:preventDefault class="mt-2">
         <div class="input-group input-group-sm">
             <input type="text"
                    class="form-control"
-                   placeholder="Ask about CV or request changes..."
+                   placeholder="Ask about CV or suggestions (work in progress)..."
                    @bind="userMessage"
                    @bind:event="oninput"
-                   @onkeydown="HandleKeyDown"
                    disabled="@IsWorking"/>
-            <button class="btn btn-primary btn-sm"
-                    @onclick="SendMessage"
+            <button type="submit" class="btn btn-primary btn-sm"
                     disabled="@(IsWorking || string.IsNullOrWhiteSpace(userMessage))">
                 Send
             </button>
         </div>
-    </div>
+    </form>
 </div>
 
 @code {
@@ -41,12 +38,6 @@
     [Parameter] public List<ChatItem> ChatHistory { get; set; } = [];
     [Parameter] public bool IsWorking { get; set; }
     [Parameter] public EventCallback<string> OnSendMessage { get; set; }
-
-    private async Task HandleKeyDown(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(userMessage) && !IsWorking)
-            await SendMessage();
-    }
 
     private async Task SendMessage()
     {

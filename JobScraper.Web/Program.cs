@@ -1,6 +1,7 @@
 using FluentValidation;
 using JobScraper.Web.Blazor;
 using JobScraper.Web.Features.Cv;
+using JobScraper.Web.Features.Cv.Logic;
 using JobScraper.Web.Features.JobOffers.Scrape;
 using JobScraper.Web.Integration;
 using JobScraper.Web.Modules.Auth;
@@ -9,7 +10,6 @@ using JobScraper.Web.Modules.Logging;
 using JobScraper.Web.Modules.Persistence;
 using JobScraper.Web.Modules.QuestPdf;
 using JobScraper.Web.Modules.Security;
-using JobScraper.Web.Features.Cv.Logic;
 using JobScraper.Web.Modules.Services;
 using JobScraper.Web.Modules.Settings;
 using JobScraper.Web.Modules.Wolverine;
@@ -29,7 +29,8 @@ builder.AddScrapeServices();
 builder.Services.AddUserProvider();
 builder.AddIntegrationServices();
 builder.AddQuestPdf();
-builder.Services.AddScoped<IAiCvChatService, AiCvChatService>();
+builder.Services.AddScoped<AdjustCvForOffer.Handler>();
+builder.Services.AddScoped<AiCvWithModifyConversation.Handler>();
 
 
 var app = builder.Build();

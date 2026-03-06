@@ -116,22 +116,22 @@ public class SummarizeOfferContent
                 Instructions =
                     $"""
                      You are an agent that holds a conversation with analyst agent to provide a final summary of the job offer.
-                     The order of agents is sequential, analyst first, then summarizer.
-                     You can ask questions to analyst agent to clarify details.
-                     When you generate a final summary, finish it with {DoneSignal}, that ends the conversation.
-                     Use language of the offer for final summary.
-                     Use plain text only.
-                     If something is wrong or required data is missing (like cv or offer content),
-                     return reason and {FailSignal}, that terminates conversation.
+                     - The order of agents is sequential, analyst first, then summarizer.
+                     - You can ask questions to analyst agent to clarify details.
+                     - When you generate a final summary, finish it with {DoneSignal}, that ends the conversation.
+                     - Use language of the offer for summary.
+                     - Use plain text only.
+                     - If something is wrong or required data is missing (like cv or offer content),
+                     - Return reason and {FailSignal}, that terminates conversation.
 
                      Final summary must contain sections with concise bullet-points defined below:
-                         - Job abstract - most important information and responsibilities of the job
-                         - User requirements - if offer matches requirements given by the user
-                         - CV gaps - technologies, skills and responsibilities from offer that are not present in CV
-                         - CV irrelevant - technologies, skills and responsibilities from CV that are not relevant for offer
-                         - CV matches - technologies, skills, and responsibilities from offer that are strongly aligned with CV
-                         - Suggestions - what to improve in CV content
-                         - Trivia - interesting information, if there is any
+                     - Job abstract - most important information and responsibilities of the job
+                     - User requirements - if offer matches requirements given by the user
+                     - CV gaps - technologies, skills and responsibilities from offer that are not present in CV
+                     - CV irrelevant - technologies, skills and responsibilities from CV that are not relevant for offer
+                     - CV matches - technologies, skills, and responsibilities from offer that are strongly aligned with CV
+                     - Suggestions - what to improve in CV content
+                     - Trivia - interesting information, if there is any
 
                      Requirements for an offer defined by user (optional):
                      {request.UserRequirementsForOffer}
@@ -154,7 +154,7 @@ public class SummarizeOfferContent
                         FinalAgentName = summarizerAgent.Name,
                         DoneSignal = DoneSignal,
                         FailSignal = FailSignal,
-                        MaximumIterations = 5,
+                        MaximumIterations = 3,
                     },
                     SelectionStrategy = new SequentialSelectionStrategy(),
                 },
