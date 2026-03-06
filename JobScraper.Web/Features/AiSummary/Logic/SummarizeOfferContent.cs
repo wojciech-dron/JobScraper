@@ -1,6 +1,7 @@
 ﻿using ErrorOr;
 using JobScraper.Web.Common.Models;
 using JobScraper.Web.Integration.AiProvider;
+using Mediator;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Agents.Chat;
@@ -16,14 +17,14 @@ public class SummarizeOfferContent
         string OfferContent,
         string UserRequirementsForOffer,
         string ProviderName = AiProvidersConfig.MainProvider
-    );
+    ) : IRequest<ErrorOr<Response>>;
 
     public record Response(string? AiSummary, List<ChatItem> ChatHistory);
 
     public class Handler(
         IServiceProvider serviceProvider,
         ILoggerFactory loggerFactory
-    )
+    ) : IRequestHandler<Request, ErrorOr<Response>>
     {
         private const string DoneSignal = "[DONE]";
         private const string FailSignal = "[FAIL]";

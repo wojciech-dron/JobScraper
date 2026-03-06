@@ -1,5 +1,6 @@
 using JobScraper.Web.Common.Models;
 using JobScraper.Web.Integration.AiProvider;
+using Mediator;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -19,19 +20,19 @@ public class AiSimpleCvChatConversation
         List<ChatItem> ExistingChatHistory,
         string UserRequirements = "",
         string ProviderName = AiProvidersConfig.MainProvider
-    );
+    ) : IRequest<Response>;
 
     public record Response(List<ChatItem> ChatHistory);
 
     public class Handler(
         IServiceProvider serviceProvider,
         ILoggerFactory loggerFactory
-    )
+    ) : IRequestHandler<Request, Response>
     {
 
         private readonly ILogger<Handler> _logger = loggerFactory.CreateLogger<Handler>();
 
-        public async Task<Response> Handle(Request request, CancellationToken ct = default)
+        public async ValueTask<Response> Handle(Request request, CancellationToken ct = default)
         {
             _logger.LogInformation("Sending follow-up message in simple AI CV chat");
 
@@ -101,7 +102,6 @@ public class AiSimpleCvChatConversation
                      {request.OfferContent}
 
                      {(request.OfferSummary is not null ? $"Offer summary:\n{request.OfferSummary}" : "")}
-
 
                      {(request.UserRequirements != "" ? $"User requirements:\n{request.UserRequirements}" : "")}
                      """,

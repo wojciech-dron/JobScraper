@@ -8,16 +8,16 @@ using JobScraper.Web.Features.Cv.Helpers;
 using JobScraper.Web.Features.Cv.Logic;
 using JobScraper.Web.Features.Cv.PdfGeneration;
 using JobScraper.Web.Modules.Persistence;
+using Mediator;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.JSInterop;
-using Wolverine;
 
 namespace JobScraper.Web.Features.Cv;
 
-public partial class PrepareCvForOfferPage(
-    IMessageBus messageBus,
+public sealed partial class PrepareCvForOfferPage(
+    IMediator mediator,
     IJSRuntime js,
     JobsDbContext dbContext,
     NavigationManager navigationManager
@@ -79,7 +79,7 @@ public partial class PrepareCvForOfferPage(
         ErrorOr<byte[]> result;
         try
         {
-            result = await messageBus.InvokeAsync<ErrorOr<byte[]>>(request);
+            result = await mediator.Send(request);
         }
         catch (Exception e)
         {
@@ -125,7 +125,7 @@ public partial class PrepareCvForOfferPage(
             OfferContent: offer.Details.Description,
             OfferSummary: offer.AiSummary);
 
-        var result = await messageBus.InvokeAsync<AdjustCvForOffer.Response>(request, _cts.Token);
+        var result = await mediator.Send(request, _cts.Token);
 
         isWorking = false;
         cvEntity.ChatHistory = result.ChatHistory;
@@ -157,7 +157,7 @@ public partial class PrepareCvForOfferPage(
             OfferSummary: offer.AiSummary,
             ExistingChatHistory: cvEntity.ChatHistory);
 
-        var result = await messageBus.InvokeAsync<AiSimpleCvChatConversation.Response>(request, _cts.Token);
+        var result = await mediator.Send(request, _cts.Token);
 
         cvEntity.ChatHistory = result.ChatHistory;
         isWorking = false;
@@ -237,6 +237,7 @@ public partial class PrepareCvForOfferPage(
         if (!confirm)
             ctx.PreventNavigation();
     }
+
     public async ValueTask DisposeAsync()
     {
         await _cts.CancelAsync();

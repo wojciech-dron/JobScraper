@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using JobScraper.Web.Common.Entities;
-using JobScraper.Web.Features.AiSummary;
 using JobScraper.Web.Features.AiSummary.Logic;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Indeed;
@@ -9,20 +8,20 @@ using JobScraper.Web.Features.JobOffers.Scrape.Logic.NoFluffJobs;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Olx;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.PracujPl;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.RocketJobs;
-using JobScraper.Web.Modules.Extensions;
 using JobScraper.Web.Modules.Persistence;
 using JobScraper.Web.Modules.Services;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Playwright;
 using Serilog.Context;
 using TickerQ.Utilities.Base;
-using Wolverine;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape;
 
 public record struct ScrapeRequest(string Owner);
 
 public sealed partial class ScrapeHandler(
-    IMessageBus messageBus,
+    IMediator mediator,
     UserProvider userProvider,
     JobsDbContext dbContext,
     ILogger<ScrapeHandler> logger
@@ -92,15 +91,19 @@ public sealed partial class ScrapeHandler(
                 var command = listCommands[idx];
                 LogScrapingListPages(idx + 1, listCommands.Length);
 
-                var result = await messageBus.InvokeWithRetryAsync<ScrapeResponse>(command,
-                    cancellationToken: cancellationToken);
+                try
+                {
+                    var result = await mediator.Send(command, cancellationToken);
+                    offersCount += result.ScrapedOffersCount;
+                }
+                catch (PlaywrightException e)
+                {
+                    logger.LogWarning(e, "Playwright exception occurred while scraping details. Retrying...");
 
-                if (result.IsError)
-                    logger.LogError("Error occurred while scraping details source {Index}/{CommandsCount}",
-                        idx + 1,
-                        listCommands.Length);
-                else
-                    offersCount += result.Value.ScrapedOffersCount;
+                    // retry one more
+                    var result = await mediator.Send(command, cancellationToken);
+                    offersCount += result.ScrapedOffersCount;
+                }
             }
         }
         finally
@@ -143,15 +146,20 @@ public sealed partial class ScrapeHandler(
                 var command = detailsCommands[idx]!;
                 LogScrapingDetails(idx + 1, detailsCommands.Length);
 
-                var result = await messageBus.InvokeWithRetryAsync<ScrapeResponse>(command,
-                    cancellationToken: cancellationToken);
 
-                if (result.IsError)
-                    logger.LogError("Error occurred while scraping details provider {ProviderNumber} of {TotalProviders}",
-                        idx + 1,
-                        detailsCommands.Length);
-                else
-                    offersScraped.AddRange(result.Value.OffersUrls);
+                try
+                {
+                    var result = await mediator.Send(command, cancellationToken);
+                    offersScraped.AddRange(result.OffersUrls);
+                }
+                catch (PlaywrightException e)
+                {
+                    logger.LogWarning(e, "Playwright exception occurred while scraping details. Retrying...");
+
+                    // retry one more
+                    var result = await mediator.Send(command, cancellationToken);
+                    offersScraped.AddRange(result.OffersUrls);
+                }
 
             }
 
