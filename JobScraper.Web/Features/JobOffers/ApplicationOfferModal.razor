@@ -6,7 +6,6 @@
 @using JobScraper.Web.Modules.Services
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
-
 <Modal @ref="_modal" Title="Offer application" Fullscreen="ModalFullscreen.Always">
     <BodyTemplate>
         <style>
@@ -136,28 +135,29 @@
 
                     <button type="submit" class="btn btn-success"
                             @onclick="SaveAsync">@(_isEdit ? "Update" : "Create")</button>
-                    @if (_canAiSummary)
-                    {
-                        <button type="submit" class="btn btn-primary" @onclick="MarkForAiSummary">
-                            Mark for AI summary
-                        </button>
-                    }
                     <button type="button" class="btn btn-secondary" @onclick="CloseAsync">Close</button>
                 </EditForm>
 
             </div>
             <div class="col-md-6">
-                <button class="btn btn-success" @onclick="PrepareCvForOffer">Prepare CV for offer</button>
-
-                <a href="@_offer.OfferUrl" target="_blank">
-                    <button class="btn btn-primary">Go to offer page</button>
-                </a>
-
                 @if (!string.IsNullOrEmpty(_application?.ApplyUrl))
                 {
                     <a href="@_application.ApplyUrl" target="_blank">
                         <button class="btn btn-primary">Go to apply page</button>
                     </a>
+                }
+
+                <a href="@_offer.OfferUrl" target="_blank">
+                    <button class="btn btn-primary">Go to offer page</button>
+                </a>
+
+                <button class="btn btn-success" @onclick="PrepareCvForOffer">Prepare CV for offer</button>
+
+                @if (_canAiSummary)
+                {
+                    <button type="submit" class="btn btn-primary" @onclick="MarkForAiSummary">
+                        Mark for AI summary
+                    </button>
                 }
 
                 <br/>
@@ -181,7 +181,7 @@
     </BodyTemplate>
 </Modal>
 
-<DuplicateCvModal ShowCvSelector @ref="_duplicateCvModal" OnSuccess="GoToPrepareCvForOfferPage" />
+<DuplicateCvModal ShowCvSelector @ref="_duplicateCvModal" OnSuccess="GoToPrepareCvForOfferPage"/>
 
 
 @inject IDbContextFactory<JobsDbContext> DbContextFactory

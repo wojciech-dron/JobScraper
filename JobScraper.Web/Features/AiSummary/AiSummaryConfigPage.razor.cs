@@ -96,6 +96,7 @@ public sealed partial class AiSummaryConfigPage(
             dbContext.Update(dbConfig);
 
         await dbContext.SaveChangesAsync();
+        dbContext.Entry(dbConfig).State = EntityState.Detached;
 
         isWorking = false;
         toasts.PushMessage("Configuration saved successfully.");
@@ -152,10 +153,9 @@ public sealed partial class AiSummaryConfigPage(
             return;
         }
 
-        toasts.PushMessage($"CV {result.Name} selected.");
+        toasts.PushMessage($"CV {result.Name} selected.", autoHide: false);
         selectedCvId = result.CvId;
     }
-
 
     private async Task TestSummarizeOfferContent()
     {
@@ -171,11 +171,11 @@ public sealed partial class AiSummaryConfigPage(
         var aiModel = !string.IsNullOrEmpty(form.SmartAiModel) ? form.SmartAiModel : form.DefaultAiModel;
         var content =
             availableCvs.FirstOrDefault(x => x.Id == selectedCvId)?.MarkdownContent ??
-            SelectedCv?.MarkdownContent;
+            SelectedCv?.MarkdownContent ?? "";
 
         var request = new SummarizeOfferContent.Request(
-            CvContent: form.CvContent,
-            OfferContent: content!,
+            CvContent: content,
+            OfferContent: form.TestOfferContent!,
             UserRequirementsForOffer: form.UserRequirements ?? "",
             ProviderName: aiModel);
 
@@ -190,6 +190,38 @@ public sealed partial class AiSummaryConfigPage(
         isWorking = false;
     }
 
+    private async Task TestCreatingCvContentForOffer()
+    {
+        if (!await validator.ValidateAsync(options => options.IncludeRuleSets("TestOffer")))
+        {
+            toasts.PushMessage("Provide test offer content.", ToastType.Warning);
+            return;
+        }
+
+        isWorking = true;
+        toasts.PushMessage("Creating new CV content in progress...");
+
+        var aiModel = !string.IsNullOrEmpty(form.SmartAiModel) ? form.SmartAiModel : form.DefaultAiModel;
+        var content =
+            availableCvs.FirstOrDefault(x => x.Id == selectedCvId)?.MarkdownContent ??
+            SelectedCv?.MarkdownContent ?? "";
+
+        var request = new AdjustCvContentToOffer.Request(
+            CvContent: content,
+            OfferContent: form.TestOfferContent!,
+            ProviderName: aiModel);
+
+        var result = await mediator.Send(request, _cts.Token);
+
+        if (!result.Success)
+            toasts.PushMessage("Something went wrong with creating new CV.");
+        else
+            toasts.PushMessage("Creating new CV content finished.");
+
+        chatHistory = result.ChatHistory;
+        isWorking = false;
+    }
+
     public async Task ScheduleSummaryJob()
     {
         if (isWorking || !await validator.ValidateAsync())
@@ -198,7 +230,6 @@ public sealed partial class AiSummaryConfigPage(
         await SaveConfig();
 
         var nextScheduledJob = await dbContext.TimeTickers
-            .AsNoTracking()
             .Where(x => x.Function      == AiSummaryJob.FunctionName)
             .Where(x => x.ExecutionTime > DateTime.UtcNow.AddMinutes(-30)) // check if job is scheduled within last 30 minutes
             .Where(x => x.Status == TickerStatus.Idle   ||
@@ -207,7 +238,7 @@ public sealed partial class AiSummaryConfigPage(
             .OrderByDescending(x => x.ExecutionTime)
             .FirstOrDefaultAsync(_cts.Token);
 
-        var nextExecutionTime = DateTime.UtcNow.AddMinutes(1);
+        var nextExecutionTime = DateTime.UtcNow.AddSeconds(1);
         if (nextScheduledJob is not null && nextScheduledJob.ExecutionTime < nextExecutionTime)
         {
             toasts.PushMessage("Ai summary job is already scheduled, and will be executed in the next minute.", ToastType.Warning);
