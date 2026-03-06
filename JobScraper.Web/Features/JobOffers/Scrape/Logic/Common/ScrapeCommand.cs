@@ -1,8 +1,9 @@
 ﻿using JobScraper.Web.Common.Entities;
+using Mediator;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 
-public abstract record ScrapeCommand(SourceConfig Source);
+public abstract record ScrapeCommand(SourceConfig Source) : IRequest<ScrapeResponse>;
 
 public abstract record ScrapeDetailsCommand(SourceConfig Source) : ScrapeCommand(Source)
 {

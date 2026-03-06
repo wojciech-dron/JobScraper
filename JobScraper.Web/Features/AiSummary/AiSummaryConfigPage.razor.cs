@@ -1,6 +1,5 @@
 ﻿using BlazorBootstrap;
 using Blazored.FluentValidation;
-using ErrorOr;
 using Facet;
 using Facet.Extensions;
 using FluentValidation;
@@ -9,18 +8,18 @@ using JobScraper.Web.Common.Entities;
 using JobScraper.Web.Features.AiSummary.Logic;
 using JobScraper.Web.Integration.AiProvider;
 using JobScraper.Web.Modules.Persistence;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using Riok.Mapperly.Abstractions;
 using TickerQ.Utilities.Enums;
-using Wolverine;
 
 namespace JobScraper.Web.Features.AiSummary;
 
 public partial class AiSummaryConfigPage(
     JobsDbContext dbContext,
-    IMessageBus messageBus,
+    IMediator mediator,
     IJSRuntime js)
 {
     private readonly CancellationTokenSource _cts = new();
@@ -72,7 +71,7 @@ public partial class AiSummaryConfigPage(
     {
         isWorking = true;
 
-        var result = await messageBus.InvokeAsync<ErrorOr<VerifyProviderAndGetModels.Response>>(
+        var result = await mediator.Send(
             new VerifyProviderAndGetModels.Request(form.ProviderName),
             _cts.Token);
 
@@ -105,7 +104,7 @@ public partial class AiSummaryConfigPage(
             UserRequirementsForOffer: form.UserRequirements ?? "",
             ProviderName: form.ProviderName);
 
-        var result = await messageBus.InvokeAsync<ErrorOr<SummarizeOfferContent.Response>>(request, _cts.Token);
+        var result = await mediator.Send(request, _cts.Token);
 
         if (result.IsError)
             toasts.PushMessage(result.FirstError.Description);
@@ -125,7 +124,7 @@ public partial class AiSummaryConfigPage(
 
         var nextScheduledJob = await dbContext.TimeTickers
             .AsNoTracking()
-            .Where(x => x.Function      == Logic.AiSummaryJob.FunctionName)
+            .Where(x => x.Function      == AiSummaryJob.FunctionName)
             .Where(x => x.ExecutionTime > DateTime.UtcNow.AddMinutes(-30)) // check if job is scheduled within last 30 minutes
             .Where(x => x.Status == TickerStatus.Idle   ||
                 x.Status         == TickerStatus.Queued ||

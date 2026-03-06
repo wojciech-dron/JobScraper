@@ -1,6 +1,7 @@
 using JobScraper.Web.Common.Models;
 using JobScraper.Web.Features.AiSummary.Logic;
 using JobScraper.Web.Integration.AiProvider;
+using Mediator;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Agents.Chat;
@@ -18,7 +19,7 @@ public class AdjustCvForOffer
         string? OfferSummary,
         string UserRequirements = "",
         string ProviderName = AiProvidersConfig.MainProvider
-    );
+    ) : IRequest<Response>;
 
     public record Response(
         bool Success,
@@ -29,7 +30,7 @@ public class AdjustCvForOffer
     public class Handler(
         IServiceProvider serviceProvider,
         ILoggerFactory loggerFactory
-    )
+    ) : IRequestHandler<Request, Response>
     {
         private const string DoneSignal = "[DONE]";
         private const string FailSignal = "[FAIL]";
@@ -37,7 +38,7 @@ public class AdjustCvForOffer
 
         private readonly ILogger<Handler> _logger = loggerFactory.CreateLogger<Handler>();
 
-        public async Task<Response> Handle(Request request, CancellationToken ct = default)
+        public async ValueTask<Response> Handle(Request request, CancellationToken ct = default)
         {
             _logger.LogInformation("Starting AI CV adjustment conversation");
 
