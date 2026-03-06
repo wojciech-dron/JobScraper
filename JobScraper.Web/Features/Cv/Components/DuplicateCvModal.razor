@@ -109,7 +109,11 @@
         isWorking = true;
         StateHasChanged();
 
-        var message = new DuplicateCv.Request(OriginCvId, NewCvName, TargetOfferUrl);
+        var message = new DuplicateCv.Command(
+            OriginCvId: OriginCvId,
+            CvName: NewCvName,
+            OfferUrl: TargetOfferUrl);
+
         var response = await Mediator.Send(message);
 
         if (response.IsError)

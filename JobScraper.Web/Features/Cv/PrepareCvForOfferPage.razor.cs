@@ -30,7 +30,7 @@ public sealed partial class PrepareCvForOfferPage(
     private IJSObjectReference? downloadModule;
     private UserOffer offer = null!;
     private CvEntity cvEntity = null!;
-    private MarkdownDiffEditor diffEditor = null!;
+    private MarkdownDiffEditor? diffEditor;
     private FluentValidationValidator validator = null!;
     private ConfirmDialog dialog = null!;
 
@@ -53,9 +53,20 @@ public sealed partial class PrepareCvForOfferPage(
         cvEntity = offer.Cv;
         cvEntity.ChatHistory ??= [];
 
+        compareMode = CompareMode.WithOrigin;
         originalContent = cvEntity.MarkdownContent;
-        modifiedContent = cvEntity.MarkdownContent;
+        modifiedContent = cvEntity.OriginCv?.MarkdownContent ?? cvEntity.MarkdownContent;
+
+        if (diffEditor is not null) // if re-enter page
+            await diffEditor.SetModels(originalContent, modifiedContent);
     }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (diffEditor is not null) // if re-enter page
+            await diffEditor.SetModels(originalContent, modifiedContent);
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender)
@@ -66,6 +77,9 @@ public sealed partial class PrepareCvForOfferPage(
     }
     private async Task GenerateCvPdf()
     {
+        if (diffEditor is null)
+            return;
+
         var mdContent = await diffEditor.GetModifiedValueAsync();
         if (string.IsNullOrWhiteSpace(mdContent))
             return;
@@ -97,7 +111,7 @@ public sealed partial class PrepareCvForOfferPage(
             return;
         }
 
-        var fileName = $"{cvEntity.Name}.pdf";
+        var fileName = $"{cvEntity.Name.ToFileName()}.pdf";
         var pdfBytes = result.Value;
         using var stream = new MemoryStream(pdfBytes);
         using var streamRef = new DotNetStreamReference(stream);
@@ -109,6 +123,9 @@ public sealed partial class PrepareCvForOfferPage(
     }
     private async Task PrepareCvContent()
     {
+        if (diffEditor is null)
+            return;
+
         var cvContent = await diffEditor.GetModifiedValueAsync();
         if (string.IsNullOrWhiteSpace(cvContent))
             return;
@@ -120,10 +137,13 @@ public sealed partial class PrepareCvForOfferPage(
         StateHasChanged();
         _toasts.PushMessage("Preparing CV content. It could take a while");
 
+        var config = dbContext.AiSummaryConfigs.First();
+
         var request = new AdjustCvForOffer.Request(
             CvContent: cvContent,
             OfferContent: offer.Details.Description,
-            OfferSummary: offer.AiSummary);
+            OfferSummary: offer.AiSummary,
+            config.SmartAiModel ?? config.DefaultAiModel);
 
         var result = await mediator.Send(request, _cts.Token);
 
@@ -141,8 +161,12 @@ public sealed partial class PrepareCvForOfferPage(
         modifiedContent = result.AdjustedCvContent!;
         _ = diffEditor.SetModifiedModel(modifiedContent);
     }
+
     private async Task SendChatMessage(string message)
     {
+        if (diffEditor is null)
+            return;
+
         var cvContent = await diffEditor.GetModifiedValueAsync();
         if (string.IsNullOrWhiteSpace(cvContent) || offer.Details.Description == null)
             return;
@@ -165,7 +189,13 @@ public sealed partial class PrepareCvForOfferPage(
 
     public async Task SaveAsync()
     {
-        cvEntity.MarkdownContent = await diffEditor.GetModifiedValueAsync();
+        if (diffEditor is null)
+            return;
+
+        var markdownContent = await diffEditor.GetModifiedValueAsync();
+        markdownContent = markdownContent.RemoveAiChars();
+
+        cvEntity.MarkdownContent = markdownContent;
 
         if (!await validator.ValidateAsync())
             return;
@@ -175,10 +205,11 @@ public sealed partial class PrepareCvForOfferPage(
 
         await dbContext.SaveChangesAsync(_cts.Token);
 
+        await diffEditor.SetModifiedModel(markdownContent);
         if (compareMode == CompareMode.WithSaved)
         {
-            originalContent = cvEntity.MarkdownContent;
-            await diffEditor.SetOriginalModel(cvEntity.MarkdownContent);
+            originalContent = markdownContent;
+            await diffEditor.SetOriginalModel(markdownContent);
         }
 
         _toasts.PushMessage("CV saved successfully");
@@ -206,13 +237,12 @@ public sealed partial class PrepareCvForOfferPage(
 
     private enum CompareMode
     {
-        None,
         WithSaved,
         WithOrigin,
     }
 
     public bool DisableCompareToOrigin =>
-        compareMode is CompareMode.WithOrigin || string.IsNullOrWhiteSpace(cvEntity?.OriginCv?.MarkdownContent);
+        compareMode is CompareMode.WithOrigin || string.IsNullOrWhiteSpace(cvEntity.OriginCv?.MarkdownContent);
     private async Task CompareToOrigin()
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(cvEntity?.OriginCv?.MarkdownContent);
