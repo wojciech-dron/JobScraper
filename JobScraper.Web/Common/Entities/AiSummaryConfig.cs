@@ -9,11 +9,16 @@ public class AiSummaryConfig : IOwnable
     public string? Owner { get; set; } = "system";
 
     public bool AiSummaryEnabled { get; set; }
-    public string ProviderName { get; set; } = null!;
+    public bool CvGenerationEnabled { get; set; }
+    public string DefaultAiModel { get; set; } = null!;
+    public string? SmartAiModel { get; set; }
 
+    /// <remarks> Remove at the next migration </remarks>
     public string CvContent { get; set; } = "";
     public string? UserRequirements { get; set; }
     public string? TestOfferContent { get; set; }
+
+    public CvEntity? DefaultCv { get; set; }
 }
 
 public class AiSummaryConfigModelBuilder : IEntityTypeConfiguration<AiSummaryConfig>
@@ -26,9 +31,16 @@ public class AiSummaryConfigModelBuilder : IEntityTypeConfiguration<AiSummaryCon
         builder.Property(j => j.Owner).HasMaxLength(255);
 
         builder.Property(x => x.AiSummaryEnabled);
-        builder.Property(x => x.ProviderName).HasMaxLength(100);
+        builder.Property(x => x.CvGenerationEnabled);
+        builder.Property(x => x.DefaultAiModel).HasMaxLength(100);
+        builder.Property(x => x.SmartAiModel).HasMaxLength(100);
         builder.Property(x => x.UserRequirements).HasMaxLength(500);
         builder.Property(x => x.CvContent).HasMaxLength(10_000);
         builder.Property(x => x.TestOfferContent).HasMaxLength(10_000);
+
+        builder.HasOne(x => x.DefaultCv)
+            .WithMany()
+            .HasForeignKey("DefaultCvId")
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

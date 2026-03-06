@@ -69,7 +69,7 @@ public sealed partial class AiSummaryJob(
             config.CvContent,
             userOffer.Details.Description ?? "",
             config.UserRequirements       ?? "",
-            config.ProviderName
+            config.DefaultAiModel
         );
 
         try

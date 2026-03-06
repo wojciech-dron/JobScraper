@@ -1,32 +1,43 @@
 ﻿using BlazorBootstrap;
 using Blazored.FluentValidation;
 using Facet;
-using Facet.Extensions;
 using FluentValidation;
 using JobScraper.Web.Blazor.Extensions;
 using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Common.Models;
 using JobScraper.Web.Features.AiSummary.Logic;
 using JobScraper.Web.Integration.AiProvider;
+using JobScraper.Web.Modules.Auth;
 using JobScraper.Web.Modules.Persistence;
 using Mediator;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
-using Riok.Mapperly.Abstractions;
 using TickerQ.Utilities.Enums;
 
 namespace JobScraper.Web.Features.AiSummary;
 
-public partial class AiSummaryConfigPage(
+public sealed partial class AiSummaryConfigPage(
     JobsDbContext dbContext,
     IMediator mediator,
-    IJSRuntime js)
+    IJSRuntime js,
+    IOptions<AiProvidersConfig> config
+) : IAsyncDisposable
 {
-    private readonly CancellationTokenSource _cts = new();
-    private AiSummaryViewModel form = new();
+    [CascadingParameter] private Task<AuthenticationState> AuthStateTask { get; set; } = default!;
 
-    private bool isWorking;
+    private readonly CancellationTokenSource _cts = new();
+    private readonly List<ToastMessage> toasts = [];
+    private AiSummaryViewModel form = new();
+    private List<CvViewModel> availableCvs = [];
+    private string[] aiModels = [];
+    private CvViewModel? selectedCv;
+    private List<ChatItem> chatHistory = [];
     private FluentValidationValidator validator = null!;
+    private bool isWorking;
 
     protected override async Task OnInitializedAsync()
     {
@@ -38,9 +49,34 @@ public partial class AiSummaryConfigPage(
                 .FirstOrDefaultAsync()
          ?? new AiSummaryViewModel
             {
-                ProviderName = AiProvidersConfig.MainProvider,
+                Owner = "default",
+                DefaultAiModel = AiProvidersConfig.MainProvider,
                 AiSummaryEnabled = true,
             };
+
+        await LoadAvailableModels();
+        await LoadCvCandidatesAsync();
+    }
+    private async Task LoadAvailableModels()
+    {
+        var authState = await AuthStateTask;
+        var isAdmin = authState.User.IsInRole(AppRoles.Admin);
+
+        aiModels = isAdmin
+            ? config.Value.AllProviders
+            : config.Value.VisibleProviders;
+    }
+
+    private async Task LoadCvCandidatesAsync()
+    {
+        availableCvs = await dbContext.Cvs
+            .AsNoTracking()
+            .Where(cv => cv.IsTemplate)
+            .OrderBy(c => c.Id)
+            .Select(CvViewModel.Projection)
+            .ToListAsync();
+
+        selectedCv = availableCvs.FirstOrDefault(x => x.Id == form.DefaultCv?.Id);
     }
 
     private async Task SaveConfig()
@@ -51,15 +87,14 @@ public partial class AiSummaryConfigPage(
         isWorking = true;
         await UpdatePageAsync();
 
-        var dbConfig = await dbContext.AiSummaryConfigs.FirstOrDefaultAsync();
+        var dbConfig = form.ToSource();
+        dbConfig.DefaultCv = await dbContext.Cvs
+            .FirstOrDefaultAsync(cv => cv.Id == form.DefaultCv!.Id);
 
-        if (dbConfig is null)
-        {
-            dbConfig = form.ToSource();
+        if (dbConfig.Owner == "default")
             dbContext.Add(dbConfig);
-        }
         else
-            dbConfig.ApplyFacet(form);
+            dbContext.Update(dbConfig);
 
         await dbContext.SaveChangesAsync();
 
@@ -67,12 +102,15 @@ public partial class AiSummaryConfigPage(
         toasts.PushMessage("Configuration saved successfully.");
     }
 
-    private async Task VerifyProvider()
+    private async Task VerifyAiModel(string? aiModel)
     {
+        if (string.IsNullOrEmpty(aiModel))
+            return;
+
         isWorking = true;
 
         var result = await mediator.Send(
-            new VerifyProviderAndGetModels.Request(form.ProviderName),
+            new VerifyProviderAndGetModels.Request(aiModel),
             _cts.Token);
 
         if (result.IsError)
@@ -83,7 +121,7 @@ public partial class AiSummaryConfigPage(
             return;
         }
 
-        toasts.PushMessage("Provider works fine.");
+        toasts.PushMessage("Model connection is OK.");
         isWorking = false;
     }
 
@@ -98,11 +136,12 @@ public partial class AiSummaryConfigPage(
         isWorking = true;
         toasts.PushMessage("AI summary in progress...");
 
+        var aiModel = !string.IsNullOrEmpty(form.SmartAiModel) ? form.SmartAiModel : form.DefaultAiModel;
         var request = new SummarizeOfferContent.Request(
             CvContent: form.CvContent,
             OfferContent: form.TestOfferContent!,
             UserRequirementsForOffer: form.UserRequirements ?? "",
-            ProviderName: form.ProviderName);
+            ProviderName: aiModel);
 
         var result = await mediator.Send(request, _cts.Token);
 
@@ -153,37 +192,59 @@ public partial class AiSummaryConfigPage(
         await Task.Yield();
     }
 
-    public void Dispose()
+    private async Task OnBeforeInternalNavigation(LocationChangingContext ctx)
     {
-        _cts.Cancel();
+        if (!isWorking)
+            return;
+
+        var confirm = await js.InvokeAsync<bool>("confirm", "Are you sure you want to leave this page?");
+        if (!confirm)
+            ctx.PreventNavigation();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await _cts.CancelAsync();
         _cts.Dispose();
     }
-}
 
-[Facet(typeof(AiSummaryConfig),
-    exclude: [nameof(AiSummaryConfig.Owner)],
-    GenerateToSource = true)]
-[Mapper(RequiredMappingStrategy = RequiredMappingStrategy.Target)]
-public partial class AiSummaryViewModel;
+    [Facet(typeof(AiSummaryConfig),
+        GenerateToSource = true,
+        NestedFacets = [typeof(CvViewModel)])]
+    public partial class AiSummaryViewModel;
 
-public class AiSummaryViewModelValidator : AbstractValidator<AiSummaryViewModel>
-{
-    private readonly AiProvidersConfig _config;
-    public AiSummaryViewModelValidator(IOptions<AiProvidersConfig> config)
+    [Facet(typeof(CvEntity),
+        Include = [nameof(CvEntity.Id), nameof(CvEntity.Name)],
+        GenerateToSource = true
+    )]
+    public partial class CvViewModel;
+
+    public class AiSummaryViewModelValidator : AbstractValidator<AiSummaryViewModel>
     {
-        _config = config.Value;
+        private readonly AiProvidersConfig _config;
 
-        RuleFor(x => x.ProviderName)
-            .NotEmpty()
-            .Must(BeAvailable).WithMessage(
-                $"Selected provider is not available. Available providers: {string.Join(", ", _config.AvailableProviders)}");
+        public AiSummaryViewModelValidator(IOptions<AiProvidersConfig> config)
+        {
+            _config = config.Value;
+            RuleLevelCascadeMode = CascadeMode.Stop;
 
-        RuleFor(x => x.CvContent)
-            .NotEmpty().WithMessage("CV content is required for AI summary.");
+            RuleFor(x => x.DefaultAiModel)
+                .NotEmpty()
+                .Must(BeAvailable).WithMessage(
+                    $"Selected provider is not available. Available providers: {string.Join(", ", _config.VisibleProviders)}");
 
-        RuleSet("TestOffer",
-            () => RuleFor(x => x.TestOfferContent).NotEmpty());
+            RuleFor(x => x.SmartAiModel)
+                .Must(x => string.IsNullOrWhiteSpace(x) || BeAvailable(x))
+                .WithMessage(
+                    $"Selected provider is not available. Available providers: {string.Join(", ", _config.VisibleProviders)}");
+
+            RuleFor(x => x.DefaultCv)
+                .NotNull().WithMessage("Default CV cannot be empty");
+
+            RuleSet("TestOffer",
+                () => RuleFor(x => x.TestOfferContent).NotEmpty());
+        }
+
+        private bool BeAvailable(string providerName) => _config.ContainsKey(providerName);
     }
-
-    private bool BeAvailable(string providerName) => _config.ContainsKey(providerName);
 }

@@ -2,14 +2,17 @@
 @using BlazorBootstrap
 @using Blazored.FluentValidation
 @using JobScraper.Web.Blazor.Components
-@using JobScraper.Web.Common.Models
+@using JobScraper.Web.Blazor.Components.ButtonSelect
+@using JobScraper.Web.Blazor.Components.MySelect
 
-<NavigationLock ConfirmExternalNavigation="@PreventNavigation"
+<PageTitle>AI Config</PageTitle>
+
+<NavigationLock ConfirmExternalNavigation="@isWorking"
                 OnBeforeInternalNavigation="OnBeforeInternalNavigation"/>
 
 <Toasts class="p-3" Messages="toasts" Placement="ToastsPlacement.TopRight"/>
 
-<h2>AI Summary</h2>
+<h2>AI Config</h2>
 
 <EditForm Model="form" disabled="@isWorking">
     <FluentValidationValidator @ref="validator"/>
@@ -17,13 +20,31 @@
     <h4>Summary configuration</h4>
 
     <div class="col-md-6 mb-3">
-        <label for="providerName" class="form-label bold">AI Provider name</label>
+        <label for="defaultAiModel" class="form-label bold">Default AI model</label>
         <div class="row">
             <div class="col-md-8">
-                <InputText id="providerName" class="form-control" @bind-Value="form.ProviderName"/>
+                <MySelect id="defaultAiModel" @bind-SelectedOption="form.DefaultAiModel" Options="aiModels"/>
             </div>
             <div class="col-md-4">
-                <button class="btn btn-secondary" @onclick="VerifyProvider" disabled="@isWorking">
+                <button class="btn btn-secondary"
+                        @onclick="() => VerifyAiModel(form.DefaultAiModel)"
+                        disabled="@isWorking">
+                    Verify provider
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label for="smartAiModel" class="form-label bold">Smart AI model</label>
+        <div class="row">
+            <div class="col-md-8">
+                <MySelect id="smartAiModel" @bind-SelectedOption="form.SmartAiModel" Options="aiModels"/>
+            </div>
+            <div class="col-md-4">
+                <button class="btn btn-secondary"
+                        @onclick="() => VerifyAiModel(form.SmartAiModel)"
+                        disabled="@isWorking">
                     Verify provider
                 </button>
             </div>
@@ -33,8 +54,16 @@
     <div class="col-md-4 mb-3">
         <label for="aiSummaryEnabled" class="form-label bold">Enable summarization for new offers</label>
         <InputSelect id="aiSummaryEnabled" @bind-Value="@form.AiSummaryEnabled" class="form-control">
-            <option value="false">No</option>
             <option value="true">Yes</option>
+            <option value="false">No</option>
+        </InputSelect>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <label for="cvGenerationEnabled" class="form-label bold">Enable summarization for new offers</label>
+        <InputSelect id="cvGenerationEnabled" @bind-Value="@form.CvGenerationEnabled" class="form-control">
+            <option value="true">Yes</option>
+            <option value="false">No</option>
         </InputSelect>
     </div>
 
@@ -44,9 +73,21 @@
     </div>
 
     <div class="mb-3">
-        <label for="cvContent" class="form-label bold">Cv content (do not provide any personal information)</label>
-        <InputTextArea id="cvContent" class="form-control" @bind-Value="form.CvContent"/>
+        <label for="defaultCv" class="form-label bold" title="Fallback CV when AI fails to select template for offer">
+            Default CV
+        </label>
+        <ButtonSelect TItem="CvViewModel"
+                      Id="defaultCv"
+                      Items="availableCvs"
+                      SelectedItem="@selectedCv"
+                      SelectedItemChanged="@(cv => form.DefaultCv = cv)"
+                      StringSelector="cv => cv.Name"
+                      CanFilter
+                      FilterPlaceholder="Search by CV name"
+                      EmptyText="No CVs found"/>
+
     </div>
+
 
     <div class="row">
         <div class="col-md-4 d-flex flex-column">
@@ -95,22 +136,3 @@
         <ChatHistory Items="chatHistory"/>
     }
 </EditForm>
-
-@code
-{
-    List<ChatItem> chatHistory = [];
-    readonly List<ToastMessage> toasts = [];
-
-
-    private bool PreventNavigation => isWorking;
-
-    private async Task OnBeforeInternalNavigation(LocationChangingContext ctx)
-    {
-        if (!PreventNavigation)
-            return;
-
-        var confirm = await js.InvokeAsync<bool>("confirm", "Are you sure you want to leave this page?");
-        if (!confirm)
-            ctx.PreventNavigation();
-    }
-}

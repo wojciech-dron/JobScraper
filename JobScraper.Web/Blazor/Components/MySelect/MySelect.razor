@@ -10,7 +10,7 @@
             @onclick="ToggleDropdown"
             aria-expanded="@_isDropdownOpen">
         <span class="simple-dropdown-text">
-            @if (!SelectedOptions.Any())
+            @if (!SelectedOptions.Any() && SelectedOption == null)
             {
                 @DefaultText
             }
@@ -57,7 +57,7 @@
 
 @code {
     private string _filterText = "";
-    private bool _isDropdownOpen = false;
+    private bool _isDropdownOpen;
     private ElementReference _dropdownContainerRef;
     private DotNetObjectReference<MySelect<TItem>>? _dotNetHelper;
     private IJSObjectReference? _module;

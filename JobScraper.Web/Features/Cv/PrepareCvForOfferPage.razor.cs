@@ -199,7 +199,8 @@ public sealed partial class PrepareCvForOfferPage(
 
         dbContext.Remove(cv);
         await dbContext.SaveChangesAsync();
-        navigationManager.NavigateTo($"/?offerUrl={offer}");
+
+        navigationManager.NavigateTo($"/?offerUrl={Uri.EscapeDataString(offer.OfferUrl)}");
     }
     private void GoToCv(long duplicatedCvId) => navigationManager.NavigateTo($"cv/edit/{duplicatedCvId}", true);
 

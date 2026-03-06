@@ -1,4 +1,5 @@
 ﻿@using BlazorBootstrap
+@using JobScraper.Web.Blazor.Components.ButtonSelect
 @using JobScraper.Web.Blazor.Extensions
 @using JobScraper.Web.Common.Entities
 @using JobScraper.Web.Features.Cv.Logic
@@ -12,28 +13,16 @@
         <div class="form-group">
             @if (ShowCvSelector)
             {
-                <label for="cv-search">Select source CV:</label>
-                <InputText id="cv-search" @bind-Value="SearchPhrase" class="form-control"
-                           placeholder="Search by CV name"/>
-
-                <div class="mt-2">
-                    @if (FilteredCvs.Count == 0)
-                    {
-                        <div class="text-muted">No CVs found</div>
-                    }
-                    else
-                    {
-                        @foreach (var cv in FilteredCvs)
-                        {
-                            <button type="button"
-                                    class="btn @(OriginCvId == cv.Id ? "btn-primary" : "btn-outline-primary") btn-sm me-2 mb-2"
-                                    @onclick="() => OriginCvId = cv.Id">
-                                @cv.Name
-                            </button>
-                        }
-                    }
-                </div>
-
+                <ButtonSelect TItem="CvEntity"
+                              Items="_cvs"
+                              SelectedItem="_selectedCv"
+                              SelectedItemChanged="OnCvSelected"
+                              StringSelector="cv => cv.Name"
+                              CanFilter="true"
+                              Label="Select source CV:"
+                              FilterPlaceholder="Search by CV name"
+                              EmptyText="No CVs found"
+                              Id="cv-search"/>
             }
 
             <label for="new-cv-name">New Cv Name:</label>
@@ -55,11 +44,7 @@
     readonly List<ToastMessage> toasts = [];
     private List<CvEntity> _cvs = [];
     private bool isWorking;
-    private string SearchPhrase { get; set; } = string.Empty;
-
-    private List<CvEntity> FilteredCvs => _cvs
-        .Where(cv => string.IsNullOrWhiteSpace(SearchPhrase) || cv.Name.Contains(SearchPhrase, StringComparison.OrdinalIgnoreCase))
-        .ToList();
+    private CvEntity? _selectedCv;
 
     [Parameter] public long OriginCvId { get; set; }
     [Parameter] public string NewCvName { get; set; } = string.Empty;
@@ -97,6 +82,14 @@
 
         if (OriginCvId <= 0 && _cvs.Count > 0)
             OriginCvId = _cvs[0].Id;
+
+        _selectedCv = _cvs.FirstOrDefault(cv => cv.Id == OriginCvId);
+    }
+
+    private void OnCvSelected(CvEntity? cv)
+    {
+        _selectedCv = cv;
+        OriginCvId = cv?.Id ?? 0;
     }
 
     public async Task SaveAsync()
