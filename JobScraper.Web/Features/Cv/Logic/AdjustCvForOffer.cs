@@ -1,5 +1,6 @@
 using JobScraper.Web.Common.Models;
 using JobScraper.Web.Features.AiSummary.Logic;
+using JobScraper.Web.Features.Cv.Helpers;
 using JobScraper.Web.Integration.AiProvider;
 using Mediator;
 using Microsoft.SemanticKernel;
@@ -68,7 +69,9 @@ public class AdjustCvForOffer
             if (finalContent is null || !finalContent.Contains(DoneSignal))
                 return new Response(false, null, chatHistory);
 
-            var adjustedCv = finalContent.Replace(DoneSignal, "").Trim();
+            var adjustedCv = finalContent
+                .Replace(DoneSignal, "")
+                .RemoveAiChars();
 
             // Remove the last item because it contains the raw CV content
             if (chatHistory.Count > 0)
@@ -105,20 +108,18 @@ public class AdjustCvForOffer
                 Instructions =
                     $"""
                      You are a professional CV analyst. Your goal is to analyze the job offer and the user's CV to find the best alignment.
-                     Before any CV editing happens, you must provide a detailed analysis.
+                     Before any CV editing happens, you must provide short analysis.
                      User prompts only first messages, do not ask for any more information.
 
                      Your task:
-                     - Analyze the 'Job offer content' and 'Requirements for an offer' (if provided).
-                     - Compare them with the 'Original CV content'.
+                     - Be concise and to the point.
                      - Analyze CV for ATS compliance.
-                     - Identify key skills, experiences, and keywords from the offer that are present (or should be highlighted) in the CV.
+                     - Focus only on the developer title and 'Summary', 'Experience', and 'Skills' sections.
+                     - Infer missing skills and experience on if they are required in offer and the evidence in the CV strongly suggests they exist.
+                     - Return the analysis in a simple format, with clear headings and bullet points.
                      - List specific suggestions for the CV editor on how to optimize each section.
                      - DO NOT rewrite the CV yourself. Just provide the analysis and suggestions.
                      - End your response with a clear instruction for the CvEditor to proceed.
-
-                     Requirements for an offer defined by user (optional):
-                     {userRequirements}
 
                      The original CV content:
                      {cvContent}
@@ -156,9 +157,6 @@ public class AdjustCvForOffer
                      - MAINTAIN the original markdown structure, keep line length about 90 characters.
 
                      If something is wrong or required data is missing, return reason and {FailSignal}, which terminates the conversation.
-
-                     Requirements for an offer defined by user (optional):
-                     {userRequirements}
 
                      The original CV content:
                      {cvContent}

@@ -1,12 +1,4 @@
 @page "/cv"
-@using BlazorBootstrap
-@using JobScraper.Web.Blazor.Components.MySelect
-@using JobScraper.Web.Common.Extensions
-@using JobScraper.Web.Features.Cv.Models
-@using JobScraper.Web.Modules.Extensions
-@using JobScraper.Web.Modules.Persistence
-@using Microsoft.AspNetCore.Components.QuickGrid
-@using Microsoft.EntityFrameworkCore
 
 <PageTitle>CVs</PageTitle>
 
@@ -37,22 +29,7 @@
                        class="form-control form-control-sm"/>
             </HeaderTemplate>
         </PropertyColumn>
-        <TemplateColumn class="col-1" SortBy="@(GridSort<CvListDto>.ByAscending(c => !c.HasOrigin))" Title="Type">
-            <HeaderTemplate>
-                <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
-                    <div class="col-title-text">@context.Title</div>
-                    <div class="sort-indicator" aria-hidden="true"></div>
-                </button>
-                <MySelect
-                    @bind-SelectedOption="@IsTemplateFilter"
-                    Options="@BoolFilterHelper.Options"
-                    StringSelector="@TemplateStringSelector"
-                />
-            </HeaderTemplate>
-            <ChildContent>
-                @(context.IsTemplate ? "Template" : "Dedicated")
-            </ChildContent>
-        </TemplateColumn>
+        <PropertyColumn class="col-1" Property="@(c => c.IsTemplate)" Sortable="true"/>
         <TemplateColumn class="col-2" SortBy="@(GridSort<CvListDto>.ByAscending(c => c.HasOrigin))" Title="Origin CV">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
@@ -67,18 +44,15 @@
                 @(context.OriginName)
             </ChildContent>
         </TemplateColumn>
-        <PropertyColumn class="col-1" Property="@(c => c.OffersCount)" Title="Offers Count"  Sortable="true"/>
-        <PropertyColumn class="col-1" Property="@(c => c.DerivedCvsCount)" Title="Derived CVs Count"  Sortable="true"/>
+        <PropertyColumn class="col-1" Property="@(c => c.OffersCount)" Title="Offers Count" Sortable="true"/>
+        <PropertyColumn class="col-1" Property="@(c => c.DerivedCvsCount)" Title="Derived CVs Count" Sortable="true"/>
         <PropertyColumn class="col-2" Property="@(c => c.CreatedAt)" Title="Created" Format="yyyy-MM-dd HH:mm"
                         Sortable="true"/>
         <PropertyColumn class="col-2" Property="@(c => c.UpdatedAt)" Title="Updated" Format="yyyy-MM-dd HH:mm"
                         Sortable="true"/>
-        <PropertyColumn class="col-1" Property="@(c => c.HasImage)" Title="Has Image"  Sortable="true"/>
+        <PropertyColumn class="col-1" Property="@(c => c.HasImage)" Title="Has Image" Sortable="true"/>
     </QuickGrid>
 </div>
-
-<ConfirmDialog @ref="dialog"/>
-
 
 @if (pagination.TotalItemCount is 0)
 {
@@ -103,7 +77,17 @@
     </Paginator>
 </div>
 
+<ConfirmDialog @ref="dialog"/>
+
 @inject IDbContextFactory<JobsDbContext> DbFactory
+@using BlazorBootstrap
+@using JobScraper.Web.Common.Extensions
+@using JobScraper.Web.Features.Cv.Models
+@using JobScraper.Web.Modules.Extensions
+@using JobScraper.Web.Modules.Persistence
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.EntityFrameworkCore
+@implements IAsyncDisposable
 
 @code {
     QuickGrid<CvListDto> grid = null!;
@@ -152,12 +136,4 @@
     }
 
     public async ValueTask DisposeAsync() => await dbContext.DisposeAsync();
-
-    private static string TemplateStringSelector(bool? value) => value switch
-    {
-        null  => "All",
-        true  => "Template",
-        false => "Dedicated",
-    };
-
 }

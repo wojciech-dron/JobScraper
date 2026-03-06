@@ -88,6 +88,7 @@ public class SummarizeOfferContent
                     $"""
                      You are an analyst designed to deeply analyze a job offer in the context of a user's CV and specific requirements.
                      The order of agents is sequential, you first, then Summarizer.
+                     Use language of the offer for analysis.
 
                      Your task is to perform a multi-step reasoning:
                      1. Analyze the job responsibilities and technical requirements from the offer.
@@ -121,7 +122,8 @@ public class SummarizeOfferContent
                      - You can ask questions to analyst agent to clarify details.
                      - When you generate a final summary, finish it with {DoneSignal}, that ends the conversation.
                      - Use language of the offer for summary.
-                     - Use plain text only.
+                     - USE SIMPLE TEXT ONLY, DO NOT USE MARKDOWN, HTML, or any other formatting.
+                     - Use multiple line breaks and - with spaces for bullet points.
                      - If something is wrong or required data is missing (like cv or offer content),
                      - Return reason and {FailSignal}, that terminates conversation.
 

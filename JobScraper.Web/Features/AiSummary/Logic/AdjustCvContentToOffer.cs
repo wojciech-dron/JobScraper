@@ -1,4 +1,3 @@
-using ErrorOr;
 using JobScraper.Web.Common.Models;
 using JobScraper.Web.Integration.AiProvider;
 using Mediator;
@@ -16,8 +15,7 @@ public class AdjustCvContentToOffer
     public record Request(
         string CvContent,
         string OfferContent,
-        string? OfferSummary,
-        string UserRequirements = "",
+        string? OfferSummary = "",
         string ProviderName = AiProvidersConfig.MainProvider
     ) : IRequest<Response>;
 
@@ -25,7 +23,7 @@ public class AdjustCvContentToOffer
         bool Success,
         string AdjustedCvContent,
         List<ChatItem> ChatHistory
-        );
+    );
 
     public class Handler(
         IServiceProvider serviceProvider,
@@ -113,11 +111,9 @@ public class AdjustCvContentToOffer
                      - Analyze CV for ATS compliance.
                      - Identify key skills, experiences, and keywords from the offer that are present (or should be highlighted) in the CV.
                      - List specific suggestions for the CV editor on how to optimize each section.
+                     - DO NOT suggest strong changes, just small improvements.
                      - DO NOT rewrite the CV yourself. Just provide the analysis and suggestions.
                      - End your response with a clear instruction for the CvEditor to proceed.
-
-                     Requirements for an offer defined by user (optional):
-                     {request.UserRequirements}
 
                      The original CV content:
                      {request.CvContent}
@@ -148,16 +144,14 @@ public class AdjustCvContentToOffer
                      - DO NOT invent experiences or skills that are not in the original CV.
                      - DO NOT remove core contact information
                      - DO optimize the 'Summary', 'Experience', or 'Skills' sections to include relevant matches based on the analysis.
-                     - DO use terminology from the job offer where appropriate to increase alignment.
-                     - MAINTAIN the original markdown structure, keep line length about 90 characters.
-                     - In this section, provide concise bullet-points about how the CV was adjusted and what further improvements can be made.
+                     - DO use terminology from the job offer where appropriate to increase alignment, but do not highlight them.
+                     - KEEP the original markdown structure.
+                     - MAKE only small adjustments, DO NOT rewrite the whole CV.
+                     - DO NOT modify spaces between paragraphs.
                      - RETURN the COMPLETE adjusted CV in markdown format followed by the summary section.
                      - FINISH your response with {DoneSignal}, which ends the conversation.
 
                      If something is wrong or required data is missing, return reason and {FailSignal}, which terminates the conversation.
-
-                     Requirements for an offer defined by user (optional):
-                     {request.UserRequirements}
 
                      The original CV content:
                      {request.CvContent}

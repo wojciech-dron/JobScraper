@@ -29,8 +29,6 @@ builder.AddScrapeServices();
 builder.Services.AddUserProvider();
 builder.AddIntegrationServices();
 builder.AddQuestPdf();
-builder.Services.AddScoped<AdjustCvForOffer.Handler>();
-builder.Services.AddScoped<AiCvWithModifyConversation.Handler>();
 
 
 var app = builder.Build();

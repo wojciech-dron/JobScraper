@@ -60,7 +60,7 @@
     </div>
 
     <div class="col-md-4 mb-3">
-        <label for="cvGenerationEnabled" class="form-label bold">Enable summarization for new offers</label>
+        <label for="cvGenerationEnabled" class="form-label bold">Enable CV generation for new offers (beta)</label>
         <InputSelect id="cvGenerationEnabled" @bind-Value="@form.CvGenerationEnabled" class="form-control">
             <option value="true">Yes</option>
             <option value="false">No</option>
@@ -121,6 +121,11 @@
         <div class="col-md-3 d-flex flex-column">
             <button class="btn btn-primary mb-3" @onclick="TestSummarizeOfferContent" disabled="@isWorking">
                 Test summarize offer content
+            </button>
+        </div>
+        <div class="col-md-3 d-flex flex-column">
+            <button class="btn btn-primary mb-3" @onclick="TestCreatingCvContentForOffer" disabled="@isWorking">
+                Test creating cv content for offer
             </button>
         </div>
     </div>
