@@ -1,5 +1,5 @@
 ﻿using JasperFx.Resources;
-using JobScraper.Web.Modules.Persistence;
+using JobScraper.Web.Modules.Wolverine.Middlewares;
 using Wolverine;
 using Wolverine.EntityFrameworkCore;
 using Wolverine.Sqlite;

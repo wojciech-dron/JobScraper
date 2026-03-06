@@ -1,6 +1,5 @@
 ﻿@using JobScraper.Web.Common.Models
 @using Microsoft.SemanticKernel.ChatCompletion
-
 <div class="chat-container">
     <div class="chat-messages p-3 border rounded mb-3">
         @foreach (var chatItem in Items)
@@ -17,6 +16,5 @@
 </div>
 
 @code {
-    [Parameter]
-    public List<ChatItem> Items { get; set; } = [];
+    [Parameter] public List<ChatItem> Items { get; set; } = [];
 }
