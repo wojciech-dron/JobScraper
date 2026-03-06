@@ -11,6 +11,8 @@ public static class Setup
     public static WebApplicationBuilder AddJobs(this WebApplicationBuilder builder)
     {
         var config = builder.Configuration.GetSection(TickerConfig.SectionName).Get<TickerConfig>();
+        if (config?.DisableJobs == true)
+            return builder;
 
         builder.Services.AddTickerQ(options =>
         {
@@ -41,8 +43,12 @@ public static class Setup
         return builder;
     }
 
-    public static IHost UseJobs(this IHost app)
+    public static WebApplication UseJobs(this WebApplication app)
     {
+        var config = app.Configuration.GetSection(TickerConfig.SectionName).Get<TickerConfig>();
+        if (config?.DisableJobs == true)
+            return app;
+
         app.UseTickerQ();
         return app;
     }
@@ -52,6 +58,7 @@ public class TickerConfig
 {
     public const string SectionName = "AppSettings:TickerQ";
     public TickerDashboardConfig Dashboard { get; set; } = new();
+    public bool DisableJobs { get; set; }
 }
 
 public class TickerDashboardConfig
