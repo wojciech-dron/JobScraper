@@ -79,7 +79,7 @@
         <ButtonSelect TItem="CvViewModel"
                       Id="defaultCv"
                       Items="availableCvs"
-                      SelectedItem="@selectedCv"
+                      SelectedItem="@SelectedCv"
                       SelectedItemChanged="@(cv => form.DefaultCv = cv)"
                       StringSelector="cv => cv.Name"
                       CanFilter
@@ -108,13 +108,19 @@
 
     <div class="mb-3">
         <label for="offerContent" class="form-label bold">Test offer content</label>
-        <InputTextArea id="offerContent" class="form-control" @bind-Value="form.TestOfferContent"/>
+        <InputTextArea id="offerContent" style="height: 150px;" class="form-control"
+                       @bind-Value="form.TestOfferContent"/>
     </div>
 
     <div class="row">
-        <div class="col-md-4 d-flex flex-column">
-            <button class="btn btn-primary mb-3" @onclick="SummarizeTestOfferContent" disabled="@isWorking">
-                Summarize test offer content
+        <div class="col-md-3 d-flex flex-column">
+            <button class="btn btn-primary mb-3" @onclick="TestSelectingCvForOffer" disabled="@isWorking">
+                Test selecting CV for offer
+            </button>
+        </div>
+        <div class="col-md-3 d-flex flex-column">
+            <button class="btn btn-primary mb-3" @onclick="TestSummarizeOfferContent" disabled="@isWorking">
+                Test summarize offer content
             </button>
         </div>
     </div>

@@ -1,8 +1,11 @@
-﻿using ErrorOr;
+﻿using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Common.Models;
 using JobScraper.Web.Integration.AiProvider;
 using JobScraper.Web.Modules.Persistence;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace JobScraper.Web.Features.Cv.Logic;
@@ -10,87 +13,114 @@ namespace JobScraper.Web.Features.Cv.Logic;
 public class SelectCvTemplateForOffer
 {
     public record Request(
-        string OfferUrl,
+        string OfferContent,
         string ProviderName
-    ) : IRequest<ErrorOr<Response>>;
+    ) : IRequest<Response>;
 
-    public record Response(int CvId);
+    public record Response(
+        long CvId = 0,
+        string Name = "",
+        List<ChatItem>? ChatItems = null,
+        bool Success = true,
+        string? ErrorMessage = null);
 
     public class Handler(
         JobsDbContext dbContext,
+        ILoggerFactory loggerFactory,
         IServiceProvider serviceProvider
-    ) : IRequestHandler<Request, ErrorOr<Response>>
+    ) : IRequestHandler<Request, Response>
     {
-        public async ValueTask<ErrorOr<Response>> Handle(Request request, CancellationToken cancellationToken)
+        private readonly ILogger<Handler> _logger = loggerFactory.CreateLogger<Handler>();
+
+        public async ValueTask<Response> Handle(Request request, CancellationToken cancellationToken)
         {
-            var userOffer = await dbContext.UserOffers
-                .Include(u => u.Details)
-                .FirstOrDefaultAsync(u => u.OfferUrl == request.OfferUrl, cancellationToken);
-
-            if (userOffer is null)
-                return Error.NotFound(description: "User offer not found");
-
-            var offerDescription = userOffer.Details?.Description;
-            if (string.IsNullOrWhiteSpace(offerDescription))
-                return Error.Validation(description: "Offer has no description to match against");
+            if (string.IsNullOrWhiteSpace(request.OfferContent))
+                return new Response(Success: false, ErrorMessage: "Offer has no description to match against");
 
             var templates = await dbContext.Cvs
                 .Where(c => c.IsTemplate)
-                .Select(c => new
-                {
-                    c.Id,
-                    c.Name,
-                    c.MarkdownContent,
-                })
                 .ToListAsync(cancellationToken);
 
             if (templates.Count == 0)
-                return Error.NotFound(description: "No CV templates found");
+                return new Response(Success: false, ErrorMessage: "No CV templates found");
 
             if (templates.Count == 1)
-                return new Response((int)templates[0].Id);
+            {
+                var template = templates[0];
+                return new Response(template.Id, template.Name, []);
+            }
 
-            var templatesDescription = string.Join("\n\n",
+            return await SelectCvWithAi(request, templates, cancellationToken);
+        }
+
+        private async ValueTask<Response> SelectCvWithAi(Request request,
+            List<CvEntity> templates,
+            CancellationToken cancellationToken)
+        {
+            var kernel = serviceProvider.GetAiKernel(request.ProviderName);
+
+            var templatesDescription = string.Join("\n\n-----------------------------------\n\n",
                 templates.Select(t =>
                     $"--- Template ID: {t.Id}, Name: {t.Name} ---\n{t.MarkdownContent}"));
 
-            var kernel = serviceProvider.GetAiKernel(request.ProviderName);
-            var chatCompletion = kernel.GetRequiredService<IChatCompletionService>();
+            var agent = new ChatCompletionAgent
+            {
+                Name = "CvAssistant",
+                Kernel = kernel,
+                Instructions =
+                    $"""
+                     You are an expert recruiter assistant that selects the best CV template for a job offer.
+                     Your task is to analyze a job offer description and a list of CV templates, then decide which template is the best match.
+
+                     The most important criteria is language match - the CV template language should match the language of the offer description.
+                     After language match, consider the relevance of skills, experience, and keywords between the CV content and the offer.
+
+                     You MUST respond with the numeric ID of the best matching template.
+                     No explanation, no other text - just the number.
+
+                     Available CV templates:
+                     {templatesDescription}
+                     """,
+                LoggerFactory = loggerFactory,
+            };
 
             var chatHistory = new ChatHistory();
-            chatHistory.AddSystemMessage(
-                $"""
-                 You are an expert recruiter assistant that selects the best CV template for a job offer.
-                 Your task is to analyze a job offer description and a list of CV templates, then decide which template is the best match.
 
-                 The most important criteria is language match - the CV template language should match the language of the offer description.
-                 After language match, consider the relevance of skills, experience, and keywords between the CV content and the offer.
+            chatHistory.AddUserMessage($"Select the best CV template for this offer:\n{request.OfferContent}");
 
-                 You MUST respond with ONLY the numeric ID of the best matching template. No explanation, no other text - just the number.
+            try
+            {
+                ChatMessageContent? lastResponse = null;
+                await foreach (var response in agent.InvokeAsync(chatHistory, cancellationToken: cancellationToken))
+                    lastResponse = response.Message;
 
-                 Available CV templates:
-                 {templatesDescription}
-                 """);
+                var chatItems = lastResponse is null
+                    ? new List<ChatItem>()
+                    : [ChatItem.From(lastResponse)];
 
-            chatHistory.AddUserMessage($"Select the best CV template for this offer:\n{offerDescription}");
+                if (!long.TryParse(lastResponse?.Content?.Trim(), out var selectedId))
+                    return new Response(
+                        Success: false,
+                        ChatItems: chatItems,
+                        ErrorMessage: "AI did not return a valid template ID");
 
-            var response = await chatCompletion.GetChatMessageContentAsync(
-                chatHistory,
-                kernel: kernel,
-                cancellationToken: cancellationToken);
+                var matchingTemplate = templates.FirstOrDefault(t => t.Id == selectedId);
+                if (matchingTemplate is null)
+                    return new Response(
+                        Success: false,
+                        ChatItems: chatItems,
+                        ErrorMessage: $"AI selected non-existent template ID: {selectedId}");
 
-            var responseText = response.Content?.Trim();
-            if (string.IsNullOrWhiteSpace(responseText))
-                return Error.Failure(description: "AI returned empty response");
+                return new Response(matchingTemplate.Id, matchingTemplate.Name, chatItems);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to get AI response in follow-up chat");
+                var chatItems = chatHistory.Select(ChatItem.From).ToList();
+                chatItems.Add(new ChatItem(AuthorRole.Assistant.Label, "System", $"Error: {ex.Message}"));
 
-            if (!long.TryParse(responseText, out var selectedId))
-                return Error.Failure(description: $"AI returned invalid template ID: {responseText}");
-
-            var matchingTemplate = templates.FirstOrDefault(t => t.Id == selectedId);
-            if (matchingTemplate is null)
-                return Error.Failure(description: $"AI selected non-existent template ID: {selectedId}");
-
-            return new Response((int)matchingTemplate.Id);
+                return new Response(Success: false, ChatItems: chatItems, ErrorMessage: "Failed to get AI response");
+            }
         }
     }
 }

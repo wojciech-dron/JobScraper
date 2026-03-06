@@ -6,6 +6,7 @@ using JobScraper.Web.Blazor.Extensions;
 using JobScraper.Web.Common.Entities;
 using JobScraper.Web.Common.Models;
 using JobScraper.Web.Features.AiSummary.Logic;
+using JobScraper.Web.Features.Cv.Logic;
 using JobScraper.Web.Integration.AiProvider;
 using JobScraper.Web.Modules.Auth;
 using JobScraper.Web.Modules.Persistence;
@@ -34,10 +35,12 @@ public sealed partial class AiSummaryConfigPage(
     private AiSummaryViewModel form = new();
     private List<CvViewModel> availableCvs = [];
     private string[] aiModels = [];
-    private CvViewModel? selectedCv;
     private List<ChatItem> chatHistory = [];
     private FluentValidationValidator validator = null!;
     private bool isWorking;
+    private long? selectedCvId;
+
+    private CvViewModel? SelectedCv => availableCvs.FirstOrDefault(x => x.Id == form.DefaultCv?.Id);
 
     protected override async Task OnInitializedAsync()
     {
@@ -57,6 +60,7 @@ public sealed partial class AiSummaryConfigPage(
         await LoadAvailableModels();
         await LoadCvCandidatesAsync();
     }
+
     private async Task LoadAvailableModels()
     {
         var authState = await AuthStateTask;
@@ -67,17 +71,12 @@ public sealed partial class AiSummaryConfigPage(
             : config.Value.VisibleProviders;
     }
 
-    private async Task LoadCvCandidatesAsync()
-    {
-        availableCvs = await dbContext.Cvs
-            .AsNoTracking()
-            .Where(cv => cv.IsTemplate)
-            .OrderBy(c => c.Id)
-            .Select(CvViewModel.Projection)
-            .ToListAsync();
-
-        selectedCv = availableCvs.FirstOrDefault(x => x.Id == form.DefaultCv?.Id);
-    }
+    private async Task LoadCvCandidatesAsync() => availableCvs = await dbContext.Cvs
+        .AsNoTracking()
+        .Where(cv => cv.IsTemplate)
+        .OrderBy(c => c.Id)
+        .Select(CvViewModel.Projection)
+        .ToListAsync();
 
     private async Task SaveConfig()
     {
@@ -125,7 +124,40 @@ public sealed partial class AiSummaryConfigPage(
         isWorking = false;
     }
 
-    private async Task SummarizeTestOfferContent()
+    private async Task TestSelectingCvForOffer()
+    {
+        if (!await validator.ValidateAsync(options => options.IncludeRuleSets("TestOffer")))
+        {
+            toasts.PushMessage("Provide test offer content.", ToastType.Warning);
+            return;
+        }
+
+        isWorking = true;
+        toasts.PushMessage("Selecting CV in progress...");
+
+        var request = new SelectCvTemplateForOffer.Request(
+            OfferContent: form.TestOfferContent!,
+            ProviderName: form.DefaultAiModel);
+
+        var result = await mediator.Send(request, _cts.Token);
+
+        isWorking = false;
+        chatHistory = result.ChatItems ?? [];
+
+        if (!result.Success)
+        {
+            if (result.ErrorMessage != null)
+                toasts.PushMessage(result.ErrorMessage);
+
+            return;
+        }
+
+        toasts.PushMessage($"CV {result.Name} selected.");
+        selectedCvId = result.CvId;
+    }
+
+
+    private async Task TestSummarizeOfferContent()
     {
         if (!await validator.ValidateAsync(options => options.IncludeRuleSets("TestOffer")))
         {
@@ -137,9 +169,13 @@ public sealed partial class AiSummaryConfigPage(
         toasts.PushMessage("AI summary in progress...");
 
         var aiModel = !string.IsNullOrEmpty(form.SmartAiModel) ? form.SmartAiModel : form.DefaultAiModel;
+        var content =
+            availableCvs.FirstOrDefault(x => x.Id == selectedCvId)?.MarkdownContent ??
+            SelectedCv?.MarkdownContent;
+
         var request = new SummarizeOfferContent.Request(
             CvContent: form.CvContent,
-            OfferContent: form.TestOfferContent!,
+            OfferContent: content!,
             UserRequirementsForOffer: form.UserRequirements ?? "",
             ProviderName: aiModel);
 
@@ -214,7 +250,12 @@ public sealed partial class AiSummaryConfigPage(
     public partial class AiSummaryViewModel;
 
     [Facet(typeof(CvEntity),
-        Include = [nameof(CvEntity.Id), nameof(CvEntity.Name)],
+        Include =
+        [
+            nameof(CvEntity.Id),
+            nameof(CvEntity.Name),
+            nameof(CvEntity.MarkdownContent),
+        ],
         GenerateToSource = true
     )]
     public partial class CvViewModel;
