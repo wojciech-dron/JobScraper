@@ -2,6 +2,7 @@
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Extensions;
 using JobScraper.Web.Modules.Extensions;
 using JobScraper.Web.Modules.Persistence;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Serilog.Context;
@@ -12,7 +13,7 @@ public abstract partial class DetailsScrapperBaseHandler<TScrapeCommand>(
     IOptions<AppSettings> config,
     ILogger<DetailsScrapperBaseHandler<TScrapeCommand>> logger,
     JobsDbContext dbContext
-) : ScrapperBaseHandler(config, logger, dbContext)
+) : ScrapperBaseHandler(config, logger, dbContext), IRequestHandler<TScrapeCommand, ScrapeResponse>
     where TScrapeCommand : ScrapeDetailsCommand
 {
     public async ValueTask<ScrapeResponse> Handle(TScrapeCommand command, CancellationToken cancellationToken = default)

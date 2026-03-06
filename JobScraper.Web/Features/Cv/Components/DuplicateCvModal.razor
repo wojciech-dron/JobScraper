@@ -1,12 +1,10 @@
 ﻿@using BlazorBootstrap
-@using ErrorOr
 @using JobScraper.Web.Blazor.Extensions
 @using JobScraper.Web.Common.Entities
 @using JobScraper.Web.Features.Cv.Logic
 @using JobScraper.Web.Modules.Persistence
+@using Mediator
 @using Microsoft.EntityFrameworkCore
-@using Wolverine
-
 <Toasts class="p-3" Messages="toasts" Placement="ToastsPlacement.TopRight"/>
 
 <Modal @ref="_modal" Title="Create duplicate CV" Fullscreen="ModalFullscreen.SmallDown">
@@ -15,7 +13,8 @@
             @if (ShowCvSelector)
             {
                 <label for="cv-search">Select source CV:</label>
-                <InputText id="cv-search" @bind-Value="SearchPhrase" class="form-control" placeholder="Search by CV name"/>
+                <InputText id="cv-search" @bind-Value="SearchPhrase" class="form-control"
+                           placeholder="Search by CV name"/>
 
                 <div class="mt-2">
                     @if (FilteredCvs.Count == 0)
@@ -48,7 +47,7 @@
     </BodyTemplate>
 </Modal>
 
-@inject IMessageBus MessageBus
+@inject IMediator Mediator
 @inject JobsDbContext DbContext
 
 @code {
@@ -118,7 +117,7 @@
         StateHasChanged();
 
         var message = new DuplicateCv.Request(OriginCvId, NewCvName, TargetOfferUrl);
-        var response = await MessageBus.InvokeAsync<ErrorOr<DuplicateCv.Response>>(message);
+        var response = await Mediator.Send(message);
 
         if (response.IsError)
         {

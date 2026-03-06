@@ -18,8 +18,7 @@ public class SelectCvTemplateForOffer
 
     public class Handler(
         JobsDbContext dbContext,
-        IServiceProvider serviceProvider,
-        ILoggerFactory loggerFactory
+        IServiceProvider serviceProvider
     ) : IRequestHandler<Request, ErrorOr<Response>>
     {
         public async ValueTask<ErrorOr<Response>> Handle(Request request, CancellationToken cancellationToken)
@@ -37,7 +36,12 @@ public class SelectCvTemplateForOffer
 
             var templates = await dbContext.Cvs
                 .Where(c => c.IsTemplate)
-                .Select(c => new { c.Id, c.Name, c.MarkdownContent })
+                .Select(c => new
+                {
+                    c.Id,
+                    c.Name,
+                    c.MarkdownContent,
+                })
                 .ToListAsync(cancellationToken);
 
             if (templates.Count == 0)
@@ -46,8 +50,9 @@ public class SelectCvTemplateForOffer
             if (templates.Count == 1)
                 return new Response((int)templates[0].Id);
 
-            var templatesDescription = string.Join("\n\n", templates.Select(t =>
-                $"--- Template ID: {t.Id}, Name: {t.Name} ---\n{t.MarkdownContent}"));
+            var templatesDescription = string.Join("\n\n",
+                templates.Select(t =>
+                    $"--- Template ID: {t.Id}, Name: {t.Name} ---\n{t.MarkdownContent}"));
 
             var kernel = serviceProvider.GetAiKernel(request.ProviderName);
             var chatCompletion = kernel.GetRequiredService<IChatCompletionService>();

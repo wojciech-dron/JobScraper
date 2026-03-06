@@ -11,8 +11,8 @@
 @using JobScraper.Web.Features.Cv.Helpers
 @using JobScraper.Web.Features.Cv.PdfGeneration
 @using JobScraper.Web.Modules.Persistence
+@using Mediator
 @using Microsoft.EntityFrameworkCore
-@using Wolverine
 
 <NavigationLock ConfirmExternalNavigation="@PreventNavigation"
                 OnBeforeInternalNavigation="OnBeforeInternalNavigation"/>
@@ -96,7 +96,8 @@
                     {
                         <div class="small d-flex align-items-center">
                             <a href="@GetImageUrl(image.Id)" target="_blank">@image.FileName</a>
-                            <button type="button" class="btn-close ms-2" style="font-size: 0.5rem;" @onclick="() => _cv.Image = null" aria-label="Remove image"></button>
+                            <button type="button" class="btn-close ms-2" style="font-size: 0.5rem;"
+                                    @onclick="() => _cv.Image = null" aria-label="Remove image"></button>
                         </div>
                     }
                     else
@@ -162,7 +163,7 @@
 
 @inject IJSRuntime JS
 @inject JobsDbContext DbContext
-@inject IMessageBus MessageBus
+@inject IMediator Mediator
 @inject NavigationManager NavigationManager
 
 @code {
@@ -320,7 +321,7 @@
         ErrorOr<byte[]> result;
         try
         {
-            result = await MessageBus.InvokeAsync<ErrorOr<byte[]>>(request);
+            result = await Mediator.Send(request);
         }
         catch (Exception e)
         {

@@ -1,22 +1,21 @@
 ﻿using System.Diagnostics;
-using ErrorOr;
 using JobScraper.Web.Common.Entities;
 using JobScraper.Web.Features.JobOffers.Scrape;
 using JobScraper.Web.Modules.Persistence;
 using JobScraper.Web.Modules.Services;
+using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Serilog.Context;
 using TickerQ.Utilities;
 using TickerQ.Utilities.Base;
 using TickerQ.Utilities.Entities;
-using Wolverine;
 
 namespace JobScraper.Web.Features.AiSummary.Logic;
 
 public record struct SummaryRequest(string Owner);
 
 public sealed partial class AiSummaryJob(
-    IMessageBus messageBus,
+    IMediator mediator,
     UserProvider userProvider,
     JobsDbContext dbContext,
     ILogger<ScrapeHandler> logger)
@@ -75,7 +74,7 @@ public sealed partial class AiSummaryJob(
 
         try
         {
-            var result = await messageBus.InvokeAsync<ErrorOr<SummarizeOfferContent.Response>>(arguments, cancellationToken);
+            var result = await mediator.Send(arguments, cancellationToken);
 
             if (result.IsError)
                 userOffer.AiSummaryStatus = AiSummaryStatus.Error;
