@@ -1,0 +1,163 @@
+@page "/users/edit/{Id}"
+@using BlazorBootstrap
+@using JobScraper.Web.Common.Entities
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+
+<PageTitle>Edit User</PageTitle>
+
+<Toasts class="p-3" Messages="toasts" Placement="ToastsPlacement.TopRight"/>
+
+<div class="row pt-2">
+    <div class="col-md-8">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>Edit User</h2>
+            <a class="btn btn-secondary btn-sm" href="/users">Back to list</a>
+        </div>
+
+        @if (user is null)
+        {
+            <p>Loading...</p>
+        }
+        else
+        {
+            <div class="card mt-3">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Username</label>
+                        <p>@user.UserName</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Email</label>
+                        <p>@user.Email</p>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Email Confirmed</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" @bind="emailConfirmed"/>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Phone Number</label>
+                        <input class="form-control" @bind="phoneNumber"/>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Lockout End</label>
+                        <p>@(user.LockoutEnd?.ToString("yyyy-MM-dd HH:mm") ?? "Not locked")</p>
+                        @if (user.LockoutEnd is not null && user.LockoutEnd > DateTimeOffset.UtcNow)
+                        {
+                            <button class="btn btn-warning btn-sm" @onclick="UnlockUserAsync">Unlock User</button>
+                        }
+                    </div>
+
+                    <hr/>
+                    <h5>Roles</h5>
+                    @foreach (var role in allRoles)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox"
+                                   checked="@selectedRoles.Contains(role)"
+                                   @onchange="(e) => ToggleRole(role, (bool)e.Value!)"/>
+                            <label class="form-check-label">@role</label>
+                        </div>
+                    }
+
+                    <hr/>
+                    <button class="btn btn-primary mt-2" @onclick="SaveAsync">Save</button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@inject UserManager<ApplicationUser> UserManager
+
+@code {
+    [Parameter] public string Id { get; set; } = null!;
+
+    ApplicationUser? user;
+    List<ToastMessage> toasts = [];
+    bool emailConfirmed;
+    string? phoneNumber;
+    List<string> allRoles = [AppRoles.Admin, AppRoles.AiSummary];
+    HashSet<string> selectedRoles = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserManager.FindByIdAsync(Id);
+        if (user is null)
+            return;
+
+        emailConfirmed = user.EmailConfirmed;
+        phoneNumber = user.PhoneNumber;
+
+        var roles = await UserManager.GetRolesAsync(user);
+        selectedRoles = [..roles];
+    }
+
+    private void ToggleRole(string role, bool isChecked)
+    {
+        if (isChecked)
+            selectedRoles.Add(role);
+        else
+            selectedRoles.Remove(role);
+    }
+
+    private async Task SaveAsync()
+    {
+        if (user is null)
+            return;
+
+        user.EmailConfirmed = emailConfirmed;
+        user.PhoneNumber = phoneNumber;
+
+        var updateResult = await UserManager.UpdateAsync(user);
+        if (!updateResult.Succeeded)
+        {
+            toasts.Add(new ToastMessage
+            {
+                Type = ToastType.Danger,
+                Title = "Error",
+                Message = string.Join("; ", updateResult.Errors.Select(e => e.Description)),
+            });
+            return;
+        }
+
+        var currentRoles = await UserManager.GetRolesAsync(user);
+        var rolesToAdd = selectedRoles.Except(currentRoles).ToList();
+        var rolesToRemove = currentRoles.Except(selectedRoles).ToList();
+
+        if (rolesToAdd.Count > 0)
+            await UserManager.AddToRolesAsync(user, rolesToAdd);
+
+        if (rolesToRemove.Count > 0)
+            await UserManager.RemoveFromRolesAsync(user, rolesToRemove);
+
+        toasts.Add(new ToastMessage
+        {
+            Type = ToastType.Success,
+            Title = "Success",
+            Message = "User updated successfully.",
+        });
+    }
+
+    private async Task UnlockUserAsync()
+    {
+        if (user is null)
+            return;
+
+        await UserManager.SetLockoutEndDateAsync(user, null);
+        user.LockoutEnd = null;
+
+        toasts.Add(new ToastMessage
+        {
+            Type = ToastType.Success,
+            Title = "Success",
+            Message = "User unlocked successfully.",
+        });
+    }
+}
