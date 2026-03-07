@@ -6,8 +6,8 @@
 @code {
     [Parameter] public string Id { get; set; } = "diff-editor";
     [Parameter] public string CssClass { get; set; } = "h-100";
-    [Parameter] public string InitOriginalContent { get; init; } = string.Empty;
-    [Parameter] public string InitModifiedContent { get; init; } = string.Empty;
+    [Parameter] public string OriginalContent { get; set; } = string.Empty;
+    [Parameter] public string ModifiedContent { get; set; } = string.Empty;
     [Parameter] public bool Inline { get; set; }
 
     private StandaloneDiffEditor? _diffEditor;
@@ -38,18 +38,42 @@
 
     public async Task SetOriginalModel(string value)
     {
+        OriginalContent = value;
         if (_diffEditor is null)
             return;
+
+        if (_diffEditor.OriginalEditor is null)
+        {
+            // create task that will set value after InitModels() is executed
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(300);
+                await _diffEditor.OriginalEditor!.SetValue(value);
+            });
+            return;
+        }
 
         await _diffEditor.OriginalEditor.SetValue(value);
     }
 
     public async Task SetModifiedModel(string value)
     {
+        ModifiedContent = value;
         if (_diffEditor is null)
             return;
 
-        await _diffEditor.ModifiedEditor.SetValue(value);
+        if (_diffEditor.ModifiedEditor is null)
+        {
+            // create task that will set value after InitModels() is executed
+            _ = Task.Run(async () =>
+            {
+                await Task.Delay(300);
+                await _diffEditor.ModifiedEditor!.SetValue(value);
+            });
+            return;
+        }
+
+        await _diffEditor.ModifiedEditor!.SetValue(value);
     }
 
     private async Task InitModels()
@@ -58,10 +82,10 @@
             return;
 
         var originalModel = await Global.GetModel(jsRuntime, $"{Id}-original") ??
-            await Global.CreateModel(jsRuntime, InitOriginalContent, "markdown", $"{Id}-original");
+            await Global.CreateModel(jsRuntime, OriginalContent, "markdown", $"{Id}-original");
 
         var modifiedModel = await Global.GetModel(jsRuntime, $"{Id}-modified") ??
-            await Global.CreateModel(jsRuntime, InitModifiedContent, "markdown", $"{Id}-modified");
+            await Global.CreateModel(jsRuntime, ModifiedContent, "markdown", $"{Id}-modified");
 
         await _diffEditor.SetModel(new DiffEditorModel
         {

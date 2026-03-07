@@ -108,7 +108,8 @@
         .WhereIf(!string.IsNullOrWhiteSpace(NameFilter), c => c.Name.ToLower().Contains(NameFilter!.ToLower()))
         .WhereIf(!string.IsNullOrWhiteSpace(OriginFilter), c => c.OriginCv != null && c.OriginCv.Name.ToLower().Contains(OriginFilter!.ToLower()))
         .WhereIf(IsTemplateFilter.HasValue, c => c.IsTemplate == IsTemplateFilter)
-        .OrderByDescending(c => c.CreatedAt)
+        .OrderByDescending(c => c.IsTemplate)
+        .ThenByDescending(c => c.CreatedAt)
         .Select(CvListDto.Projection);
 
     protected override async Task OnInitializedAsync()
