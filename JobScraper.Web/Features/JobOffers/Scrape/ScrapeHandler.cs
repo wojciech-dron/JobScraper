@@ -98,13 +98,15 @@ public sealed partial class ScrapeHandler(
                 }
                 catch (PlaywrightException e)
                 {
-                    logger.LogWarning(e, "Playwright exception occurred while scraping details. Retrying...");
-
-                    // retry one more
-                    var result = await mediator.Send(command, cancellationToken);
-                    offersCount += result.ScrapedOffersCount;
+                    logger.LogWarning(e,
+                        "PlaywrightException occurred while scraping lists. Skipping command {CommandType}",
+                        command.GetType().Name);
                 }
             }
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Unexpected exception occurred while scraping lists. skipping scraping lists...");
         }
         finally
         {
@@ -146,7 +148,6 @@ public sealed partial class ScrapeHandler(
                 var command = detailsCommands[idx]!;
                 LogScrapingDetails(idx + 1, detailsCommands.Length);
 
-
                 try
                 {
                     var result = await mediator.Send(command, cancellationToken);
@@ -154,13 +155,10 @@ public sealed partial class ScrapeHandler(
                 }
                 catch (PlaywrightException e)
                 {
-                    logger.LogWarning(e, "Playwright exception occurred while scraping details. Retrying...");
-
-                    // retry one more
-                    var result = await mediator.Send(command, cancellationToken);
-                    offersScraped.AddRange(result.OffersUrls);
+                    logger.LogWarning(e,
+                        "PlaywrightException occurred while scraping details. Skipping command {CommandType}",
+                        command.GetType().Name);
                 }
-
             }
 
             var aiSummaryEnabled = dbContext.AiSummaryConfigs.Any(x => x.AiSummaryEnabled == true);
@@ -169,6 +167,10 @@ public sealed partial class ScrapeHandler(
                 await MarkOffersForAiSummary(offersScraped);
                 await dbContext.SaveChangesAsync(cancellationToken);
             }
+        }
+        catch (Exception e)
+        {
+            logger.LogError(e, "Unexpected exception occurred while scraping details. skipping scraping details...");
         }
         finally
         {

@@ -95,10 +95,15 @@ public abstract class ScrapperBaseHandler : IDisposable
         };
 
 
-        return await _browser.NewPageAsync(new BrowserNewPageOptions
+        var page = await _browser.NewPageAsync(new BrowserNewPageOptions
         {
             UserAgent = _userAgentStrings[Random.Shared.Next() % _userAgentStrings.Length],
         });
+
+        page.SetDefaultTimeout(5 * 60 * 1000); // 5 minutes for lists
+        page.SetDefaultNavigationTimeout(5 * 60 * 1000); // 5 minutes for lists
+
+        return page;
     }
 
     private async Task<IBrowser> LaunchLocalBrowser(IBrowserType browserType)
