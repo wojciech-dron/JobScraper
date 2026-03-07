@@ -27,13 +27,13 @@
             <h2>Edit CV</h2>
 
             <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <div class="input-group input-group-sm mb-3">
                         <span class="input-group-text px-1 py-0 small text-muted" title="Cv name">Name</span>
                         <TextInput @bind-Value="_cv.Name" class="form-control"/>
                     </div>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <div class="input-group input-group-sm">
                         <span class="input-group-text px-1 py-0 small text-muted"
                               title="Value indicating that CV is selected for template for creating dedicated CVs for offers">
@@ -46,7 +46,7 @@
                     </div>
                 </div>
 
-                <div class="col-md-2">
+                <div class="col-md-3">
                     @if (_cv.OriginCv is not null)
                     {
                         <button class="btn btn-info btn-sm"
@@ -54,9 +54,17 @@
                             Origin Cv: @_cv.OriginCv.Name
                         </button>
                     }
+                    @if (relatedOfferUrl is not null)
+                    {
+                        <a href="cv/prepare-for-offer/@Uri.EscapeDataString(relatedOfferUrl)">
+                            <button class="btn btn-info btn-sm ms-1">
+                                Prepare for offer
+                            </button>
+                        </a>
+                    }
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <button class="btn btn-info btn-sm"
                             @onclick="CompareToOrigin"
                             disabled="@DisableCompareToOrigin">
@@ -76,8 +84,8 @@
             <span class="ml-1">Markdown content:</span>
             <MarkdownDiffEditor @ref="_diffEditor"
                                 CssClass="h-75 mt-1"
-                                InitOriginalContent="@OriginalContent"
-                                InitModifiedContent="@ModifiedContent"/>
+                                OriginalContent="@OriginalContent"
+                                ModifiedContent="@ModifiedContent"/>
 
             <div class="row mt-3">
                 <div class="col-md-8">
@@ -177,14 +185,17 @@
     private MarkdownDiffEditor? _diffEditor;
     ConfirmDialog dialog = null!;
     private bool isWorking;
+    private string? relatedOfferUrl;
 
     private CompareMode _compareMode = CompareMode.WithSaved;
     private CvEntity _cv = null!;
     private string OriginalContent = "";
     private string ModifiedContent = "";
+    private bool updateDiffEditor;
 
     [Parameter]
     public int Id { get; set; }
+    private const long MaxImageBytes = 5 * 1024 * 1024;
 
     protected override async Task OnInitializedAsync()
     {
@@ -192,7 +203,7 @@
         {
             _cv = new CvEntity
             {
-                Name = "Test",
+                Name = "Base CV",
             };
         }
         else
@@ -202,23 +213,28 @@
                     .Include(c => c.Image)
                     .FirstOrDefaultAsync(c => c.Id == Id, _cts.Token)
                 ?? throw new InvalidOperationException($"CV with ID {Id} not found");
+
+            relatedOfferUrl = DbContext.UserOffers
+                .Where(jo => jo.Cv!.Id == Id)
+                .Select(x => x.OfferUrl)
+                .FirstOrDefault();
         }
 
         OriginalContent = _cv.MarkdownContent;
         ModifiedContent = _cv.MarkdownContent;
 
-        if (_diffEditor is not null) // if re-enter page
-            await _diffEditor.SetModels(OriginalContent, ModifiedContent);
+        updateDiffEditor = true;
     }
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (_diffEditor is not null) // if re-enter page
+        if (firstRender && updateDiffEditor && _diffEditor is not null)
+        {
             await _diffEditor.SetModels(OriginalContent, ModifiedContent);
+            updateDiffEditor = false;
+        }
     }
 
-
-    private const long MaxImageBytes = 5 * 1024 * 1024;
 
     private async Task UploadImage(InputFileChangeEventArgs args)
     {

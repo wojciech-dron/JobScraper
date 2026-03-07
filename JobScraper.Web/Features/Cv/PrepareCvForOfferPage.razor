@@ -32,21 +32,18 @@
     <FluentValidationValidator @ref="validator"/>
 
     <div class="row mb-3">
-        <div class="col-md-3">
+        <div class="col-md-4">
             <div class="input-group input-group-sm mb-3">
                 <span class="input-group-text px-1 py-0 small text-muted" title="Cv name">Name</span>
                 <TextInput @bind-Value="cvEntity.Name" class="form-control"/>
             </div>
         </div>
-        <div class="col-md-2">
-            @if (cvEntity.OriginCv is not null)
-            {
-                <button class="btn btn-info btn-sm"
-                        disabled="@isWorking"
-                        @onclick="() => GoToCv(cvEntity.OriginCv.Id)">
-                    Origin Cv: @cvEntity.OriginCv.Name
-                </button>
-            }
+        <div class="col-md-1">
+            <button class="btn btn-info btn-sm"
+                    disabled="@isWorking"
+                    @onclick="() => GoToCv(cvEntity.Id)">
+                Go to CV page
+            </button>
         </div>
 
         <div class="col-md-3">
@@ -107,7 +104,7 @@
                     @offer.AiSummary
                 </span>
             }
-            
+
             <h4>Description:</h4>
             <span>
                 @offer.Details.Description
@@ -119,8 +116,8 @@
         <div id="editor-panel" style="flex: 1 1 auto; min-width: 400px;">
             <MarkdownDiffEditor
                 @ref="diffEditor"
-                InitOriginalContent="@originalContent"
-                InitModifiedContent="@modifiedContent"
+                OriginalContent="@originalContent"
+                ModifiedContent="@modifiedContent"
                 CssClass="h-100"
                 Inline/>
         </div>

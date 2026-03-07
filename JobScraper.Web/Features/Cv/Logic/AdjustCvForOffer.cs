@@ -116,6 +116,7 @@ public class AdjustCvForOffer
                      - Analyze CV for ATS compliance.
                      - Focus only on the developer title and 'Summary', 'Experience', and 'Skills' sections.
                      - Infer missing skills and experience on if they are required in offer and the evidence in the CV strongly suggests they exist.
+                     - Remove unnecessary skills and experiences if they are NOT RELEVANT to the job offer.
                      - Return the analysis in a simple format, with clear headings and bullet points.
                      - List specific suggestions for the CV editor on how to optimize each section.
                      - DO NOT rewrite the CV yourself. Just provide the analysis and suggestions.
