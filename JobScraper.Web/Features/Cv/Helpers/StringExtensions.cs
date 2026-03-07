@@ -15,11 +15,12 @@ public static class StringExtensions
     public static string RemoveAiChars(this string str) => str
         .Replace("[DONE]", "")
         .Replace("[FAIL]", "")
-        .Replace("–", "-")    // ai long dashes
-        .Replace("—", "-")    // ai long dashes 2
-        .Replace("‑", "-")    // ai long dashes 3
-        .Replace(" ", " ")    // ai spaces
-        .Replace("…", "...")  // ai ellipsis
-        .Replace("\n---", "") // ai sections
+        .Replace("–", "-")      // ai long dashes
+        .Replace("—", "-")      // ai long dashes 2
+        .Replace("‑", "-")      // ai long dashes 3
+        .Replace("&nbsp;", " ") // ai spaces
+        .Replace(" ", " ")      // ai spaces 2
+        .Replace("…", "...")    // ai ellipsis
+        .Replace("\n---", "")   // ai sections
         .Trim();
 }

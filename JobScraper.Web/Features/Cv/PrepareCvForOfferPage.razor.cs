@@ -247,7 +247,7 @@ public sealed partial class PrepareCvForOfferPage(
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(cvEntity?.OriginCv?.MarkdownContent);
         compareMode = CompareMode.WithOrigin;
-        originalContent = cvEntity?.OriginCv?.MarkdownContent!;
+        originalContent = cvEntity.OriginCv?.MarkdownContent!;
         await diffEditor!.SetOriginalModel(cvEntity!.OriginCv!.MarkdownContent);
     }
     public bool DisableCompareToSaved => compareMode is CompareMode.WithSaved;
@@ -255,7 +255,7 @@ public sealed partial class PrepareCvForOfferPage(
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(cvEntity?.MarkdownContent);
         compareMode = CompareMode.WithSaved;
-        originalContent = cvEntity?.MarkdownContent!;
+        originalContent = cvEntity.MarkdownContent!;
         await diffEditor!.SetOriginalModel(cvEntity!.MarkdownContent);
     }
     private bool PreventNavigation => isWorking || dbContext.Entry(cvEntity).State == EntityState.Modified;
