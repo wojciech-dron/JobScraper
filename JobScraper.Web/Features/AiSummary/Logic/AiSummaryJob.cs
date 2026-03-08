@@ -117,7 +117,6 @@ public sealed partial class AiSummaryJob(
         CvEntity cvTemplate,
         CancellationToken cancellationToken)
     {
-
         var request = new SummarizeOfferContent.Request(
             cvTemplate.MarkdownContent,
             userOffer.Details.Description ?? "",

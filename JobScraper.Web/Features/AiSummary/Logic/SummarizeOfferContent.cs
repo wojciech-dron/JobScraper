@@ -133,8 +133,10 @@ public partial class SummarizeOfferContent
 
                      Formatting rules:
                      - USE SIMPLE TEXT ONLY, DO NOT USE MARKDOWN, HTML, or any other formatting.
-                     - Use multiple line breaks and - with spaces for bullet points.
+                     - Use line breaks between sections and - with spaces for bullet points.
+                     - Use Unicode emojis (like ✅, ❌, ⚠️, 💡, 📌, 🔍, ✨) to highlight key points and improve readability.
                      - Be concise and to the point.
+                     - Start DIRECTLY with the first section content. Do NOT include any preamble, status messages, or meta-commentary like "Now proceeding to summary generation...", "SUMMARIZER OUTPUT:", or similar.
 
                      Final summary must contain sections with concise bullet-points defined below:
                      - Job abstract - most important information and responsibilities of the job

@@ -15,6 +15,7 @@ public class Application : IUpdatable, IOwnable
     public string? ExpectedSalaryCurrency { get; set; }
     public ApplyStatus Status { get; set; } = ApplyStatus.Applied;
     public string? ApplyUrl { get; set; }
+    public string? ExternalNotes { get; set; }
 
     public UserOffer Offer { get; set; } = null!;
     public string? Owner { get; set; } = "system";
@@ -51,6 +52,7 @@ public class ApplicationModelBuilder : IEntityTypeConfiguration<Application>
         builder.Property(j => j.ExpectedSalaryCurrency).HasMaxLength(10);
         builder.Property(j => j.Status).HasConversion<string>().HasMaxLength(24);
         builder.Property(j => j.ApplyUrl).HasMaxLength(2048);
+        builder.Property(j => j.ExternalNotes).HasMaxLength(2048);
 
         builder.HasOne(e => e.Offer)
             .WithOne(e => e.Application)
