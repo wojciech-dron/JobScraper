@@ -1,9 +1,8 @@
-﻿using System.Net;
-using Serilog.Context;
+﻿using Serilog.Context;
 
 namespace JobScraper.Web.Integration.DelegatingHandlers;
 
-public partial class LoggingDelegatingHandler(
+public sealed class LoggingDelegatingHandler(
     ILogger<LoggingDelegatingHandler> logger,
     IConfiguration configuration
 ) : DelegatingHandler
@@ -14,17 +13,26 @@ public partial class LoggingDelegatingHandler(
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
         CancellationToken cancellationToken)
     {
+        var response = await base.SendAsync(request, cancellationToken);
+
+        var logLevel = response.IsSuccessStatusCode ? LogLevel.Information : LogLevel.Warning;
+        if (!logger.IsEnabled(logLevel))
+            return response;
+
         var requestBody = await GetBodyOrNull(request.Content, cancellationToken);
         using var requestBodyScope = LogContext.PushProperty("RequestBody", requestBody);
 
-        var requestUrl = request.RequestUri?.AbsoluteUri;
-        var method = request.Method.Method;
-
-        var response = await base.SendAsync(request, cancellationToken);
-
         var responseBody = await GetBodyOrNull(response.Content, cancellationToken);
         using var responseBodyScope = LogContext.PushProperty("ResponseBody", responseBody);
-        LogResponse(response.StatusCode, method, requestUrl);
+
+        var method = response.RequestMessage?.Method.Method;
+        var requestUrl = response.RequestMessage?.RequestUri?.AbsoluteUri;
+
+        logger.Log(logLevel,
+            "Received {Status} response from: {Method} {RequestUrl}",
+            response.StatusCode,
+            method,
+            requestUrl);
 
         return response;
     }
@@ -32,9 +40,6 @@ public partial class LoggingDelegatingHandler(
     private async Task<string?> GetBodyOrNull(HttpContent? content, CancellationToken cancellationToken)
     {
         if (content is null)
-            return null;
-
-        if (!logger.IsEnabled(LogLevel.Information))
             return null;
 
         if (!PayloadLoggingEnabled)
@@ -50,7 +55,4 @@ public partial class LoggingDelegatingHandler(
             return null;
         }
     }
-
-    [LoggerMessage(LogLevel.Information, "Received {status} response from: {method} {requestUrl}")]
-    partial void LogResponse(HttpStatusCode status, string method, string? requestUrl);
 }

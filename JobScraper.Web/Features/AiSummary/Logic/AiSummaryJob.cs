@@ -98,7 +98,7 @@ public sealed partial class AiSummaryJob(
     {
         var request = new SelectCvTemplateForOffer.Request(
             OfferContent: offer.Details.Description ?? "",
-            ProviderName: config.SmartAiModel       ?? config.DefaultAiModel);
+            AiModel: config.SmartAiModel            ?? config.DefaultAiModel);
 
         var result = await mediator.Send(request, cancellationToken);
 
@@ -147,7 +147,7 @@ public sealed partial class AiSummaryJob(
             CvContent: cvTemplate.MarkdownContent,
             OfferContent: offer.Details.Description ?? "",
             OfferSummary: offer.AiSummary,
-            ProviderName: config.SmartAiModel ?? config.DefaultAiModel);
+            AiModel: config.SmartAiModel ?? config.DefaultAiModel);
 
         var result = await mediator.Send(request, cancellationToken);
 

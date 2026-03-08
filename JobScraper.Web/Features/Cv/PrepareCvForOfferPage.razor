@@ -20,6 +20,8 @@
     }
 </style>
 
+<AppPageTitle Title="Prepare CV with AI"></AppPageTitle>
+
 <NavigationLock ConfirmExternalNavigation="@PreventNavigation"
                 OnBeforeInternalNavigation="OnBeforeInternalNavigation"/>
 
@@ -38,11 +40,14 @@
             </div>
         </div>
         <div class="col-md-1">
-            <button class="btn btn-info btn-sm"
-                    disabled="@isWorking"
-                    @onclick="() => GoToCv(cvEntity.Id)">
-                Go to CV page
-            </button>
+            @if (cvEntity.OriginCv is not null)
+            {
+                <button class="btn btn-info btn-sm"
+                        disabled="@isWorking"
+                        @onclick="@(() => GoToCv(cvEntity.OriginCv.Id))">
+                    Go to origin CV
+                </button>
+            }
         </div>
 
         <div class="col-md-3">

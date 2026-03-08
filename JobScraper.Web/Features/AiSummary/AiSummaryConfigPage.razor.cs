@@ -53,7 +53,7 @@ public sealed partial class AiSummaryConfigPage(
          ?? new AiSummaryViewModel
             {
                 Owner = "default",
-                DefaultAiModel = AiProvidersConfig.MainProvider,
+                DefaultAiModel = AiProvidersConfig.MainModel,
                 AiSummaryEnabled = true,
             };
 
@@ -138,7 +138,7 @@ public sealed partial class AiSummaryConfigPage(
 
         var request = new SelectCvTemplateForOffer.Request(
             OfferContent: form.TestOfferContent!,
-            ProviderName: form.DefaultAiModel);
+            AiModel: form.DefaultAiModel);
 
         var result = await mediator.Send(request, _cts.Token);
 
@@ -177,7 +177,7 @@ public sealed partial class AiSummaryConfigPage(
             CvContent: cvContent,
             OfferContent: form.TestOfferContent!,
             UserRequirementsForOffer: form.UserRequirements ?? "",
-            ProviderName: aiModel);
+            AiModel: aiModel);
 
         var result = await mediator.Send(request, _cts.Token);
 
