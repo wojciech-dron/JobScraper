@@ -1,27 +1,17 @@
 @page "/Cv/edit"
 @page "/Cv/edit/{Id:int}"
-@using System.Text
 @using BlazorBootstrap
 @using Blazored.FluentValidation
-@using ErrorOr
-@using JobScraper.Web.Blazor.Components
-@using JobScraper.Web.Blazor.Extensions
-@using JobScraper.Web.Common.Entities
 @using JobScraper.Web.Features.Cv.Components
-@using JobScraper.Web.Features.Cv.Helpers
-@using JobScraper.Web.Features.Cv.PdfGeneration
-@using JobScraper.Web.Modules.Persistence
-@using Mediator
-@using Microsoft.EntityFrameworkCore
 
 <AppPageTitle Title="Edit CV"/>
 
 <NavigationLock ConfirmExternalNavigation="@PreventNavigation"
                 OnBeforeInternalNavigation="OnBeforeInternalNavigation"/>
 
-<Toasts class="p-3" Messages="toasts" Placement="ToastsPlacement.TopRight"/>
+<Toasts class="p-3" Messages="_toasts" Placement="ToastsPlacement.TopRight"/>
 
-<EditForm Model="@_cv">
+<EditForm Model="@cvEntity">
     <FluentValidationValidator @ref="validator"/>
 
     <div class="row vh-100 pt-2">
@@ -32,7 +22,7 @@
                 <div class="col-md-4">
                     <div class="input-group input-group-sm mb-3">
                         <span class="input-group-text px-1 py-0 small text-muted" title="Cv name">Name</span>
-                        <TextInput @bind-Value="_cv.Name" class="form-control"/>
+                        <TextInput @bind-Value="cvEntity.Name" class="form-control"/>
                     </div>
                 </div>
                 <div class="col-md-2">
@@ -41,7 +31,7 @@
                               title="Value indicating that CV is selected for template for creating dedicated CVs for offers">
                             Is Template
                         </span>
-                        <InputSelect @bind-Value="_cv.IsTemplate" class="form-control">
+                        <InputSelect @bind-Value="cvEntity.IsTemplate" class="form-control">
                             <option value="false">No</option>
                             <option value="true">Yes</option>
                         </InputSelect>
@@ -49,20 +39,12 @@
                 </div>
 
                 <div class="col-md-3">
-                    @if (_cv.OriginCv is not null)
+                    @if (cvEntity.OriginCv is not null)
                     {
                         <button class="btn btn-info btn-sm"
-                                @onclick="() => GoToCv(_cv.OriginCv.Id)">
-                            Origin Cv: @_cv.OriginCv.Name
+                                @onclick="() => GoToCv(cvEntity.OriginCv.Id)">
+                            Origin Cv: @cvEntity.OriginCv.Name
                         </button>
-                    }
-                    @if (relatedOfferUrl is not null)
-                    {
-                        <a href="cv/prepare-for-offer/@Uri.EscapeDataString(relatedOfferUrl)">
-                            <button class="btn btn-info btn-sm ms-1">
-                                Prepare for offer
-                            </button>
-                        </a>
                     }
                 </div>
 
@@ -84,10 +66,10 @@
 
 
             <span class="ml-1">Markdown content:</span>
-            <MarkdownDiffEditor @ref="_diffEditor"
+            <MarkdownDiffEditor @ref="diffEditor"
                                 CssClass="h-75 mt-1"
-                                OriginalContent="@OriginalContent"
-                                ModifiedContent="@ModifiedContent"/>
+                                OriginalContent="@originalContent"
+                                ModifiedContent="@modifiedContent"/>
 
             <div class="row mt-3">
                 <div class="col-md-8">
@@ -95,21 +77,21 @@
                     <div class="input-group input-group-sm">
                         <span class="input-group-text px-1 py-0 small text-muted"
                               title="Disclaimer content positioned on the footer">Disclaimer</span>
-                        <TextAreaInput @bind-Value="_cv.Disclaimer" class="form-control"/>
+                        <TextAreaInput @bind-Value="cvEntity.Disclaimer" class="form-control"/>
                     </div>
                 </div>
 
                 <div class="col-md-2">
                     <span>Selected image:</span>
                     @{
-                        var image = _cv.Image;
+                        var image = cvEntity.Image;
                     }
                     @if (image is not null)
                     {
                         <div class="small d-flex align-items-center">
                             <a href="@GetImageUrl(image.Id)" target="_blank">@image.FileName</a>
                             <button type="button" class="btn-close ms-2" style="font-size: 0.5rem;"
-                                    @onclick="() => _cv.Image = null" aria-label="Remove image"></button>
+                                    @onclick="() => cvEntity.Image = null" aria-label="Remove image"></button>
                         </div>
                     }
                     else
@@ -132,7 +114,7 @@
         <div class="col-md-3">
             <h5>Layout settings</h5>
 
-            <LayoutConfigComponent Config="_cv.LayoutConfig"/>
+            <LayoutConfigComponent Config="cvEntity.LayoutConfig"/>
 
             <div class="mt-2">
                 <button class="btn btn-success"
@@ -140,7 +122,7 @@
                         @onclick="SaveAsync">
                     Save changes
                 </button>
-                @if (_cv.Id > 0)
+                @if (cvEntity.Id > 0)
                 {
                     <button class="btn btn-success ms-1"
                             disabled="@isWorking"
@@ -171,293 +153,5 @@
 </EditForm>
 
 <DuplicateCvModal @ref="duplicateCvModal" OnSuccess="GoToCv"></DuplicateCvModal>
+
 <ConfirmDialog @ref="dialog"/>
-
-@inject IJSRuntime JS
-@inject JobsDbContext DbContext
-@inject IMediator Mediator
-@inject NavigationManager NavigationManager
-
-@code {
-    private readonly List<ToastMessage> toasts = [];
-    private FluentValidationValidator validator = null!;
-    private DuplicateCvModal duplicateCvModal = null!;
-    private IJSObjectReference? _downloadModule;
-    private readonly CancellationTokenSource _cts = new();
-    private MarkdownDiffEditor? _diffEditor;
-    ConfirmDialog dialog = null!;
-    private bool isWorking;
-    private string? relatedOfferUrl;
-
-    private CompareMode _compareMode = CompareMode.WithSaved;
-    private CvEntity _cv = null!;
-    private string OriginalContent = "";
-    private string ModifiedContent = "";
-    private bool updateDiffEditor;
-
-    [Parameter]
-    public int Id { get; set; }
-    private const long MaxImageBytes = 5 * 1024 * 1024;
-
-    protected override async Task OnInitializedAsync()
-    {
-        if (Id == 0)
-        {
-            _cv = new CvEntity
-            {
-                Name = "Base CV",
-            };
-        }
-        else
-        {
-            _cv = await DbContext.Cvs
-                    .Include(c => c.OriginCv)
-                    .Include(c => c.Image)
-                    .FirstOrDefaultAsync(c => c.Id == Id, _cts.Token)
-                ?? throw new InvalidOperationException($"CV with ID {Id} not found");
-
-            relatedOfferUrl = DbContext.UserOffers
-                .Where(jo => jo.Cv!.Id == Id)
-                .Select(x => x.OfferUrl)
-                .FirstOrDefault();
-        }
-
-        OriginalContent = _cv.MarkdownContent;
-        ModifiedContent = _cv.MarkdownContent;
-
-        updateDiffEditor = true;
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender && updateDiffEditor && _diffEditor is not null)
-        {
-            await _diffEditor.SetModels(OriginalContent, ModifiedContent);
-            updateDiffEditor = false;
-        }
-    }
-
-
-    private async Task UploadImage(InputFileChangeEventArgs args)
-    {
-        var file = args.File;
-        if (file.Size == 0)
-        {
-            toasts.PushMessage("Cannot upload empty file", ToastType.Warning);
-            return;
-        }
-
-        if (!file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
-        {
-            toasts.PushMessage("Only image files are allowed", ToastType.Warning);
-            return;
-        }
-
-        if (file.Size > MaxImageBytes)
-        {
-            toasts.PushMessage("Image is too large (max 5 MB)", ToastType.Warning);
-            return;
-        }
-
-        isWorking = true;
-        StateHasChanged();
-
-        try
-        {
-            await using var inputStream = file.OpenReadStream(MaxImageBytes, _cts.Token);
-            await using var memoryStream = new MemoryStream();
-            await inputStream.CopyToAsync(memoryStream, _cts.Token);
-
-            var image = new ImageEntity
-            {
-                FileName = file.Name,
-                ContentType = file.ContentType,
-                Size = file.Size,
-                Data = memoryStream.ToArray(),
-            };
-
-            DbContext.Add(image);
-            await DbContext.SaveChangesAsync(_cts.Token);
-
-            _cv.Image = image;
-            toasts.PushMessage("Image uploaded successfully");
-        }
-        catch (Exception e)
-        {
-            toasts.PushMessage("Failed to upload image: " + e.Message, ToastType.Danger);
-        }
-        finally
-        {
-            isWorking = false;
-        }
-    }
-
-    private string GetImageUrl(long imageId) => $"/api/cv-images/{imageId}";
-
-    public async Task SaveAsync()
-    {
-        if (_diffEditor is null)
-            return;
-
-        var markdownContent = await _diffEditor.GetModifiedValueAsync();
-        markdownContent = markdownContent.RemoveAiChars();
-
-        _cv.MarkdownContent = markdownContent;
-
-        if (!await validator.ValidateAsync())
-            return;
-
-        if (DbContext.Entry(_cv).State == EntityState.Detached)
-            DbContext.Add(_cv);
-
-        await DbContext.SaveChangesAsync(_cts.Token);
-
-        await _diffEditor.SetModifiedModel(markdownContent);
-        if (_compareMode == CompareMode.WithSaved)
-        {
-            OriginalContent = markdownContent;
-            await _diffEditor.SetModels(markdownContent, markdownContent);
-        }
-
-        toasts.PushMessage("CV saved successfully");
-
-        if (Id == 0) // redirect if new cv
-            NavigationManager.NavigateTo($"cv/edit/{_cv.Id}", true);
-    }
-
-    private void GoToCv(long duplicatedCvId) => NavigationManager.NavigateTo($"cv/edit/{duplicatedCvId}", true);
-
-    private async Task GenerateCvPdf()
-    {
-        if (_diffEditor is null)
-            return;
-
-        var mdContent = await _diffEditor.GetModifiedValueAsync();
-        if (string.IsNullOrWhiteSpace(mdContent))
-            return;
-
-        isWorking = true;
-        StateHasChanged();
-
-        var cvContent = new CvContent(mdContent, _cv.Image?.Data, _cv.Disclaimer);
-        var request = new GenerateCvPdfFromMarkdown.Request(cvContent, _cv.LayoutConfig);
-
-        ErrorOr<byte[]> result;
-        try
-        {
-            result = await Mediator.Send(request);
-        }
-        catch (Exception e)
-        {
-            var errorMessage = e.Message.ToFriendlyErrorMessage();
-            toasts.PushMessage("Failed to Generate PDF PDF: " + errorMessage, ToastType.Danger);
-            isWorking = false;
-            return;
-        }
-
-        isWorking = false;
-
-        if (result.IsError)
-        {
-            toasts.PushMessage("Failed to Generate PDF PDF", ToastType.Danger);
-            return;
-        }
-
-        var fileName = $"{_cv.Name.ToFileName()}.pdf";
-        var pdfBytes = result.Value;
-        using var stream = new MemoryStream(pdfBytes);
-        using var streamRef = new DotNetStreamReference(stream);
-
-        _downloadModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/downloadFile.js");
-        await _downloadModule.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
-
-        toasts.PushMessage("CV PDF generated successfully");
-    }
-
-    private async Task DownloadMarkdown()
-    {
-        if (_diffEditor is null)
-            return;
-
-        var mdContent = await _diffEditor.GetModifiedValueAsync();
-        if (string.IsNullOrWhiteSpace(mdContent))
-            return;
-
-        var fileName = $"{_cv.Name.ToFileName()}.md";
-        var bytes = Encoding.UTF8.GetBytes(mdContent);
-        using var stream = new MemoryStream(bytes);
-        using var streamRef = new DotNetStreamReference(stream);
-
-        _downloadModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/downloadFile.js");
-        await _downloadModule.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
-    }
-
-    private async Task DuplicateAsync()
-    {
-        await SaveAsync();
-        await duplicateCvModal.ShowAsync(_cv.Id);
-    }
-
-    private async Task DeleteCvAsync()
-    {
-        var confirmation = await dialog.ShowAsync(
-            title: "Are you sure you want to delete this?",
-            message1: "This will delete the record. Once deleted can not be rolled back.",
-            message2: "Do you want to proceed?");
-
-        if (!confirmation)
-            return;
-
-        var cv = await DbContext.Cvs.FindAsync(_cv.Id);
-        if (cv is null)
-            return;
-
-        DbContext.Remove(cv);
-        await DbContext.SaveChangesAsync();
-        NavigationManager.NavigateTo("cv");
-    }
-
-    private enum CompareMode
-    {
-        WithSaved,
-        WithOrigin,
-    }
-
-    public bool DisableCompareToOrigin =>
-        _compareMode is CompareMode.WithOrigin || string.IsNullOrWhiteSpace(_cv?.OriginCv?.MarkdownContent);
-    private async Task CompareToOrigin()
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(_cv?.OriginCv?.MarkdownContent);
-        _compareMode = CompareMode.WithOrigin;
-        OriginalContent = _cv?.OriginCv?.MarkdownContent!;
-        await _diffEditor!.SetOriginalModel(_cv!.OriginCv!.MarkdownContent);
-    }
-
-    public bool DisableCompareToSaved => _compareMode is CompareMode.WithSaved;
-    private async Task CompareToSaved()
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(_cv?.MarkdownContent);
-        _compareMode = CompareMode.WithSaved;
-        OriginalContent = _cv?.MarkdownContent!;
-        await _diffEditor!.SetOriginalModel(_cv!.MarkdownContent);
-    }
-
-    private bool PreventNavigation => isWorking || DbContext.Entry(_cv).State == EntityState.Modified;
-
-    private async Task OnBeforeInternalNavigation(LocationChangingContext ctx)
-    {
-        if (!PreventNavigation)
-            return;
-
-        var confirm = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to leave this page?");
-        if (!confirm)
-            ctx.PreventNavigation();
-    }
-
-    public void Dispose()
-    {
-        _cts.Cancel();
-        _cts.Dispose();
-    }
-
-}
