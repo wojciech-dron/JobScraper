@@ -1,4 +1,4 @@
-﻿@page "/Cv/edit"
+@page "/Cv/edit"
 @page "/Cv/edit/{Id:int}"
 @using System.Text
 @using BlazorBootstrap
@@ -13,6 +13,8 @@
 @using JobScraper.Web.Modules.Persistence
 @using Mediator
 @using Microsoft.EntityFrameworkCore
+
+<AppPageTitle Title="Edit CV"/>
 
 <NavigationLock ConfirmExternalNavigation="@PreventNavigation"
                 OnBeforeInternalNavigation="OnBeforeInternalNavigation"/>
