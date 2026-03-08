@@ -113,6 +113,20 @@
                         </InputSelect>
                     </div>
 
+                    <div class="form-group pb-1">
+                        <label for="externalNotes">External Notes:</label>
+                        <div class="d-flex">
+                            <InputText id="externalNotes" @bind-Value="@_application.ExternalNotes"
+                                       class="form-control" placeholder="Notes or URL"/>
+                            @if (Uri.IsWellFormedUriString(_application.ExternalNotes, UriKind.Absolute))
+                            {
+                                <a href="@_application.ExternalNotes" target="_blank" class="btn btn-outline-primary ms-2">
+                                    Open
+                                </a>
+                            }
+                        </div>
+                    </div>
+
                     <div class="form-group">
                         <label for="comments">Comments:</label>
                         <InputTextArea id="comments" @bind-Value="@_application.Comments" class="form-control"/>

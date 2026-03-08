@@ -13,7 +13,7 @@ public class Application : IUpdatable, IOwnable
     public string? Comments { get; set; }
     public int? ExpectedSalary { get; set; }
     public string? ExpectedSalaryCurrency { get; set; }
-    public ApplyStatus Status { get; set; } = ApplyStatus.Applied; // TODO: Move to application
+    public ApplyStatus Status { get; set; } = ApplyStatus.Applied;
     public string? ApplyUrl { get; set; }
 
     public UserOffer Offer { get; set; } = null!;

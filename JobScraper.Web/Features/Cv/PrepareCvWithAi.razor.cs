@@ -141,7 +141,8 @@ public sealed partial class PrepareCvWithAi(
             CvContent: cvContent,
             OfferContent: offer!.Details.Description,
             OfferSummary: offer.AiSummary,
-            AiModel: config.SmartAiModel ?? config.DefaultAiModel);
+            AiModel: config.SmartAiModel ?? config.DefaultAiModel,
+            UserCvRules: config.UserCvRules);
 
         var result = await mediator.Send(request, _cts.Token);
 
@@ -180,7 +181,8 @@ public sealed partial class PrepareCvWithAi(
             OfferContent: offer?.Details.Description,
             OfferSummary: offer?.AiSummary,
             ExistingChatHistory: cvEntity.ChatHistory,
-            ProviderName: config.SmartAiModel ?? config.DefaultAiModel);
+            ProviderName: config.SmartAiModel ?? config.DefaultAiModel,
+            UserCvRules: config.UserCvRules);
 
         var result = await mediator.Send(request, _cts.Token);
 

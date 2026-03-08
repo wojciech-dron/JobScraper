@@ -20,6 +20,7 @@ public partial class AdjustCvForOffer
         string CvContent,
         string OfferContent,
         string? OfferSummary,
+        string? UserCvRules,
         string AiModel
     ) : IRequest<Response>;
 
@@ -53,7 +54,7 @@ public partial class AdjustCvForOffer
             var chatHistory = new List<ChatItem>();
             do
             {
-                var chat = PrepareAgentsChat(request.CvContent, request.AiModel);
+                var chat = PrepareAgentsChat(request);
                 chat.AddChatMessage(offerMessage);
 
                 if (request.OfferSummary is not null)
@@ -133,9 +134,9 @@ public partial class AdjustCvForOffer
             return false;
         }
 
-        private AgentGroupChat PrepareAgentsChat(string cvContent, string aiModel)
+        private AgentGroupChat PrepareAgentsChat(Request request)
         {
-            var kernel = serviceProvider.GetAiKernel(aiModel);
+            var kernel = serviceProvider.GetAiKernel(request.AiModel);
 
             var analyzerAgent = new ChatCompletionAgent
             {
@@ -160,9 +161,10 @@ public partial class AdjustCvForOffer
                      - List specific suggestions for the CV editor on how to optimize each section.
                      - DO NOT rewrite the CV yourself. Just provide the analysis and suggestions.
                      - End your response with a clear instruction for the CvEditor to proceed.
+                     {(string.IsNullOrWhiteSpace(request.UserCvRules) ? "" : $"\nAdditional user-defined CV rules that MUST be followed:\n{request.UserCvRules}")}
 
                      The original CV content:
-                     {cvContent}
+                     {request.CvContent}
 
                      An optional OfferSummary may follow the offer content in the conversation.
 
@@ -212,11 +214,12 @@ public partial class AdjustCvForOffer
                      - DO use terminology from the job offer where appropriate to increase alignment.
                      - Remove unnecessary skills and experiences if they are NOT RELEVANT to the job offer.
                      - KEEP the original markdown structure.
+                     {(string.IsNullOrWhiteSpace(request.UserCvRules) ? "" : $"\nAdditional user-defined CV rules that MUST be followed:\n{request.UserCvRules}")}
 
                      If something is wrong or required data is missing, return reason and {FailSignal}, which terminates the conversation.
 
                      The original CV content:
-                     {cvContent}
+                     {request.CvContent}
 
                      Job offer content will be provided in first user prompt.
                      """,

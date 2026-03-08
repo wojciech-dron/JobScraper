@@ -19,7 +19,8 @@ public partial class CvChatConversation
         string? OfferContent,
         string? OfferSummary,
         List<ChatItem> ExistingChatHistory,
-        string ProviderName
+        string ProviderName,
+        string? UserCvRules = null
     ) : IRequest<Response>;
 
     public record Response(List<ChatItem> ChatHistory, string? AdjustedCvContent = null);
@@ -159,6 +160,7 @@ public partial class CvChatConversation
                      - DO NOT remove core contact information.
                      - Apply targeted, meaningful edits — do not rewrite the whole CV unless asked.
                      - KEEP the original markdown structure.
+                     {(string.IsNullOrWhiteSpace(request.UserCvRules) ? "" : $"\nAdditional user-defined CV rules that MUST be followed:\n{request.UserCvRules}")}
 
                      CV content:
                      {request.CurrentCvContent}
