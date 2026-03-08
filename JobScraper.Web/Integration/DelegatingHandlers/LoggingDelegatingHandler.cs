@@ -25,8 +25,8 @@ public sealed class LoggingDelegatingHandler(
         var responseBody = await GetBodyOrNull(response.Content, cancellationToken);
         using var responseBodyScope = LogContext.PushProperty("ResponseBody", responseBody);
 
-        var method = response.RequestMessage?.Method.Method;
-        var requestUrl = response.RequestMessage?.RequestUri?.AbsoluteUri;
+        var method = request.Method.Method;
+        var requestUrl = request.RequestUri?.AbsoluteUri;
 
         logger.Log(logLevel,
             "Received {Status} response from: {Method} {RequestUrl}",

@@ -4,6 +4,13 @@ public class BoolFilterHelper
 {
     public static readonly bool?[] Options = [null, true, false];
 
+    public static string NullBoolStringSelector(bool? value) => value switch
+    {
+        null  => "All",
+        true  => "True",
+        false => "False",
+    };
+
     public static string AppliedStringSelector(bool? value) => value switch
     {
         null  => "All",

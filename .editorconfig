@@ -20,8 +20,8 @@ indent_size = 2
 [*{_AssemblyInfo.cs,.notsupported.cs}]
 generated_code = true
 
-# C# files
-[*.cs]
+# C# and Razor files
+[*.{cs,razor}]
 # New line preferences
 csharp_new_line_before_open_brace = all
 csharp_new_line_before_else = true

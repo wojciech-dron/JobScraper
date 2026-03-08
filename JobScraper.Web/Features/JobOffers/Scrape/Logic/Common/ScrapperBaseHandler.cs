@@ -100,7 +100,7 @@ public abstract class ScrapperBaseHandler : IDisposable
             UserAgent = _userAgentStrings[Random.Shared.Next() % _userAgentStrings.Length],
         });
 
-        page.SetDefaultTimeout(5 * 60 * 1000); // 5 minutes for lists
+        page.SetDefaultTimeout(5           * 60 * 1000); // 5 minutes for lists
         page.SetDefaultNavigationTimeout(5 * 60 * 1000); // 5 minutes for lists
 
         return page;

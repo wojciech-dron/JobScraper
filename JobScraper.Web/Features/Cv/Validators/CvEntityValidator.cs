@@ -31,10 +31,7 @@ public class CvEntityValidator : AbstractValidator<CvEntity>
             .MaximumLength(MaxDisclaimerLength).WithMessage($"Disclaimer must not exceed {MaxDisclaimerLength} characters");
     }
 
-    private async Task<bool> BeUnique(CvEntity cv, string name, CancellationToken cancellationToken)
-    {
-        return !await _dbContext.Cvs
-            .Where(c => c.Id != cv.Id)
-            .AnyAsync(c => c.Name == name, cancellationToken);
-    }
+    private async Task<bool> BeUnique(CvEntity cv, string name, CancellationToken cancellationToken) => !await _dbContext.Cvs
+        .Where(c => c.Id      != cv.Id)
+        .AnyAsync(c => c.Name == name, cancellationToken);
 }

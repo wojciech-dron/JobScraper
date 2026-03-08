@@ -358,9 +358,6 @@
         NavigationManager.NavigateTo(uriWithoutOffer, replace: true);
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        await dbContext.DisposeAsync();
-    }
+    public async ValueTask DisposeAsync() => await dbContext.DisposeAsync();
 
 }

@@ -8,7 +8,7 @@ public interface IUserProvider
     public string? UserName { get; }
 }
 
-public class UserProvider() : IUserProvider
+public class UserProvider : IUserProvider
 {
     public string? UserName { get; set; }
 }

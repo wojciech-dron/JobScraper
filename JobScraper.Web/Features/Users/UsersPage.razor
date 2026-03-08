@@ -13,13 +13,15 @@
 </div>
 
 <div id="table-container">
-    <QuickGrid @ref="@grid" Items="filteredUsers" Pagination="@pagination" Class="table small-padding-table align-items-center">
+    <QuickGrid @ref="@grid" Items="filteredUsers" Pagination="@pagination"
+               Class="table small-padding-table align-items-center">
         <TemplateColumn class="col-1" Title="Actions">
             <ChildContent>
                 <a class="btn btn-primary btn-sm" href="/users/edit/@context.Id">Edit</a>
             </ChildContent>
         </TemplateColumn>
-        <TemplateColumn class="col-2" Title="Username" Sortable="true" SortBy="@(GridSort<ApplicationUser>.ByAscending(u => u.UserName))">
+        <TemplateColumn class="col-2" Title="Username" Sortable="true"
+                        SortBy="@(GridSort<ApplicationUser>.ByAscending(u => u.UserName))">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -33,7 +35,8 @@
                 @context.UserName
             </ChildContent>
         </TemplateColumn>
-        <TemplateColumn class="col-3" Title="Email" Sortable="true" SortBy="@(GridSort<ApplicationUser>.ByAscending(u => u.Email))">
+        <TemplateColumn class="col-3" Title="Email" Sortable="true"
+                        SortBy="@(GridSort<ApplicationUser>.ByAscending(u => u.Email))">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -96,7 +99,7 @@
     public string? UserNameFilter { get; set; } = "";
     public string? EmailFilter { get; set; } = "";
 
-    Dictionary<string, IList<string>> userRoles = new();
+    readonly Dictionary<string, IList<string>> userRoles = new();
 
     IQueryable<ApplicationUser> filteredUsers => UserManager.Users
         .WhereIf(!string.IsNullOrWhiteSpace(UserNameFilter),

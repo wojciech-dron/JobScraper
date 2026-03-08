@@ -115,10 +115,7 @@
     private bool collapseNavMenu;
     private string? NavMenuCssClass => collapseNavMenu ? "collapse" : "d-flex";
 
-    private void ToggleNavMenu()
-    {
-        collapseNavMenu = !collapseNavMenu;
-    }
+    private void ToggleNavMenu() => collapseNavMenu = !collapseNavMenu;
 
     protected override void OnInitialized()
     {
@@ -132,9 +129,6 @@
         StateHasChanged();
     }
 
-    public void Dispose()
-    {
-        NavigationManager.LocationChanged -= OnLocationChanged;
-    }
+    public void Dispose() => NavigationManager.LocationChanged -= OnLocationChanged;
 }
 

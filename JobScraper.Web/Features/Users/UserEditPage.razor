@@ -2,7 +2,6 @@
 @using BlazorBootstrap
 @using JobScraper.Web.Common.Entities
 @using Microsoft.AspNetCore.Identity
-@using Microsoft.EntityFrameworkCore
 
 <AppPageTitle Title="Edit User"/>
 
@@ -80,10 +79,10 @@
     [Parameter] public string Id { get; set; } = null!;
 
     ApplicationUser? user;
-    List<ToastMessage> toasts = [];
+    readonly List<ToastMessage> toasts = [];
     bool emailConfirmed;
     string? phoneNumber;
-    List<string> allRoles = [AppRoles.Admin, AppRoles.AiSummary];
+    readonly List<string> allRoles = [AppRoles.Admin, AppRoles.AiSummary];
     HashSet<string> selectedRoles = [];
 
     protected override async Task OnInitializedAsync()
