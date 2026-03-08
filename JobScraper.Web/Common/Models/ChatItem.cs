@@ -9,5 +9,9 @@ public record ChatItem(
 )
 {
     public static ChatItem From(ChatMessageContent content) =>
-        new(content.Role.Label, content.AuthorName, content.Content);
+        new(
+            content.Role.Label,
+            content.AuthorName,
+            content.Content?.Replace("\n---", "")
+        );
 }

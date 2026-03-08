@@ -58,7 +58,7 @@ public partial class SummarizeOfferContent
             if (finalContent is null || !finalContent.Contains(DoneSignal))
                 return Error.Failure(description: "Failed to summarize offer content");
 
-            var summary = finalContent.Replace(DoneSignal, "").Trim();
+            var summary = finalContent.Replace(DoneSignal, "").Replace("---\n", "").Trim();
 
             return new Response(summary, chatHistory);
         }
@@ -90,18 +90,23 @@ public partial class SummarizeOfferContent
                 Kernel = kernel,
                 Instructions =
                     $"""
-                     You are an analyst designed to deeply analyze a job offer in the context of a user's CV and specific requirements.
-                     The order of agents is sequential, you first, then Summarizer.
+                     You are a professional job offer analyst.
+                     Your goal is to deeply analyze a job offer in the context of the user's CV and specific requirements.
+                     The order of agents is sequential: you first, then Summarizer.
+                     User prompts only first messages, do not ask for any more information.
                      Use language of the offer for analysis.
 
-                     Your task is to perform a multi-step reasoning:
-                     1. Analyze the job responsibilities and technical requirements from the offer.
-                     2. Compare them with the user's CV content to identify matches and gaps.
-                     3. Evaluate if the offer meets the user's provided requirements.
-                     4. Identify any interesting trivia or unique aspects of the offer.
+                     Your task:
+                     - Be concise and to the point.
+                     - Analyze the job responsibilities and technical requirements from the offer.
+                     - Compare them with the user's CV content to identify matches and gaps.
+                     - Evaluate if the offer meets the user's provided requirements (if any).
+                     - Identify any interesting trivia or unique aspects of the offer.
+                     - Provide a detailed internal analysis with clear headings and bullet points.
+                     - This analysis will be used by the Summarizer to create the final response.
+                     - End your response with a clear instruction for the Summarizer to proceed.
 
-                     Provide a detailed internal analysis. This analysis will be used by the Summarizer to create the final response.
-                     If something is wrong or required data is missing (like cv or offer content), return reason and {FailSignal}.
+                     If something is wrong or required data is missing (like CV or offer content), return reason and {FailSignal}.
 
                      Requirements for an offer defined by user (optional):
                      {request.UserRequirementsForOffer}
@@ -109,8 +114,7 @@ public partial class SummarizeOfferContent
                      The CV content:
                      {request.CvContent}
 
-
-                     Job offer content will be provided in user prompt.
+                     Job offer content will be provided in first user prompt.
                      """,
                 LoggerFactory = loggerFactory,
             };
@@ -121,15 +125,16 @@ public partial class SummarizeOfferContent
                 Kernel = kernel,
                 Instructions =
                     $"""
-                     You are an agent that holds a conversation with analyst agent to provide a final summary of the job offer.
-                     - The order of agents is sequential, analyst first, then summarizer.
-                     - You can ask questions to analyst agent to clarify details.
-                     - When you generate a final summary, finish it with {DoneSignal}, that ends the conversation.
-                     - Use language of the offer for summary.
+                     You are a professional job offer summarizer.
+                     You MUST wait for the Analyst to provide an analysis before you start your work.
+                     Apply the analysis from Analyst to produce the final summary.
+                     User prompts only first messages, do not ask for any more information.
+                     Use language of the offer for summary.
+
+                     Formatting rules:
                      - USE SIMPLE TEXT ONLY, DO NOT USE MARKDOWN, HTML, or any other formatting.
                      - Use multiple line breaks and - with spaces for bullet points.
-                     - If something is wrong or required data is missing (like cv or offer content),
-                     - Return reason and {FailSignal}, that terminates conversation.
+                     - Be concise and to the point.
 
                      Final summary must contain sections with concise bullet-points defined below:
                      - Job abstract - most important information and responsibilities of the job
@@ -140,14 +145,17 @@ public partial class SummarizeOfferContent
                      - Suggestions - what to improve in CV content
                      - Trivia - interesting information, if there is any
 
+                     End the message with {DoneSignal} to finish the conversation.
+
+                     If something is wrong or required data is missing (like CV or offer content), return reason and {FailSignal}, which terminates the conversation.
+
                      Requirements for an offer defined by user (optional):
                      {request.UserRequirementsForOffer}
 
                      The CV content:
                      {request.CvContent}
 
-
-                     Job offer content will be provided in user prompt.
+                     Job offer content will be provided in first user prompt.
                      """,
                 LoggerFactory = loggerFactory,
             };
@@ -158,7 +166,7 @@ public partial class SummarizeOfferContent
                 {
                     TerminationStrategy = new ApprovalTerminationStrategy
                     {
-                        FinalAgentName = summarizerAgent.Name,
+                        Agents = [summarizerAgent],
                         DoneSignal = DoneSignal,
                         FailSignal = FailSignal,
                         MaximumIterations = 3,

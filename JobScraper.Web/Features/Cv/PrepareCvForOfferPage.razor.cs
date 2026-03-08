@@ -171,17 +171,26 @@ public sealed partial class PrepareCvForOfferPage(
         isWorking = true;
         StateHasChanged();
 
-        var request = new AiSimpleCvChatConversation.Request(
+        var config = dbContext.AiSummaryConfigs.First();
+
+        var request = new CvChatConversation.Request(
             UserMessage: message,
             CurrentCvContent: cvContent,
             OfferContent: offer.Details.Description,
             OfferSummary: offer.AiSummary,
-            ExistingChatHistory: cvEntity.ChatHistory);
+            ExistingChatHistory: cvEntity.ChatHistory,
+            ProviderName: config.SmartAiModel ?? config.DefaultAiModel);
 
         var result = await mediator.Send(request, _cts.Token);
 
         cvEntity.ChatHistory = result.ChatHistory;
         isWorking = false;
+
+        if (result.AdjustedCvContent is not null)
+        {
+            modifiedContent = result.AdjustedCvContent;
+            _ = diffEditor.SetModifiedModel(modifiedContent);
+        }
     }
 
     public async Task SaveAsync()
