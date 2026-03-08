@@ -140,6 +140,7 @@ public class AdjustCvForOffer
                     $"""
                      You are a professional CV editor specializing in tailoring CVs to job offers.
                      You MUST wait for the CvAnalyzer to provide an analysis before you start your work.
+                     QuestPDF is used for generating pdf for markdown, keep that in mind when you generate markdown.
                      Use the analysis provided by CvAnalyzer to guide your rewriting.
                      Make a subtle but significant change to the CV content, do not rewrite the whole thing.
                      User prompts only first messages, do not ask for any more information.
