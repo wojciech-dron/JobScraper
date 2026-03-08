@@ -1,5 +1,4 @@
 ﻿@using JobScraper.Web.Features.Cv.PdfGeneration
-
 <style>
     .layout-config-grid {
         display: flex;
@@ -7,13 +6,16 @@
         gap: 0.25rem;
         align-items: flex-start;
     }
+
     .flex-full {
         flex-basis: 100%;
     }
+
     .flex-col {
         flex: 1 1 160px;
         min-width: 140px;
     }
+
     .layout-config-grid .input-group-text {
         flex-shrink: 1;
         min-width: 0;
@@ -21,10 +23,12 @@
         text-overflow: ellipsis;
         white-space: nowrap;
     }
+
     .layout-config-grid .form-control {
         flex: 1 1 auto;
         min-width: 55px;
     }
+
     .form-control-color {
         height: 31px;
     }
@@ -46,21 +50,21 @@
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Margin (cm)">Margin (cm)</span>
-            <InputNumber @bind-Value="Config.MarginCm" class="form-control" Step="0.1" />
+            <InputNumber @bind-Value="Config.MarginCm" class="form-control" Step="0.1"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted"
                   title="Page Background Color">Background</span>
-            <input type="color" class="form-control form-control-color p-0" @bind="Config.PageBackgroundColor" />
+            <input type="color" class="form-control form-control-color p-0" @bind="Config.PageBackgroundColor"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted"
                   title="Url Color - Color of links in the CV">Url Color</span>
-            <input type="color" class="form-control form-control-color p-0" @bind="Config.UrlColor" />
+            <input type="color" class="form-control form-control-color p-0" @bind="Config.UrlColor"/>
         </div>
     </div>
 
@@ -75,32 +79,32 @@
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Height">Height</span>
-            <InputNumber @bind-Value="Config.ImageHeight" class="form-control" />
+            <InputNumber @bind-Value="Config.ImageHeight" class="form-control"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted"
                   title="Space From Text - minimal size of the gap between text and image">Space From Text</span>
-            <InputNumber @bind-Value="Config.ImageMinSpaceFromText" class="form-control" />
+            <InputNumber @bind-Value="Config.ImageMinSpaceFromText" class="form-control"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Border Radius">Border Radius</span>
-            <InputNumber @bind-Value="Config.ImageBorderRadius" class="form-control" />
+            <InputNumber @bind-Value="Config.ImageBorderRadius" class="form-control"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Border Thick">Border Thick</span>
-            <InputNumber @bind-Value="Config.ImageBorderThickness" class="form-control" />
+            <InputNumber @bind-Value="Config.ImageBorderThickness" class="form-control"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Border Color">Border Color</span>
-            <input type="color" class="form-control form-control-color p-0" @bind="Config.ImageBorderColor" />
+            <input type="color" class="form-control form-control-color p-0" @bind="Config.ImageBorderColor"/>
         </div>
     </div>
 
@@ -108,7 +112,7 @@
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Default Size">Default Size</span>
-            <InputNumber @bind-Value="Config.DefaultFontSize" class="form-control" Step="0.1" />
+            <InputNumber @bind-Value="Config.DefaultFontSize" class="form-control" Step="0.1"/>
         </div>
     </div>
     <div class="flex-col">
@@ -120,7 +124,7 @@
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="H1 Color">H1 Color</span>
-            <input type="color" class="form-control form-control-color p-0" @bind="Config.H1FontColor" Step="0.1" />
+            <input type="color" class="form-control form-control-color p-0" @bind="Config.H1FontColor" Step="0.1"/>
         </div>
     </div>
     <div class="flex-col">
@@ -143,14 +147,16 @@
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
-            <span class="input-group-text px-1 py-0 small text-muted" title="Default Header Size">Default Header Size</span>
+            <span class="input-group-text px-1 py-0 small text-muted"
+                  title="Default Header Size">Default Header Size</span>
             <InputNumber @bind-Value="Config.HeadingFontSizeDefault" class="form-control" Step="0.1"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
-            <span class="input-group-text px-1 py-0 small text-muted" title="Default Header Color">Default Header Color</span>
-            <input type="color" class="form-control form-control-color p-0" @bind="Config.HeadingFontColorDefault" />
+            <span class="input-group-text px-1 py-0 small text-muted"
+                  title="Default Header Color">Default Header Color</span>
+            <input type="color" class="form-control form-control-color p-0" @bind="Config.HeadingFontColorDefault"/>
         </div>
     </div>
 
@@ -159,25 +165,25 @@
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted"
                   title="Max Level - maximum level of header that will have included underline">Max Level</span>
-            <InputNumber @bind-Value="Config.HeaderUnderlineMaxLevel" class="form-control" />
+            <InputNumber @bind-Value="Config.HeaderUnderlineMaxLevel" class="form-control"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Pad Top">Pad Top</span>
-            <InputNumber @bind-Value="Config.HeaderUnderlinePaddingTop" class="form-control" Step="0.1" />
+            <InputNumber @bind-Value="Config.HeaderUnderlinePaddingTop" class="form-control" Step="0.1"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Color">Color</span>
-            <input type="color" class="form-control form-control-color p-0" @bind="Config.HeaderUnderlineColor" />
+            <input type="color" class="form-control form-control-color p-0" @bind="Config.HeaderUnderlineColor"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Thick">Thick</span>
-            <InputNumber @bind-Value="Config.HeaderUnderlineThickness" class="form-control" Step="0.1" />
+            <InputNumber @bind-Value="Config.HeaderUnderlineThickness" class="form-control" Step="0.1"/>
         </div>
     </div>
 
@@ -191,13 +197,13 @@
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Color">Color</span>
-            <input type="color" class="form-control form-control-color p-0" @bind="Config.DisclaimerColor" />
+            <input type="color" class="form-control form-control-color p-0" @bind="Config.DisclaimerColor"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Footer Pad Bottom">Footer Pad Bottom</span>
-            <InputNumber @bind-Value="Config.FooterPaddingBottom" class="form-control" />
+            <InputNumber @bind-Value="Config.FooterPaddingBottom" class="form-control"/>
         </div>
     </div>
 
@@ -205,31 +211,33 @@
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Header Pad Top">Header Pad Top</span>
-            <InputNumber @bind-Value="Config.HeaderPaddingTop" class="form-control" />
+            <InputNumber @bind-Value="Config.HeaderPaddingTop" class="form-control"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Line Height">Line Height</span>
-            <InputNumber @bind-Value="Config.LineHeight" class="form-control" Step="0.1" />
+            <InputNumber @bind-Value="Config.LineHeight" class="form-control" Step="0.1"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Heading Pad Top">Heading Pad Top</span>
-            <InputNumber @bind-Value="Config.HeadingPaddingTop" class="form-control" />
+            <InputNumber @bind-Value="Config.HeadingPaddingTop" class="form-control"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
-            <span class="input-group-text px-1 py-0 small text-muted" title="Heading Pad Bottom">Heading Pad Bottom</span>
-            <InputNumber @bind-Value="Config.HeadingPaddingBottom" class="form-control" />
+            <span class="input-group-text px-1 py-0 small text-muted"
+                  title="Heading Pad Bottom">Heading Pad Bottom</span>
+            <InputNumber @bind-Value="Config.HeadingPaddingBottom" class="form-control"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
-            <span class="input-group-text px-1 py-0 small text-muted" title="Paragraph Pad Bottom">Paragraph Pad Bottom</span>
-            <InputNumber @bind-Value="Config.ParagraphPaddingBottom" class="form-control" />
+            <span class="input-group-text px-1 py-0 small text-muted"
+                  title="Paragraph Pad Bottom">Paragraph Pad Bottom</span>
+            <InputNumber @bind-Value="Config.ParagraphPaddingBottom" class="form-control"/>
         </div>
     </div>
 
@@ -237,19 +245,19 @@
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Pad Left">Pad Left</span>
-            <InputNumber @bind-Value="Config.ListPaddingLeft" class="form-control" />
+            <InputNumber @bind-Value="Config.ListPaddingLeft" class="form-control"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Bullet Text">Bullet Text</span>
-            <InputText @bind-Value="Config.ListBulletText" class="form-control" />
+            <InputText @bind-Value="Config.ListBulletText" class="form-control"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Bullet Width">Bullet Width</span>
-            <InputNumber @bind-Value="Config.ListBulletWidth" class="form-control" />
+            <InputNumber @bind-Value="Config.ListBulletWidth" class="form-control"/>
         </div>
     </div>
 

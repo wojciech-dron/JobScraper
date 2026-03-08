@@ -119,10 +119,7 @@
     private Func<TItem, string, bool> DefaultFilterPredicate =>
         (item, filter) => StringSelector(item).Contains(filter, StringComparison.OrdinalIgnoreCase);
 
-    protected override void OnInitialized()
-    {
-        FilterPredicate ??= DefaultFilterPredicate;
-    }
+    protected override void OnInitialized() => FilterPredicate ??= DefaultFilterPredicate;
 
     private async Task SelectItemAsync(TItem item)
     {

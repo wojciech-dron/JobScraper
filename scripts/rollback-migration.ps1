@@ -30,7 +30,7 @@ $migrationNames = $migrations | Where-Object { $_ -and $_ -notmatch '^\s*$' -and
 if ($migrationNames.Count -le $Count)
 {
     $targetMigration = "0"
-    Write-Host "Rolling back all $($migrationNames.Count) migrations..." -ForegroundColor Cyan
+    Write-Host "Rolling back all $( $migrationNames.Count ) migrations..." -ForegroundColor Cyan
 }
 else
 {

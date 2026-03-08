@@ -155,10 +155,7 @@
         .OrderByDescending(jo => jo.RespondedAt)
         .ThenByDescending(jo => jo.AppliedAt);
 
-    protected override async Task OnInitializedAsync()
-    {
-        context = await DbFactory.CreateDbContextAsync();
-    }
+    protected override async Task OnInitializedAsync() => context = await DbFactory.CreateDbContextAsync();
 
     private async Task RejectApply(Application application)
     {

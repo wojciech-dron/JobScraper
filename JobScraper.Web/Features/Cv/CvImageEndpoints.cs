@@ -1,4 +1,5 @@
-﻿using JobScraper.Web.Modules.Persistence;
+﻿using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Modules.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -39,7 +40,7 @@ public static class CvImageEndpoints
         await stream.CopyToAsync(memoryStream, cancellationToken);
 
         var owner = context.User.Identity?.Name;
-        var image = new Common.Entities.ImageEntity
+        var image = new ImageEntity
         {
             FileName = file.FileName,
             ContentType = file.ContentType,
@@ -51,13 +52,17 @@ public static class CvImageEndpoints
         db.CvImages.Add(image);
         await db.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok(new { id = image.Id, url = $"/api/cv-images/{image.Id}" });
+        return Results.Ok(new
+        {
+            id = image.Id,
+            url = $"/api/cv-images/{image.Id}",
+        });
     }
 
     private static async Task<IResult> GetImage(
         HttpContext context,
         long id,
-        [FromServices()] JobsDbContext db,
+        [FromServices] JobsDbContext db,
         CancellationToken cancellationToken)
     {
         var image = await db.CvImages.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);

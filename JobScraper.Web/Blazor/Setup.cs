@@ -1,6 +1,5 @@
 ﻿using System.Globalization;
 using JobScraper.Web.Features.Account;
-using JobScraper.Web.Features.Cv;
 
 namespace JobScraper.Web.Blazor;
 

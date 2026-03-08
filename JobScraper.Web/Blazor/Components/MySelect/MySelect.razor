@@ -63,10 +63,7 @@
     private IJSObjectReference? _module;
     private IJSObjectReference? _clickHandler;
 
-    protected override void OnInitialized()
-    {
-        _dotNetHelper = DotNetObjectReference.Create(this);
-    }
+    protected override void OnInitialized() => _dotNetHelper = DotNetObjectReference.Create(this);
 
     private async Task ToggleDropdown()
     {

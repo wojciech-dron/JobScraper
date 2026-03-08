@@ -7,6 +7,7 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Agents.Chat;
 using Microsoft.SemanticKernel.ChatCompletion;
+
 #pragma warning disable OPENAI001
 
 namespace JobScraper.Web.Features.Cv.Logic;
@@ -72,6 +73,8 @@ public partial class AdjustCvForOffer
                 return new Response(false, null, chatHistory);
 
             var adjustedCv = ExtractCvContent(finalContent);
+            if (string.IsNullOrWhiteSpace(adjustedCv))
+                return new Response(false, null, chatHistory);
 
             ReplaceCvContentInHistory(chatHistory);
 
@@ -84,9 +87,7 @@ public partial class AdjustCvForOffer
             var endIdx = content.IndexOf(CvEndMarker, StringComparison.OrdinalIgnoreCase);
 
             if (startIdx < 0 || endIdx < 0 || endIdx <= startIdx)
-                return content
-                    .Replace(DoneSignal, "")
-                    .RemoveAiChars();
+                return null;
 
             return content[(startIdx + CvStartMarker.Length)..endIdx]
                 .RemoveAiChars();

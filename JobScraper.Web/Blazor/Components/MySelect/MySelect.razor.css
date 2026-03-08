@@ -1,6 +1,6 @@
 ﻿/* Dropdown Container */
 .simple-dropdown {
-    font-size:16px;
+    font-size: 16px;
     position: relative;
     display: inline-block;
     width: 100%;
@@ -126,16 +126,16 @@
     &:hover {
         background-color: var(--bs-dropdown-link-hover-bg);
     }
-    
+
     &:active {
         color: var(--bs-dropdown-link-active-color);
         background-color: var(--bs-dropdown-link-active-bg);
     }
-    
+
     & label {
         cursor: pointer;
     }
-    
+
     & input[type="checkbox"] {
         margin-right: 0.5rem;
     }

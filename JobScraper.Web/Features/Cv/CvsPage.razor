@@ -29,7 +29,18 @@
                        class="form-control form-control-sm"/>
             </HeaderTemplate>
         </PropertyColumn>
-        <PropertyColumn class="col-1" Property="@(c => c.IsTemplate)" Sortable="true"/>
+        <PropertyColumn class="col-1" Property="@(c => c.IsTemplate)" Sortable="true">
+            <HeaderTemplate>
+                <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
+                    <div class="col-title-text">@context.Title</div>
+                    <div class="sort-indicator" aria-hidden="true"></div>
+                </button>
+                <MySelect
+                    @bind-SelectedOption="@IsTemplateFilter"
+                    Options="@BoolFilterHelper.Options"
+                    StringSelector="@BoolFilterHelper.NullBoolStringSelector"/>
+            </HeaderTemplate>
+        </PropertyColumn>
         <TemplateColumn class="col-2" SortBy="@(GridSort<CvListDto>.ByAscending(c => c.HasOrigin))" Title="Origin CV">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
@@ -86,6 +97,7 @@
 
 @inject IDbContextFactory<JobsDbContext> DbFactory
 @using BlazorBootstrap
+@using JobScraper.Web.Blazor.Components.MySelect
 @using JobScraper.Web.Common.Extensions
 @using JobScraper.Web.Features.Cv.Models
 @using JobScraper.Web.Modules.Extensions
@@ -117,10 +129,7 @@
         .ThenByDescending(c => c.CreatedAt)
         .Select(CvListDto.Projection);
 
-    protected override async Task OnInitializedAsync()
-    {
-        dbContext = await DbFactory.CreateDbContextAsync();
-    }
+    protected override async Task OnInitializedAsync() => dbContext = await DbFactory.CreateDbContextAsync();
 
     private async Task DeleteCvAsync(long id)
     {

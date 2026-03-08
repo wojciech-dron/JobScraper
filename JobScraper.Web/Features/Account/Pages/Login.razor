@@ -44,12 +44,16 @@
                     <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
                 </div>
                 <hr/>
+                <div class="alert alert-info" role="alert">
+                    <strong>Demo login:</strong> test@@email.com / JobScraper1@@#
+                </div>
                 <div>
                     <p>
-                        <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?>
-                                 {
-                                     ["ReturnUrl"] = ReturnUrl,
-                                 }))">Register as a new user</a>
+                        <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register",
+                                     new Dictionary<string, object?>
+                                     {
+                                         ["ReturnUrl"] = ReturnUrl,
+                                     }))">Register as a new user</a>
                     </p>
                 </div>
             </EditForm>

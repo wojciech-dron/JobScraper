@@ -162,9 +162,7 @@ public partial class MySelect<TItem> : ComponentBase
 
         _filteredOptionsCache = [];
         if (!CanFilter || string.IsNullOrWhiteSpace(_filterText))
-        {
             _filteredOptionsCache.AddRange(Options);
-        }
         else
         {
             var predicate = FilterPredicate ?? DefaultFilterPredicate;

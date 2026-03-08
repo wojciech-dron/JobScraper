@@ -59,10 +59,7 @@
 
     private string? Message => identityErrors is null ? null : $"Error: {string.Join(", ", identityErrors.Select(error => error.Description))}";
 
-    protected override void OnInitialized()
-    {
-        Input ??= new InputModel();
-    }
+    protected override void OnInitialized() => Input ??= new InputModel();
 
     public async Task RegisterUser(EditContext editContext)
     {

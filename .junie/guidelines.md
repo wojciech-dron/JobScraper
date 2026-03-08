@@ -1,22 +1,25 @@
-﻿# JobScraper2 — Solution Guidelines
+﻿# JobScraper — Solution Guidelines
 
 ## Solution Overview
 
-JobScraper2 is a Blazor Server (.NET 10) application for scraping job offers from Polish job portals, managing CVs, and using AI to summarize offers and adjust CVs. It uses SQLite for persistence and runs scheduled scraping jobs.
+JobScraper2 is a Blazor Server (.NET 10) application for scraping job offers
+from Polish job portals, managing CVs, and using AI to summarize offers and
+adjust CVs. It uses SQLite for persistence and runs scheduled scraping jobs.
 
 ### Projects
 
-| Project | Purpose |
-|---|---|
-| `JobScraper.Web` | Main web app (Blazor SSR, API endpoints, all business logic) |
-| `JobScraper.Tests` | Unit tests (`InternalsVisibleTo` from Web project) |
+| Project            | Purpose                                                      |
+|--------------------|--------------------------------------------------------------|
+| `JobScraper.Web`   | Main web app (Blazor SSR, API endpoints, all business logic) |
+| `JobScraper.Tests` | Unit tests (`InternalsVisibleTo` from Web project)           |
 
 ### Key Technologies & Libraries
 
 - **Framework**: .NET 10, ASP.NET Core, Blazor Server (SSR)
 - **UI**: Blazor Bootstrap, BlazorMonaco, QuickGrid
 - **CQRS/Mediator**: `Mediator` (source-generated, scoped lifetime)
-- **Persistence**: EF Core + SQLite, pooled `DbContextFactory`, ownership query filters
+- **Persistence**: EF Core + SQLite, pooled `DbContextFactory`, ownership query
+  filters
 - **Validation**: FluentValidation + Blazored.FluentValidation
 - **Error handling**: `ErrorOr` for result types
 - **Mapping**: Riok.Mapperly (source-generated)
@@ -67,10 +70,13 @@ JobScraper.Web/
 ### Module Registration Pattern
 
 Each module/feature has a `Setup.cs` with extension methods:
+
 - **Services**: `builder.AddXxx()` on `WebApplicationBuilder`
-- **Middleware/Endpoints**: `app.UseXxx()` / `app.MapXxx()` on `IEndpointRouteBuilder` or `WebApplication`
+- **Middleware/Endpoints**: `app.UseXxx()` / `app.MapXxx()` on
+  `IEndpointRouteBuilder` or `WebApplication`
 
 All registered in `Program.cs`:
+
 ```csharp
 builder.AddScraperSettings();
 builder.AddBlazor();
@@ -107,12 +113,15 @@ public class DuplicateCv
 ### Scraper Handler Hierarchy
 
 Scrapers follow an inheritance chain:
+
 - `ScrapperBaseHandler` → base with config, logger, DbContext
-- `ListScraperBaseHandler<T>` → list scraping with `IAsyncEnumerable<List<JobOffer>> ScrapeJobs()`
+- `ListScraperBaseHandler<T>` → list scraping with
+  `IAsyncEnumerable<List<JobOffer>> ScrapeJobs()`
 - `DetailsScrapperBaseHandler<T>` → detail scraping
 - Concrete scrapers: `JjitListScraper`, `IndeedDetailsScraper`, etc.
 
 Each concrete scraper defines a nested `Command` record:
+
 ```csharp
 public class JjitListScraper
 {
@@ -123,7 +132,8 @@ public class JjitListScraper
 
 ### Primary Constructors for DI
 
-All classes use **C# primary constructors** for dependency injection (no field assignments):
+All classes use **C# primary constructors** for dependency injection (no field
+assignments):
 
 ```csharp
 public sealed partial class ScrapeHandler(
@@ -136,7 +146,8 @@ public sealed partial class ScrapeHandler(
 
 ### Source-Generated Logging
 
-Use `[LoggerMessage]` attribute on `static partial void` methods in `partial` classes:
+Use `[LoggerMessage]` attribute on `static partial void` methods in `partial`
+classes:
 
 ```csharp
 public sealed partial class ScrapeHandler(...)
@@ -148,7 +159,8 @@ public sealed partial class ScrapeHandler(...)
 
 ### Entity Configuration
 
-Entities and their EF Core configurations live in the **same file** under `Common/Entities/`:
+Entities and their EF Core configurations live in the **same file** under
+`Common/Entities/`:
 
 ```csharp
 public class JobOffer : IUpdatable
@@ -163,17 +175,21 @@ public class JobOfferModelBuilder : IEntityTypeConfiguration<JobOffer>
 }
 ```
 
-Applied in `JobsDbContext.OnModelCreating` via `modelBuilder.ApplyConfiguration(new XxxModelBuilder())`.
+Applied in `JobsDbContext.OnModelCreating` via
+`modelBuilder.ApplyConfiguration(new XxxModelBuilder())`.
 
 ### Result Types
 
 - Use `ErrorOr<T>` for operations that can fail
-- Return `Error.Failure(description: "...")` or `Error.Validation(metadata: ...)` for errors
+- Return `Error.Failure(description: "...")` or
+  `Error.Validation(metadata: ...)` for errors
 
 ### Blazor Pages
 
-- Pages use **code-behind** files (`.razor.cs`) with `partial class` and primary constructors
-- Inject services via primary constructor: `public partial class ScrapePage(IDbContextFactory<JobsDbContext> dbFactory, ...)`
+- Pages use **code-behind** files (`.razor.cs`) with `partial class` and primary
+  constructors
+- Inject services via primary constructor:
+  `public partial class ScrapePage(IDbContextFactory<JobsDbContext> dbFactory, ...)`
 - Use `IDbContextFactory<JobsDbContext>` to create scoped DbContext instances
 - FluentValidation integrated via `Blazored.FluentValidation`
 
@@ -197,9 +213,12 @@ public static class CvPdfEndpoints
 
 ### DbContext & Multi-tenancy
 
-- `JobsDbContext` extends `IdentityDbContext<ApplicationUser>` with ownership filtering
-- `CurrentUserName` property drives global query filters via `ApplyOwnershipFilter()`
-- Uses **pooled factory** with `IDbContextFactory<JobsDbContext>`, decorated by `UserJobsContextFactory`
+- `JobsDbContext` extends `IdentityDbContext<ApplicationUser>` with ownership
+  filtering
+- `CurrentUserName` property drives global query filters via
+  `ApplyOwnershipFilter()`
+- Uses **pooled factory** with `IDbContextFactory<JobsDbContext>`, decorated by
+  `UserJobsContextFactory`
 - Interceptors: `UpdatableInterceptor` (auto `UpdatedAt`), `OwnerInterceptor`
 
 ## Naming & Style Conventions
@@ -217,9 +236,11 @@ public static class CvPdfEndpoints
 ## Testing Conventions
 
 - **Framework**: xUnit (`[Fact]`, `[Theory]`)
-- **Assertions**: Shouldly (`result.ShouldBe(...)`, `result.IsError.ShouldBeFalse()`)
+- **Assertions**: Shouldly (`result.ShouldBe(...)`,
+  `result.IsError.ShouldBeFalse()`)
 - **Mocking**: NSubstitute
-- **Test structure**: mirrors feature folder structure under `JobScraper.Tests/Features/` and `JobScraper.Tests/Logic/`
+- **Test structure**: mirrors feature folder structure under
+  `JobScraper.Tests/Features/` and `JobScraper.Tests/Logic/`
 - **Naming**: `{ClassName}Tests` with descriptive method names
 - Direct handler instantiation (no DI container in tests)
 
@@ -230,10 +251,13 @@ public static class CvPdfEndpoints
 - **Database**: SQLite (connection string in `appsettings.Development.json`)
 - **Docker**: `compose.yaml` in root, Linux target OS
 - **Scripts**: `scripts/` folder (PowerShell: migrations, publish, docker push)
-- **EF Migrations**: `scripts/add-migration.ps1`, `scripts/rollback-migration.ps1`
+- **EF Migrations**: `scripts/add-migration.ps1`,
+  `scripts/rollback-migration.ps1`
 - DB auto-migrates on startup via `app.Services.PrepareDbAsync()`
 
 ## Key Embedded Resources
 
-- `Features/JobOffers/Scrape/Logic/Jjit/jjit-list.js` — JS for Playwright scraping
-- `Features/JobOffers/Scrape/Logic/NoFluffJobs/no-fluff-jobs-details.js`, `no-fluff-jobs-list.js`
+- `Features/JobOffers/Scrape/Logic/Jjit/jjit-list.js` — JS for Playwright
+  scraping
+- `Features/JobOffers/Scrape/Logic/NoFluffJobs/no-fluff-jobs-details.js`,
+  `no-fluff-jobs-list.js`
