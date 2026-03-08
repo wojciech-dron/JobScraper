@@ -7,6 +7,7 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Agents;
 using Microsoft.SemanticKernel.Agents.Chat;
 using Microsoft.SemanticKernel.ChatCompletion;
+#pragma warning disable OPENAI001
 
 namespace JobScraper.Web.Features.Cv.Logic;
 
@@ -34,6 +35,8 @@ public partial class AdjustCvForOffer
     {
         private const string DoneSignal = "[DONE]";
         private const string FailSignal = "[FAIL]";
+        private const string CvStartMarker = "[CV_START]";
+        private const string CvEndMarker = "[CV_END]";
         private const int MaxRetries = 2;
 
         private readonly ILogger<Handler> _logger = loggerFactory.CreateLogger<Handler>();
@@ -68,15 +71,48 @@ public partial class AdjustCvForOffer
             if (finalContent is null || !finalContent.Contains(DoneSignal))
                 return new Response(false, null, chatHistory);
 
-            var adjustedCv = finalContent
-                .Replace(DoneSignal, "")
-                .RemoveAiChars();
+            var adjustedCv = ExtractCvContent(finalContent);
 
-            // Remove the last item because it contains the raw CV content
-            if (chatHistory.Count > 0)
-                chatHistory.RemoveAt(chatHistory.Count - 1);
+            ReplaceCvContentInHistory(chatHistory);
 
             return new Response(true, adjustedCv, chatHistory);
+        }
+
+        private static string? ExtractCvContent(string content)
+        {
+            var startIdx = content.IndexOf(CvStartMarker, StringComparison.OrdinalIgnoreCase);
+            var endIdx = content.IndexOf(CvEndMarker, StringComparison.OrdinalIgnoreCase);
+
+            if (startIdx < 0 || endIdx < 0 || endIdx <= startIdx)
+                return content
+                    .Replace(DoneSignal, "")
+                    .RemoveAiChars();
+
+            return content[(startIdx + CvStartMarker.Length)..endIdx]
+                .RemoveAiChars();
+        }
+
+        private static void ReplaceCvContentInHistory(List<ChatItem> chatHistory)
+        {
+            for (var i = 0; i < chatHistory.Count; i++)
+            {
+                var item = chatHistory[i];
+                if (item.Content is null)
+                    continue;
+
+                var startIdx = item.Content.IndexOf(CvStartMarker, StringComparison.OrdinalIgnoreCase);
+                var endIdx = item.Content.IndexOf(CvEndMarker, StringComparison.OrdinalIgnoreCase);
+
+                if (startIdx < 0 || endIdx < 0 || endIdx <= startIdx)
+                    continue;
+
+                var before = item.Content[..startIdx];
+                var after = item.Content[(endIdx + CvEndMarker.Length)..];
+                chatHistory[i] = item with
+                {
+                    Content = $"{before}{after}".Replace(DoneSignal, "").Trim(),
+                };
+            }
         }
 
         private static bool ShouldRetry(string? lastContent, int retryCount)
@@ -110,12 +146,14 @@ public partial class AdjustCvForOffer
                      Your goal is to analyze the job offer and the user's CV to find the best alignment.
                      Before any CV editing happens, you must provide short analysis.
                      User prompts only first messages, do not ask for any more information.
+                     Use language of the offer for analysis.
 
                      Your task:
                      - Be concise and to the point.
-                     - Analyze CV for ATS compliance with offer.
-                     - Focus only on the developer title and 'Summary', 'Experience', 'Skills' sections.
-                     - Infer missing skills and experience on if they are required in offer and the evidence in the CV strongly suggests they exist.
+                     - Analyze CV for ATS compliance with the offer.
+                     - Prioritize: 1) Skills alignment, 2) Experience relevance, 3) Summary optimization.
+                     - Focus only on the developer title, job positions and 'Summary', 'Experience', 'Skills' sections.
+                     - Infer missing skills and experience only if they are required in the offer and the CV evidence strongly suggests they exist.
                      - Remove unnecessary skills and experiences if they are NOT RELEVANT to the job offer.
                      - Return the analysis in a simple format, with clear headings and bullet points.
                      - List specific suggestions for the CV editor on how to optimize each section.
@@ -125,7 +163,7 @@ public partial class AdjustCvForOffer
                      The original CV content:
                      {cvContent}
 
-                     OfferSummary will be provided in first analyst prompt and is optional.
+                     An optional OfferSummary may follow the offer content in the conversation.
 
                      Job offer content will be provided in first user prompt.
                      """,
@@ -140,19 +178,35 @@ public partial class AdjustCvForOffer
                     $"""
                      You are a professional CV editor specializing in tailoring CVs to job offers.
                      You MUST wait for the CvAnalyzer to provide an analysis before you start your work.
-                     QuestPDF is used for generating pdf for markdown, keep that in mind when you generate markdown.
-                     Use the analysis provided by CvAnalyzer to guide your rewriting.
-                     Make a subtle but significant change to the CV content, do not rewrite the whole thing.
+                     The output markdown will be rendered to PDF via QuestPDF. Avoid complex markdown features (no tables, no HTML, no images). Stick to headings, bold, italic, and bullet lists.
+                     Apply the suggestions from CvAnalyzer's analysis to produce the final CV.
+                     Apply targeted, meaningful edits to the relevant sections — do not rewrite the whole CV.
                      User prompts only first messages, do not ask for any more information.
+                     Use language of the offer for response.
 
                      Your workflow:
                      - Start with the original CV content provided below.
-                     - Make conversation with AiAnalyzer to get a tailored CV for offer.
-                     - Return the COMPLETE final CV in markdown format, with {DoneSignal}, which ends the conversation.
+                     - Apply CvAnalyzer's suggestions to tailor the CV for the offer.
+                     - Return the COMPLETE final CV (not just changed sections) in markdown format.
+                     - Wrap the CV content between {CvStartMarker} and {CvEndMarker} markers.
+                     - After {CvEndMarker}, include a concise summary of all applied changes with a short reason for each change.
+                     - End the message with {DoneSignal} to finish the conversation.
+
+                     Example output format:
+                     {CvStartMarker}
+                     (complete CV markdown here)
+                     {CvEndMarker}
+
+                     **Changes applied:**
+                     - (change 1) — (short reason)
+                     - (change 2) — (short reason)
+
+                     {DoneSignal}
 
                      Rules:
                      - DO NOT invent experiences or skills that are not in the original CV.
                      - DO NOT remove core contact information.
+                     - DO NOT modify languages and interests sections.
                      - DO optimize the 'Summary', 'Experience', or 'Skills' sections to include relevant matches based on the analysis.
                      - DO use terminology from the job offer where appropriate to increase alignment.
                      - Remove unnecessary skills and experiences if they are NOT RELEVANT to the job offer.

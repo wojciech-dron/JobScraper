@@ -14,7 +14,7 @@
     <File Path=".github/workflows/pr-agent.yml" />
   </Folder>
   <Folder Name="/solution items/.junie/">
-    <File Path=".junie/gudelines.md" />
+    <File Path=".junie/guidelines.md" />
   </Folder>
   <Folder Name="/solution items/scripts/">
     <File Path="scripts/add-migration.ps1" />
