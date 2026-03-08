@@ -209,7 +209,8 @@ public sealed partial class AiSummaryConfigPage(
         var request = new AdjustCvContentToOffer.Request(
             CvContent: content,
             OfferContent: form.TestOfferContent!,
-            ProviderName: aiModel);
+            ProviderName: aiModel,
+            UserCvRules: form.UserCvRules);
 
         var result = await mediator.Send(request, _cts.Token);
 

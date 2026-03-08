@@ -16,6 +16,7 @@ public class AdjustCvContentToOffer
         string CvContent,
         string OfferContent,
         string? OfferSummary = "",
+        string? UserCvRules = null,
         string ProviderName = AiProvidersConfig.MainModel
     ) : IRequest<Response>;
 
@@ -114,6 +115,7 @@ public class AdjustCvContentToOffer
                      - DO NOT suggest strong changes, just small improvements.
                      - DO NOT rewrite the CV yourself. Just provide the analysis and suggestions.
                      - End your response with a clear instruction for the CvEditor to proceed.
+                     {(string.IsNullOrWhiteSpace(request.UserCvRules) ? "" : $"\nAdditional user-defined CV rules that MUST be followed:\n{request.UserCvRules}")}
 
                      The original CV content:
                      {request.CvContent}
@@ -150,6 +152,7 @@ public class AdjustCvContentToOffer
                      - DO NOT modify spaces between paragraphs.
                      - RETURN the COMPLETE adjusted CV in markdown format followed by the summary section.
                      - FINISH your response with {DoneSignal}, which ends the conversation.
+                     {(string.IsNullOrWhiteSpace(request.UserCvRules) ? "" : $"\nAdditional user-defined CV rules that MUST be followed:\n{request.UserCvRules}")}
 
                      If something is wrong or required data is missing, return reason and {FailSignal}, which terminates the conversation.
 

@@ -72,6 +72,11 @@
     </div>
 
     <div class="mb-3">
+        <label for="userCvRules" class="form-label bold">User CV rules (optional)</label>
+        <InputTextArea id="userCvRules" style="height: 100px;" class="form-control" @bind-Value="form.UserCvRules"/>
+    </div>
+
+    <div class="mb-3">
         <label for="defaultCv" class="form-label bold" title="Fallback CV when AI fails to select template for offer">
             Default CV
         </label>
