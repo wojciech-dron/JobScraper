@@ -37,7 +37,6 @@ public sealed partial class CvEditPage(
     private CvEntity cvEntity = null!;
     private string originalContent = "";
     private string modifiedContent = "";
-    private string? relatedOfferUrl;
 
     [Parameter]
     public int Id { get; set; }
@@ -54,18 +53,11 @@ public sealed partial class CvEditPage(
                 Name = "Test",
             };
         else
-        {
             cvEntity = await dbContext.Cvs
                     .Include(c => c.OriginCv)
                     .Include(c => c.Image)
                     .FirstOrDefaultAsync(c => c.Id == Id, _cts.Token)
              ?? throw new InvalidOperationException($"CV with ID {Id} not found");
-
-            relatedOfferUrl = await dbContext.UserOffers
-                .Where(o => o.Cv!.Id == cvEntity.Id)
-                .Select(o => o.OfferUrl)
-                .FirstOrDefaultAsync(_cts.Token);
-        }
 
         compareMode = CompareMode.WithSaved;
         originalContent = cvEntity.MarkdownContent;

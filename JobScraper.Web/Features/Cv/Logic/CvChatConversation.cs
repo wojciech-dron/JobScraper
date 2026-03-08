@@ -16,7 +16,7 @@ public partial class CvChatConversation
     public record Request(
         string UserMessage,
         string CurrentCvContent,
-        string OfferContent,
+        string? OfferContent,
         string? OfferSummary,
         List<ChatItem> ExistingChatHistory,
         string ProviderName
@@ -131,8 +131,10 @@ public partial class CvChatConversation
                 Kernel = kernel,
                 Instructions =
                     $"""
-                     You are a professional CV consultant and editor. You help users modify and improve their CV content
-                     based on a specific job offer.
+                     You are a professional CV consultant and editor. You help users modify and improve their CV content.
+                     {(request.OfferContent is not null
+                         ? "You are helping the user tailor their CV for a specific job offer."
+                         : "No specific job offer is provided. Focus on general CV improvements, formatting, and best practices.")}
                      You can suggest changes, answer questions about CV optimization, and edit the CV when asked.
                      Be concise and to the point.
                      Return simple bullet points unless user asks for more details.
@@ -161,8 +163,7 @@ public partial class CvChatConversation
                      CV content:
                      {request.CurrentCvContent}
 
-                     Job offer content:
-                     {request.OfferContent}
+                     {(request.OfferContent is not null ? $"Job offer content:\n{request.OfferContent}" : "")}
 
                      {(request.OfferSummary is not null ? $"Offer summary:\n{request.OfferSummary}" : "")}
                      """,

@@ -16,7 +16,7 @@ using Microsoft.JSInterop;
 
 namespace JobScraper.Web.Features.Cv;
 
-public sealed partial class PrepareCvForOfferPage(
+public sealed partial class PrepareCvWithAi(
     IMediator mediator,
     IJSRuntime js,
     JobsDbContext dbContext,
@@ -28,7 +28,7 @@ public sealed partial class PrepareCvForOfferPage(
 
     private IJSObjectReference? module;
     private IJSObjectReference? downloadModule;
-    private UserOffer offer = null!;
+    private UserOffer? offer;
     private CvEntity cvEntity = null!;
     private MarkdownDiffEditor? diffEditor;
     private FluentValidationValidator validator = null!;
@@ -39,20 +39,21 @@ public sealed partial class PrepareCvForOfferPage(
     private string originalContent = "";
     private string modifiedContent = "";
 
-    [Parameter] public string? OfferUrl { get; set; }
+    [Parameter] public long CvId { get; set; }
 
     private void GoToCv(long duplicatedCvId) => navigationManager.NavigateTo($"cv/edit/{duplicatedCvId}", true);
 
     protected override async Task OnInitializedAsync()
     {
+        cvEntity = await dbContext.Cvs
+            .Include(c => c.OriginCv)
+            .Include(c => c.Image)
+            .FirstAsync(c => c.Id == CvId);
+
         offer = await dbContext.UserOffers
             .Include(x => x.Details)
-            .Include(x => x.Cv!.OriginCv)
-            .Include(x => x.Cv!.Image)
-            .FirstAsync(x => x.OfferUrl == OfferUrl);
-
-        ArgumentNullException.ThrowIfNull(offer.Cv);
-        cvEntity = offer.Cv;
+            .Where(x => x.Cv!.Id == CvId)
+            .FirstOrDefaultAsync();
 
         compareMode = cvEntity.OriginCv is not null ? CompareMode.WithOrigin : CompareMode.WithSaved;
         originalContent = cvEntity.OriginCv?.MarkdownContent ?? cvEntity.MarkdownContent;
@@ -64,7 +65,7 @@ public sealed partial class PrepareCvForOfferPage(
         if (!firstRender)
             return;
 
-        module = await js.InvokeAsync<IJSObjectReference>("import", "./Features/Cv/PrepareCvForOfferPage.razor.js");
+        module = await js.InvokeAsync<IJSObjectReference>("import", "./Features/Cv/PrepareCvWithAi.razor.js");
         await module.InvokeVoidAsync("initPrepareCvResizers");
 
         ArgumentNullException.ThrowIfNull(diffEditor);
@@ -127,7 +128,7 @@ public sealed partial class PrepareCvForOfferPage(
         if (string.IsNullOrWhiteSpace(cvContent))
             return;
 
-        if (offer.Details.Description == null)
+        if (offer?.Details.Description == null)
             return;
 
         isWorking = true;
@@ -138,7 +139,7 @@ public sealed partial class PrepareCvForOfferPage(
 
         var request = new AdjustCvForOffer.Request(
             CvContent: cvContent,
-            OfferContent: offer.Details.Description,
+            OfferContent: offer!.Details.Description,
             OfferSummary: offer.AiSummary,
             AiModel: config.SmartAiModel ?? config.DefaultAiModel);
 
@@ -165,7 +166,7 @@ public sealed partial class PrepareCvForOfferPage(
             return;
 
         var cvContent = await diffEditor.GetModifiedValueAsync();
-        if (string.IsNullOrWhiteSpace(cvContent) || offer.Details.Description == null)
+        if (string.IsNullOrWhiteSpace(cvContent))
             return;
 
         isWorking = true;
@@ -176,8 +177,8 @@ public sealed partial class PrepareCvForOfferPage(
         var request = new CvChatConversation.Request(
             UserMessage: message,
             CurrentCvContent: cvContent,
-            OfferContent: offer.Details.Description,
-            OfferSummary: offer.AiSummary,
+            OfferContent: offer?.Details.Description,
+            OfferSummary: offer?.AiSummary,
             ExistingChatHistory: cvEntity.ChatHistory,
             ProviderName: config.SmartAiModel ?? config.DefaultAiModel);
 
@@ -238,7 +239,9 @@ public sealed partial class PrepareCvForOfferPage(
         dbContext.Remove(cv);
         await dbContext.SaveChangesAsync();
 
-        navigationManager.NavigateTo($"/?offerUrl={Uri.EscapeDataString(offer.OfferUrl)}");
+        navigationManager.NavigateTo(offer is not null
+            ? $"/?offerUrl={Uri.EscapeDataString(offer.OfferUrl)}"
+            : "/cv");
     }
 
     private enum CompareMode
