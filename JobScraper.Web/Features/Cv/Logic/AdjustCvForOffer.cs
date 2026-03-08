@@ -185,7 +185,8 @@ public partial class AdjustCvForOffer
                      Apply the suggestions from CvAnalyzer's analysis to produce the final CV.
                      Apply targeted, meaningful edits to the relevant sections — do not rewrite the whole CV.
                      User prompts only first messages, do not ask for any more information.
-                     Use language of the offer for response.
+                     Use language of the offer for summary.
+                     Use original language for CV content.
 
                      Your workflow:
                      - Start with the original CV content provided below.

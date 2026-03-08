@@ -120,7 +120,8 @@
                                        class="form-control" placeholder="Notes or URL"/>
                             @if (Uri.IsWellFormedUriString(_application.ExternalNotes, UriKind.Absolute))
                             {
-                                <a href="@_application.ExternalNotes" target="_blank" class="btn btn-outline-primary ms-2">
+                                <a href="@_application.ExternalNotes" target="_blank"
+                                   class="btn btn-outline-primary ms-2">
                                     Open
                                 </a>
                             }
@@ -240,7 +241,6 @@
         {
             OfferUrl = _offer.OfferUrl,
             ExpectedSalaryCurrency = "PLN/mth",
-            Owner = UserProvider.UserName,
         };
 
         var companyName = _offer.Details.CompanyName?.ToLowerInvariant();
