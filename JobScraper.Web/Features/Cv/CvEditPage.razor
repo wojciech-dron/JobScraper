@@ -47,11 +47,11 @@
                             Go to origin CV
                         </button>
                     }
-                    @if (relatedOfferUrl is not null)
+                    @if (cvEntity.Id > 0)
                     {
-                        <a href="cv/prepare-for-offer/@Uri.EscapeDataString(relatedOfferUrl)">
+                        <a href="cv/prepare-with-ai/@cvEntity.Id">
                             <button class="btn btn-info btn-sm">
-                                Prepare for offer
+                                Prepare with AI
                             </button>
                         </a>
                     }

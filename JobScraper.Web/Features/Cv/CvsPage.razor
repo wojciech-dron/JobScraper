@@ -12,10 +12,10 @@
 
 <div id="table-container">
     <QuickGrid @ref="@grid" Items="cvs" Pagination="@pagination" Class="table small-padding-table align-items-center">
-        <TemplateColumn class="col-1" Title="Actions">
+        <TemplateColumn class="col-2" Title="Edit">
             <ChildContent>
                 <a class="btn btn-primary btn-sm" href="/cv/edit/@context.Id">Edit</a>
-                <button class="btn btn-danger btn-sm" @onclick="() => DeleteCvAsync(context.Id)">Delete</button>
+                <a class="btn btn-info btn-sm" href="/cv/prepare-with-ai/@context.Id">AI chat</a>
             </ChildContent>
         </TemplateColumn>
         <PropertyColumn class="col-3" Property="@(c => c.Name)" Sortable="true">
@@ -51,6 +51,11 @@
         <PropertyColumn class="col-2" Property="@(c => c.UpdatedAt)" Title="Updated" Format="yyyy-MM-dd HH:mm"
                         Sortable="true"/>
         <PropertyColumn class="col-1" Property="@(c => c.HasImage)" Title="Has Image" Sortable="true"/>
+        <TemplateColumn class="col-3" Title="Delete">
+            <ChildContent>
+                <button class="btn btn-danger btn-sm" @onclick="() => DeleteCvAsync(context.Id)">Delete</button>
+            </ChildContent>
+        </TemplateColumn>
     </QuickGrid>
 </div>
 

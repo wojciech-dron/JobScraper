@@ -8,7 +8,7 @@
             var messageClass = isUser ? "user-message" : "ai-message";
 
             <div class="message @messageClass">
-                <strong>@chatItem.AuthorName</strong>
+                <strong>@(isUser ? "You" : chatItem.AuthorName)</strong>
                 <pre>@chatItem.Content</pre>
             </div>
         }

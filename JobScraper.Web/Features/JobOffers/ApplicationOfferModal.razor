@@ -181,7 +181,7 @@
     </BodyTemplate>
 </Modal>
 
-<DuplicateCvModal ShowCvSelector @ref="_duplicateCvModal" OnSuccess="GoToPrepareCvForOfferPage"/>
+<DuplicateCvModal ShowCvSelector @ref="_duplicateCvModal" OnSuccess="GoToPrepareCvWithAiPage"/>
 
 
 @inject IDbContextFactory<JobsDbContext> DbContextFactory
@@ -262,9 +262,14 @@
 
     private async Task PrepareCvForOffer()
     {
-        if (await _context.UserOffers.AnyAsync(o => o.OfferUrl == _offer.OfferUrl && o.Cv != null))
+        var existingCvId = await _context.UserOffers
+            .Where(o => o.OfferUrl == _offer.OfferUrl && o.Cv != null)
+            .Select(o => o.Cv!.Id)
+            .FirstOrDefaultAsync();
+
+        if (existingCvId > 0)
         {
-            GoToPrepareCvForOfferPage();
+            GoToPrepareCvWithAiPage(existingCvId);
             return;
         }
 
@@ -273,8 +278,8 @@
             newCvName: $"{_offer.Details.CompanyName} - {_offer.Details.Title}");
     }
 
-    private void GoToPrepareCvForOfferPage() =>
-        NavigationManager.NavigateTo($"/cv/prepare-for-offer/{Uri.EscapeDataString(_offer.OfferUrl)}");
+    private void GoToPrepareCvWithAiPage(long cvId) =>
+        NavigationManager.NavigateTo($"/cv/prepare-with-ai/{cvId}");
 
     private async Task CloseAsync()
     {
