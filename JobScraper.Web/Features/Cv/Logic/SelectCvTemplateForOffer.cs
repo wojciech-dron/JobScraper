@@ -10,11 +10,11 @@ using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace JobScraper.Web.Features.Cv.Logic;
 
-public class SelectCvTemplateForOffer
+public partial class SelectCvTemplateForOffer
 {
     public record Request(
         string OfferContent,
-        string ProviderName
+        string AiModel
     ) : IRequest<Response>;
 
     public record Response(
@@ -24,7 +24,7 @@ public class SelectCvTemplateForOffer
         bool Success = true,
         string? ErrorMessage = null);
 
-    public class Handler(
+    public partial class Handler(
         JobsDbContext dbContext,
         ILoggerFactory loggerFactory,
         IServiceProvider serviceProvider
@@ -34,6 +34,8 @@ public class SelectCvTemplateForOffer
 
         public async ValueTask<Response> Handle(Request request, CancellationToken cancellationToken)
         {
+            LogSelectingCvTemplateForOffer(request.AiModel);
+
             if (string.IsNullOrWhiteSpace(request.OfferContent))
                 return new Response(Success: false, ErrorMessage: "Offer has no description to match against");
 
@@ -57,7 +59,7 @@ public class SelectCvTemplateForOffer
             List<CvEntity> templates,
             CancellationToken cancellationToken)
         {
-            var kernel = serviceProvider.GetAiKernel(request.ProviderName);
+            var kernel = serviceProvider.GetAiKernel(request.AiModel);
 
             var templatesDescription = string.Join("\n\n-----------------------------------\n\n",
                 templates.Select(t =>
@@ -122,5 +124,8 @@ public class SelectCvTemplateForOffer
                 return new Response(Success: false, ChatItems: chatItems, ErrorMessage: "Failed to get AI response");
             }
         }
+
+        [LoggerMessage(LogLevel.Information, "Selecting CV template for offer. AiModel: {AiModel}")]
+        partial void LogSelectingCvTemplateForOffer(string AiModel);
     }
 }

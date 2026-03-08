@@ -5,7 +5,7 @@ public class AiProvidersConfig()
 {
     public const string SectionBase = "Integration:AiProviders";
 
-    public const string MainProvider = "Main";
+    public const string MainModel = "Main";
 
     public string[] AllProviders => [.. Keys];
 

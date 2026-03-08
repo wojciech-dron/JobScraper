@@ -12,14 +12,13 @@ namespace JobScraper.Web.Features.Cv.Logic;
 
 #pragma warning disable SKEXP0110
 
-public class AdjustCvForOffer
+public partial class AdjustCvForOffer
 {
     public record Request(
         string CvContent,
         string OfferContent,
         string? OfferSummary,
-        string UserRequirements = "",
-        string ProviderName = AiProvidersConfig.MainProvider
+        string AiModel
     ) : IRequest<Response>;
 
     public record Response(
@@ -28,7 +27,7 @@ public class AdjustCvForOffer
         List<ChatItem> ChatHistory
     );
 
-    public class Handler(
+    public partial class Handler(
         IServiceProvider serviceProvider,
         ILoggerFactory loggerFactory
     ) : IRequestHandler<Request, Response>
@@ -41,7 +40,7 @@ public class AdjustCvForOffer
 
         public async ValueTask<Response> Handle(Request request, CancellationToken ct = default)
         {
-            _logger.LogInformation("Starting AI CV adjustment conversation");
+            LogStartingAiCvAdjustment(request.AiModel);
 
             var offerMessage = new ChatMessageContent(AuthorRole.User, $"offerContent: {request.OfferContent}");
 
@@ -50,7 +49,7 @@ public class AdjustCvForOffer
             var chatHistory = new List<ChatItem>();
             do
             {
-                var chat = PrepareAgentsChat(request.CvContent, request.UserRequirements, request.ProviderName);
+                var chat = PrepareAgentsChat(request.CvContent, request.AiModel);
                 chat.AddChatMessage(offerMessage);
 
                 if (request.OfferSummary is not null)
@@ -97,9 +96,9 @@ public class AdjustCvForOffer
             return false;
         }
 
-        private AgentGroupChat PrepareAgentsChat(string cvContent, string userRequirements, string providerName)
+        private AgentGroupChat PrepareAgentsChat(string cvContent, string aiModel)
         {
-            var kernel = serviceProvider.GetAiKernel(providerName);
+            var kernel = serviceProvider.GetAiKernel(aiModel);
 
             var analyzerAgent = new ChatCompletionAgent
             {
@@ -107,14 +106,15 @@ public class AdjustCvForOffer
                 Kernel = kernel,
                 Instructions =
                     $"""
-                     You are a professional CV analyst. Your goal is to analyze the job offer and the user's CV to find the best alignment.
+                     You are a professional CV analyst.
+                     Your goal is to analyze the job offer and the user's CV to find the best alignment.
                      Before any CV editing happens, you must provide short analysis.
                      User prompts only first messages, do not ask for any more information.
 
                      Your task:
                      - Be concise and to the point.
-                     - Analyze CV for ATS compliance.
-                     - Focus only on the developer title and 'Summary', 'Experience', and 'Skills' sections.
+                     - Analyze CV for ATS compliance with offer.
+                     - Focus only on the developer title and 'Summary', 'Experience', 'Skills' sections.
                      - Infer missing skills and experience on if they are required in offer and the evidence in the CV strongly suggests they exist.
                      - Remove unnecessary skills and experiences if they are NOT RELEVANT to the job offer.
                      - Return the analysis in a simple format, with clear headings and bullet points.
@@ -156,7 +156,7 @@ public class AdjustCvForOffer
                      - DO optimize the 'Summary', 'Experience', or 'Skills' sections to include relevant matches based on the analysis.
                      - DO use terminology from the job offer where appropriate to increase alignment.
                      - Remove unnecessary skills and experiences if they are NOT RELEVANT to the job offer.
-                     - MAINTAIN the original markdown structure, keep line length about 90 characters.
+                     - KEEP the original markdown structure.
 
                      If something is wrong or required data is missing, return reason and {FailSignal}, which terminates the conversation.
 
@@ -181,9 +181,11 @@ public class AdjustCvForOffer
                     },
                     SelectionStrategy = new SequentialSelectionStrategy(),
                 },
-                LoggerFactory = loggerFactory,
             };
             return chat;
         }
+
+        [LoggerMessage(LogLevel.Information, "Starting AI CV adjustment conversation. Selected model: {aiModel}")]
+        partial void LogStartingAiCvAdjustment(string aiModel);
     }
 }

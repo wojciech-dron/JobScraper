@@ -10,28 +10,32 @@ using Microsoft.SemanticKernel.ChatCompletion;
 namespace JobScraper.Web.Features.AiSummary.Logic;
 #pragma warning disable SKEXP0110
 
-public class SummarizeOfferContent
+public partial class SummarizeOfferContent
 {
     public record Request(
         string CvContent,
         string OfferContent,
         string UserRequirementsForOffer,
-        string ProviderName = AiProvidersConfig.MainProvider
+        string AiModel
     ) : IRequest<ErrorOr<Response>>;
 
     public record Response(string? AiSummary, List<ChatItem> ChatHistory);
 
-    public class Handler(
+    public partial class Handler(
         IServiceProvider serviceProvider,
         ILoggerFactory loggerFactory
     ) : IRequestHandler<Request, ErrorOr<Response>>
     {
+        private readonly ILogger<Handler> _logger = loggerFactory.CreateLogger<Handler>();
+
         private const string DoneSignal = "[DONE]";
         private const string FailSignal = "[FAIL]";
         private const int MaxRetries = 5;
 
         public async ValueTask<ErrorOr<Response>> Handle(Request request, CancellationToken cancellationToken)
         {
+            LogSummarizingOfferContent(request.AiModel);
+
             var message = new ChatMessageContent(AuthorRole.User, $"offerContent: {request.OfferContent}");
 
             string? finalContent = null;
@@ -78,7 +82,7 @@ public class SummarizeOfferContent
 
         private AgentGroupChat PrepareAgentsChat(Request request)
         {
-            var kernel = serviceProvider.GetAiKernel(request.ProviderName);
+            var kernel = serviceProvider.GetAiKernel(request.AiModel);
 
             var analystAgent = new ChatCompletionAgent
             {
@@ -161,9 +165,11 @@ public class SummarizeOfferContent
                     },
                     SelectionStrategy = new SequentialSelectionStrategy(),
                 },
-                LoggerFactory = loggerFactory,
             };
             return chat;
         }
+
+        [LoggerMessage(LogLevel.Information, "Summarizing offer content. Selected AI model: {aiModel}")]
+        partial void LogSummarizingOfferContent(string aiModel);
     }
 }

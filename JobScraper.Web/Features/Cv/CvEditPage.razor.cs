@@ -37,18 +37,22 @@ public sealed partial class CvEditPage(
     private CvEntity cvEntity = null!;
     private string originalContent = "";
     private string modifiedContent = "";
+    private string? relatedOfferUrl;
 
     [Parameter]
     public int Id { get; set; }
+
+    private const long MaxImageBytes = 5 * 1024 * 1024;
+    private static string GetImageUrl(long imageId) => $"/api/cv-images/{imageId}";
+    private void GoToCv(long duplicatedCvId) => navigationManager.NavigateTo($"cv/edit/{duplicatedCvId}", true);
+
     protected override async Task OnInitializedAsync()
     {
         if (Id == 0)
-        {
             cvEntity = new CvEntity
             {
                 Name = "Test",
             };
-        }
         else
         {
             cvEntity = await dbContext.Cvs
@@ -56,20 +60,28 @@ public sealed partial class CvEditPage(
                     .Include(c => c.Image)
                     .FirstOrDefaultAsync(c => c.Id == Id, _cts.Token)
              ?? throw new InvalidOperationException($"CV with ID {Id} not found");
+
+            relatedOfferUrl = await dbContext.UserOffers
+                .Where(o => o.Cv!.Id == cvEntity.Id)
+                .Select(o => o.OfferUrl)
+                .FirstOrDefaultAsync(_cts.Token);
         }
 
+        compareMode = CompareMode.WithSaved;
         originalContent = cvEntity.MarkdownContent;
         modifiedContent = cvEntity.MarkdownContent;
+    }
 
-        if (diffEditor is not null) // if re-enter page
-            await diffEditor.SetModels(originalContent, modifiedContent);
-    }
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (diffEditor is not null) // if re-enter page
-            await diffEditor.SetModels(originalContent, modifiedContent);
+        if (!firstRender)
+            return;
+
+        ArgumentNullException.ThrowIfNull(diffEditor);
+        await diffEditor.SetModels(originalContent, modifiedContent);
     }
-    private const long MaxImageBytes = 5 * 1024 * 1024;
+
+
     private async Task UploadImage(InputFileChangeEventArgs args)
     {
         var file = args.File;
@@ -123,7 +135,7 @@ public sealed partial class CvEditPage(
             isWorking = false;
         }
     }
-    private string GetImageUrl(long imageId) => $"/api/cv-images/{imageId}";
+
     public async Task SaveAsync()
     {
         if (diffEditor is null)
@@ -150,7 +162,7 @@ public sealed partial class CvEditPage(
         if (Id == 0) // redirect if new cv
             navigationManager.NavigateTo($"cv/edit/{cvEntity.Id}", true);
     }
-    private void GoToCv(long duplicatedCvId) => navigationManager.NavigateTo($"cv/edit/{duplicatedCvId}", true);
+
     private async Task GenerateCvPdf()
     {
         if (diffEditor is null)
@@ -197,6 +209,7 @@ public sealed partial class CvEditPage(
 
         _toasts.PushMessage("CV PDF generated successfully");
     }
+
     private async Task DownloadMarkdown()
     {
         if (diffEditor is null)
@@ -214,11 +227,14 @@ public sealed partial class CvEditPage(
         downloadModule ??= await js.InvokeAsync<IJSObjectReference>("import", "./js/downloadFile.js");
         await downloadModule.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
     }
+
     private async Task DuplicateAsync()
     {
         await SaveAsync();
-        await duplicateCvModal.ShowAsync(cvEntity.Id);
+        await duplicateCvModal.ShowAsync(cvEntity.Id,
+            $"{cvEntity.Name} - copy");
     }
+
     private async Task DeleteCvAsync()
     {
         var confirmation = await dialog.ShowAsync(

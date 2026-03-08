@@ -16,7 +16,7 @@ public class AdjustCvContentToOffer
         string CvContent,
         string OfferContent,
         string? OfferSummary = "",
-        string ProviderName = AiProvidersConfig.MainProvider
+        string ProviderName = AiProvidersConfig.MainModel
     ) : IRequest<Response>;
 
     public record Response(
@@ -174,7 +174,6 @@ public class AdjustCvContentToOffer
                     },
                     SelectionStrategy = new SequentialSelectionStrategy(),
                 },
-                LoggerFactory = loggerFactory,
             };
             return chat;
         }

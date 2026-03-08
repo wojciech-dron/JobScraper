@@ -19,7 +19,7 @@ public class AiSimpleCvChatConversation
         string? OfferSummary,
         List<ChatItem> ExistingChatHistory,
         string UserRequirements = "",
-        string ProviderName = AiProvidersConfig.MainProvider
+        string ProviderName = AiProvidersConfig.MainModel
     ) : IRequest<Response>;
 
     public record Response(List<ChatItem> ChatHistory);

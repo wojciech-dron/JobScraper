@@ -35,11 +35,13 @@ public sealed partial class PrepareCvForOfferPage(
     private ConfirmDialog dialog = null!;
 
     private bool isWorking;
-    private CompareMode compareMode = CompareMode.WithSaved;
+    private CompareMode compareMode = CompareMode.WithOrigin;
     private string originalContent = "";
     private string modifiedContent = "";
 
     [Parameter] public string? OfferUrl { get; set; }
+
+    private void GoToCv(long duplicatedCvId) => navigationManager.NavigateTo($"cv/edit/{duplicatedCvId}", true);
 
     protected override async Task OnInitializedAsync()
     {
@@ -51,20 +53,10 @@ public sealed partial class PrepareCvForOfferPage(
 
         ArgumentNullException.ThrowIfNull(offer.Cv);
         cvEntity = offer.Cv;
-        cvEntity.ChatHistory ??= [];
 
-        compareMode = CompareMode.WithOrigin;
-        originalContent = cvEntity.MarkdownContent;
-        modifiedContent = cvEntity.OriginCv?.MarkdownContent ?? cvEntity.MarkdownContent;
-
-        if (diffEditor is not null) // if re-enter page
-            await diffEditor.SetModels(originalContent, modifiedContent);
-    }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        if (diffEditor is not null) // if re-enter page
-            await diffEditor.SetModels(originalContent, modifiedContent);
+        compareMode = cvEntity.OriginCv is not null ? CompareMode.WithOrigin : CompareMode.WithSaved;
+        originalContent = cvEntity.OriginCv?.MarkdownContent ?? cvEntity.MarkdownContent;
+        modifiedContent = cvEntity.MarkdownContent;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -74,7 +66,11 @@ public sealed partial class PrepareCvForOfferPage(
 
         module = await js.InvokeAsync<IJSObjectReference>("import", "./Features/Cv/PrepareCvForOfferPage.razor.js");
         await module.InvokeVoidAsync("initPrepareCvResizers");
+
+        ArgumentNullException.ThrowIfNull(diffEditor);
+        await diffEditor.SetModels(originalContent, modifiedContent);
     }
+
     private async Task GenerateCvPdf()
     {
         if (diffEditor is null)
@@ -121,6 +117,7 @@ public sealed partial class PrepareCvForOfferPage(
 
         _toasts.PushMessage("CV PDF generated successfully");
     }
+
     private async Task PrepareCvContent()
     {
         if (diffEditor is null)
@@ -143,7 +140,7 @@ public sealed partial class PrepareCvForOfferPage(
             CvContent: cvContent,
             OfferContent: offer.Details.Description,
             OfferSummary: offer.AiSummary,
-            config.SmartAiModel ?? config.DefaultAiModel);
+            AiModel: config.SmartAiModel ?? config.DefaultAiModel);
 
         var result = await mediator.Send(request, _cts.Token);
 
@@ -214,6 +211,7 @@ public sealed partial class PrepareCvForOfferPage(
 
         _toasts.PushMessage("CV saved successfully");
     }
+
     private async Task DeleteCvAsync()
     {
         var confirmation = await dialog.ShowAsync(
@@ -233,7 +231,6 @@ public sealed partial class PrepareCvForOfferPage(
 
         navigationManager.NavigateTo($"/?offerUrl={Uri.EscapeDataString(offer.OfferUrl)}");
     }
-    private void GoToCv(long duplicatedCvId) => navigationManager.NavigateTo($"cv/edit/{duplicatedCvId}", true);
 
     private enum CompareMode
     {
@@ -245,20 +242,22 @@ public sealed partial class PrepareCvForOfferPage(
         compareMode is CompareMode.WithOrigin || string.IsNullOrWhiteSpace(cvEntity.OriginCv?.MarkdownContent);
     private async Task CompareToOrigin()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(cvEntity?.OriginCv?.MarkdownContent);
+        ArgumentException.ThrowIfNullOrWhiteSpace(cvEntity.OriginCv?.MarkdownContent);
         compareMode = CompareMode.WithOrigin;
-        originalContent = cvEntity.OriginCv?.MarkdownContent!;
-        await diffEditor!.SetOriginalModel(cvEntity!.OriginCv!.MarkdownContent);
+        originalContent = cvEntity.OriginCv.MarkdownContent;
+        await diffEditor!.SetOriginalModel(cvEntity.OriginCv.MarkdownContent);
     }
+
     public bool DisableCompareToSaved => compareMode is CompareMode.WithSaved;
     private async Task CompareToSaved()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(cvEntity?.MarkdownContent);
+        ArgumentException.ThrowIfNullOrWhiteSpace(cvEntity.MarkdownContent);
         compareMode = CompareMode.WithSaved;
-        originalContent = cvEntity.MarkdownContent!;
-        await diffEditor!.SetOriginalModel(cvEntity!.MarkdownContent);
+        originalContent = cvEntity.MarkdownContent;
+        await diffEditor!.SetOriginalModel(cvEntity.MarkdownContent);
     }
     private bool PreventNavigation => isWorking || dbContext.Entry(cvEntity).State == EntityState.Modified;
+
     private async Task OnBeforeInternalNavigation(LocationChangingContext ctx)
     {
         if (!PreventNavigation)

@@ -100,7 +100,7 @@ public sealed partial class ScrapeHandler(
                 {
                     logger.LogWarning(e,
                         "PlaywrightException occurred while scraping lists. Skipping command {CommandType}",
-                        command.GetType().Name);
+                        command.GetType().FullName);
                 }
             }
         }
@@ -157,7 +157,7 @@ public sealed partial class ScrapeHandler(
                 {
                     logger.LogWarning(e,
                         "PlaywrightException occurred while scraping details. Skipping command {CommandType}",
-                        command.GetType().Name);
+                        command.GetType().FullName);
                 }
             }
 
