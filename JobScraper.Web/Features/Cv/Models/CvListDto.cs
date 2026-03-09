@@ -1,4 +1,5 @@
-﻿using Facet;
+﻿using EntityFrameworkCore.Projectables;
+using Facet;
 using JobScraper.Web.Common.Entities;
 
 namespace JobScraper.Web.Features.Cv.Models;
@@ -25,8 +26,17 @@ public partial class CvListDto
     public string? OriginName { get; init; }
 
     [MapFrom("Offers.Count")]
-    public int OffersCount { get; set; }
+    public int OffersCount { get; init; }
 
     [MapFrom("DerivedCvs.Count")]
-    public int DerivedCvsCount { get; set; }
+    public int DerivedCvsCount { get; init; }
+
+    [MapFrom("OfferHidden()")]
+    public bool OfferHidden { get; init; }
+}
+
+public static class CvEntityExtensions
+{
+    [Projectable]
+    public static bool OfferHidden(this CvEntity cv) => cv.Offers.Any(o => o.HideStatus == HideStatus.Hidden);
 }
