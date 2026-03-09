@@ -1,7 +1,8 @@
 @using BlazorMonaco.Editor
 @inject IJSRuntime jsRuntime
 
-<StandaloneDiffEditor @ref="_diffEditor" Id="@Id" ConstructionOptions="EditorOptions" CssClass="@CssClass"/>
+<StandaloneDiffEditor @ref="_diffEditor" Id="@Id" ConstructionOptions="EditorOptions" CssClass="@CssClass"
+                     OnDidChangeModelContentModified="HandleModifiedContentChanged"/>
 
 @code {
     [Parameter] public string Id { get; set; } = "diff-editor";
@@ -9,6 +10,7 @@
     [Parameter] public string OriginalContent { get; set; } = string.Empty;
     [Parameter] public string ModifiedContent { get; set; } = string.Empty;
     [Parameter] public bool Inline { get; set; }
+    [Parameter] public EventCallback OnModifiedContentChanged { get; set; }
 
     private StandaloneDiffEditor? _diffEditor;
 
@@ -92,6 +94,13 @@
             Original = originalModel,
             Modified = modifiedModel,
         });
+
+    }
+
+    private async Task HandleModifiedContentChanged(ModelContentChangedEvent _)
+    {
+        if (OnModifiedContentChanged.HasDelegate)
+            await OnModifiedContentChanged.InvokeAsync();
     }
 
     public async Task<string> GetModifiedValueAsync() => _diffEditor is not null

@@ -79,7 +79,8 @@
             <MarkdownDiffEditor @ref="diffEditor"
                                 CssClass="h-75 mt-1"
                                 OriginalContent="@originalContent"
-                                ModifiedContent="@modifiedContent"/>
+                                ModifiedContent="@modifiedContent"
+                                OnModifiedContentChanged="OnEditorContentChanged"/>
 
             <div class="row mt-3">
                 <div class="col-md-8">

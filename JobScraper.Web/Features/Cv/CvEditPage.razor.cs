@@ -271,7 +271,20 @@ public sealed partial class CvEditPage(
         originalContent = cvEntity?.MarkdownContent!;
         await diffEditor!.SetOriginalModel(cvEntity!.MarkdownContent);
     }
-    private bool PreventNavigation => isWorking || dbContext.Entry(cvEntity).State == EntityState.Modified;
+    private bool _hasEditorChanges;
+
+    private bool PreventNavigation => isWorking ||
+        _hasEditorChanges ||
+        dbContext.Entry(cvEntity).State == EntityState.Modified;
+
+    private async Task OnEditorContentChanged()
+    {
+        if (diffEditor is null)
+            return;
+
+        var currentContent = await diffEditor.GetModifiedValueAsync();
+        _hasEditorChanges = currentContent != cvEntity.MarkdownContent;
+    }
 
     private async Task<bool> HasUnsavedEditorChanges()
     {
@@ -279,7 +292,8 @@ public sealed partial class CvEditPage(
             return false;
 
         var currentContent = await diffEditor.GetModifiedValueAsync();
-        return currentContent != cvEntity.MarkdownContent;
+        _hasEditorChanges = currentContent != cvEntity.MarkdownContent;
+        return _hasEditorChanges;
     }
 
     private async Task OnBeforeInternalNavigation(LocationChangingContext ctx)
