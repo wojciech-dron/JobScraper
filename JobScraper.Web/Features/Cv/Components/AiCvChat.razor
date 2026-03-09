@@ -17,12 +17,14 @@
 
     <form @onsubmit="SendMessage" @onsubmit:preventDefault class="mt-2">
         <div class="input-group input-group-sm">
-            <input type="text"
-                   class="form-control"
-                   placeholder="Ask about CV or request changes..."
-                   @bind="userMessage"
-                   @bind:event="oninput"
-                   disabled="@IsWorking"/>
+            <textarea class="form-control"
+                      rows="4"
+                      placeholder="Ask about CV or request changes..."
+                      @bind="userMessage"
+                      @bind:event="oninput"
+                      @onkeydown="HandleKeyDown"
+                      @onkeydown:preventDefault="shouldPreventDefault"
+                      disabled="@IsWorking"/>
             <button type="submit" class="btn btn-primary btn-sm"
                     disabled="@(IsWorking || string.IsNullOrWhiteSpace(userMessage))">
                 Send
@@ -33,6 +35,7 @@
 
 @code {
     private string userMessage = "";
+    private bool shouldPreventDefault;
     private ElementReference chatContainerRef;
     private IJSObjectReference? module;
 
@@ -51,6 +54,19 @@
             "./Features/Cv/Components/AiCvChat.razor.js");
 
         await module.InvokeVoidAsync("scrollToBottom", chatContainerRef);
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e is { Key: "Enter", ShiftKey: false })
+        {
+            shouldPreventDefault = true;
+            await SendMessage();
+        }
+        else
+        {
+            shouldPreventDefault = false;
+        }
     }
 
     private async Task SendMessage()

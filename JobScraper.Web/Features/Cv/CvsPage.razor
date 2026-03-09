@@ -29,7 +29,7 @@
                        class="form-control form-control-sm"/>
             </HeaderTemplate>
         </PropertyColumn>
-        <PropertyColumn class="col-1" Property="@(c => c.IsTemplate)" Sortable="true">
+        <PropertyColumn class="col-narrow" Property="@(c => c.IsTemplate)" Sortable="true">
             <HeaderTemplate>
                 <button class="col-title mb-1" type="button" @onclick="@(() => context.SortAsync())">
                     <div class="col-title-text">@context.Title</div>
@@ -55,13 +55,14 @@
                 @(context.OriginName)
             </ChildContent>
         </TemplateColumn>
-        <PropertyColumn class="col-1" Property="@(c => c.OffersCount)" Title="Offers Count" Sortable="true"/>
-        <PropertyColumn class="col-1" Property="@(c => c.DerivedCvsCount)" Title="Derived CVs Count" Sortable="true"/>
+        <PropertyColumn class="col-narrow" Property="@(c => c.OffersCount)" Title="Offers" Sortable="true"/>
+        <PropertyColumn class="col-narrow" Property="@(c => c.DerivedCvsCount)" Title="Derived CVs" Sortable="true"/>
         <PropertyColumn class="col-2" Property="@(c => c.CreatedAt)" Title="Created" Format="yyyy-MM-dd HH:mm"
                         Sortable="true"/>
         <PropertyColumn class="col-2" Property="@(c => c.UpdatedAt)" Title="Updated" Format="yyyy-MM-dd HH:mm"
                         Sortable="true"/>
-        <PropertyColumn class="col-1" Property="@(c => c.HasImage)" Title="Has Image" Sortable="true"/>
+        <PropertyColumn class="col-narrow" Property="@(c => c.HasImage)" Title="Has Image" Sortable="true"/>
+        <PropertyColumn class="col-narrow" Property="@(c => c.OfferHidden)" Title="Offer hidden" Sortable="true"/>
         <TemplateColumn class="col-3" Title="Delete">
             <ChildContent>
                 <button class="btn btn-danger btn-sm" @onclick="() => DeleteCvAsync(context.Id)">Delete</button>

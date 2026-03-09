@@ -42,11 +42,12 @@
         <div class="col-md-1">
             @if (cvEntity.OriginCv is not null)
             {
-                <button class="btn btn-info btn-sm"
-                        disabled="@isWorking"
-                        @onclick="@(() => GoToCv(cvEntity.OriginCv.Id))">
-                    Go to origin CV
-                </button>
+                <a href="/cv/edit/@cvEntity.OriginCv.Id">
+                    <button class="btn btn-info btn-sm"
+                            disabled="@isWorking">
+                        Origin CV
+                    </button>
+                </a>
             }
         </div>
 
@@ -71,22 +72,35 @@
                     <span class="sr-only"></span>
                 </div>
             }
+            <a href="/cv/@cvEntity.Id/pdf" target="_blank">
+                <button class="btn btn-primary btn-sm"
+                        disabled="@isWorking">
+                    Show PDF
+                </button>
+            </a>
             <button class="btn btn-primary btn-sm"
                     disabled="@isWorking"
                     @onclick="GenerateCvPdf">
-                Generate PDF
+                Save PDF
             </button>
             @if (offer is not null)
             {
                 <button class="btn btn-primary btn-sm ms-1"
                         disabled="@isWorking"
+                        title="Adjusts CV content with AI, with user defined rules in AI Summary"
                         @onclick="PrepareCvContent">
-                    Prepare for offer
+                    Adjust with AI
                 </button>
+            }
+            @if (offer is not null)
+            {
+                <a class="ms-1" href="/?offerUrl=@Uri.EscapeDataString(offer.OfferUrl)">
+                    <button class="btn btn-info btn-sm" disabled="@isWorking">Offer</button>
+                </a>
             }
             <a class="ms-1" href="/cv/edit/@cvEntity.Id">
                 <button class="btn btn-info btn-sm" disabled="@isWorking">
-                    Go to CV page
+                    CV page
                 </button>
             </a>
             <button class="btn btn-success btn-sm"
@@ -129,7 +143,8 @@
                 OriginalContent="@originalContent"
                 ModifiedContent="@modifiedContent"
                 CssClass="h-100"
-                Inline/>
+                Inline
+                OnModifiedContentChanged="OnEditorContentChanged"/>
         </div>
         <div class="gutter"
              style="flex: 0 0 5px; cursor: col-resize; background-color: #dee2e6; user-select: none;"></div>

@@ -269,3 +269,4 @@ __pycache__/
 /Data/
 .roo/
 /JobScraper.Tests/Features/Cv/PdfGeneration/CV_output.pdf
+/.claude/

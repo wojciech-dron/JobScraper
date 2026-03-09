@@ -270,11 +270,34 @@ public sealed partial class PrepareCvWithAi(
         originalContent = cvEntity.MarkdownContent;
         await diffEditor!.SetOriginalModel(cvEntity.MarkdownContent);
     }
-    private bool PreventNavigation => isWorking || dbContext.Entry(cvEntity).State == EntityState.Modified;
+    private bool _hasEditorChanges;
+
+    private bool PreventNavigation => isWorking ||
+        _hasEditorChanges ||
+        dbContext.Entry(cvEntity).State == EntityState.Modified;
+
+    private async Task OnEditorContentChanged()
+    {
+        if (diffEditor is null)
+            return;
+
+        var currentContent = await diffEditor.GetModifiedValueAsync();
+        _hasEditorChanges = currentContent != cvEntity.MarkdownContent;
+    }
+
+    private async Task<bool> HasUnsavedEditorChanges()
+    {
+        if (diffEditor is null)
+            return false;
+
+        var currentContent = await diffEditor.GetModifiedValueAsync();
+        _hasEditorChanges = currentContent != cvEntity.MarkdownContent;
+        return _hasEditorChanges;
+    }
 
     private async Task OnBeforeInternalNavigation(LocationChangingContext ctx)
     {
-        if (!PreventNavigation)
+        if (!PreventNavigation && !await HasUnsavedEditorChanges())
             return;
 
         var confirm = await js.InvokeAsync<bool>("confirm", "Are you sure you want to leave this page?");

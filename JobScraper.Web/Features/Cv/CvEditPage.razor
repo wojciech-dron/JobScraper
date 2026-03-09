@@ -41,11 +41,12 @@
                 <div class="col-md-3">
                     @if (cvEntity.OriginCv is not null)
                     {
-                        <button class="btn btn-info btn-sm me-1"
-                                title="@cvEntity.OriginCv.Name"
-                                @onclick="() => GoToCv(cvEntity.OriginCv.Id)">
-                            Go to origin CV
-                        </button>
+                        <a href="/cv/edit/@cvEntity.OriginCv.Id">
+                            <button class="btn btn-info btn-sm me-1"
+                                    title="@cvEntity.OriginCv.Name">
+                                Go to origin CV
+                            </button>
+                        </a>
                     }
                     @if (cvEntity.Id > 0)
                     {
@@ -78,7 +79,8 @@
             <MarkdownDiffEditor @ref="diffEditor"
                                 CssClass="h-75 mt-1"
                                 OriginalContent="@originalContent"
-                                ModifiedContent="@modifiedContent"/>
+                                ModifiedContent="@modifiedContent"
+                                OnModifiedContentChanged="OnEditorContentChanged"/>
 
             <div class="row mt-3">
                 <div class="col-md-8">
@@ -145,15 +147,24 @@
                     </button>
                 }
                 <div class="mt-2">
+                    @if (cvEntity.Id > 0)
+                    {
+                        <a href="/cv/@cvEntity.Id/pdf" target="_blank" class="me-1">
+                            <button class="btn btn-primary"
+                                    disabled="@isWorking">
+                                Show PDF
+                            </button>
+                        </a>
+                    }
                     <button class="btn btn-primary"
                             disabled="@isWorking"
                             @onclick="GenerateCvPdf">
-                        Generate PDF
+                        Save PDF
                     </button>
                     <button class="btn btn-outline-primary"
                             disabled="@isWorking"
                             @onclick="DownloadMarkdown">
-                        Download MD
+                        Save MD
                     </button>
                 </div>
             </div>

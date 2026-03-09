@@ -10,7 +10,7 @@ public static class CvPdfEndpoints
 {
     public static IEndpointRouteBuilder MapCvPdfEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/cv")
+        var group = app.MapGroup("/cv")
             .RequireAuthorization();
 
         group.MapGet("/{id:long}/pdf", GetPdf);
