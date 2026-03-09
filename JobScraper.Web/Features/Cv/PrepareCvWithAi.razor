@@ -92,6 +92,12 @@
                     Adjust with AI
                 </button>
             }
+            @if (offer is not null)
+            {
+                <a class="ms-1" href="/?offerUrl=@Uri.EscapeDataString(offer.OfferUrl)">
+                    <button class="btn btn-info btn-sm" disabled="@isWorking">Offer</button>
+                </a>
+            }
             <a class="ms-1" href="/cv/edit/@cvEntity.Id">
                 <button class="btn btn-info btn-sm" disabled="@isWorking">
                     CV page
