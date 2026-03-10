@@ -2,7 +2,7 @@
 
 ## Project
 Blazor Server (.NET 10) app: job scraping, CV management, AI summarization.
-Solution: `JobScraper.slnx` | Main project: `JobScraper.Web/` | Tests: `JobScraper.Tests/`
+Solution: `JobScraper.slnx` | Main project: `JobScraper.Web/` | Unit tests: `JobScraper.Tests/` | Integration tests: `JobScraper.IntegrationTests/`
 
 ## Key File Locations
 - Entities + EF config: `JobScraper.Web/Common/Entities/*.cs` (entity + `IEntityTypeConfiguration` in same file)
@@ -74,10 +74,20 @@ public sealed partial class MyClass(...)
 - Use field assignments instead of primary constructors
 
 ## Testing
+
+### Unit tests (`JobScraper.Tests/`)
 - xUnit + Shouldly + NSubstitute
 - Direct handler instantiation (no DI container)
 - Mirror feature folder structure under `JobScraper.Tests/Features/`
 - Naming: `{ClassName}Tests` with descriptive method names
+
+### Integration tests (`JobScraper.IntegrationTests/`)
+- Real database via Sqlite in memory + Respawn for cleanup between tests
+- `WebApiTestFactory` boots the full app host with `WebApplicationFactory<Program>`
+- Inherit from `IntegrationTestBase` — provides `DbContext`, `ObjectMother`, `TimeProviderMock`, `MockHttpMessageHandler`
+- Object Mothers in `Factories/` for building test entities (`CompanyObjectMother`, `JobOfferObjectMother`, `UserOfferObjectMother`)
+- HTTP mocks via `RichardSzalay.MockHttp` — registered in `Host/HttpMocks/Setup.cs`
+- Mirror feature folder structure under `JobScraper.IntegrationTests/Features/`
 
 ## Build
 - `dotnet build JobScraper.slnx`
