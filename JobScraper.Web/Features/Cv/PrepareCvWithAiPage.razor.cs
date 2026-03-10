@@ -16,7 +16,7 @@ using Microsoft.JSInterop;
 
 namespace JobScraper.Web.Features.Cv;
 
-public sealed partial class PrepareCvWithAi(
+public sealed partial class PrepareCvWithAiPage(
     IMediator mediator,
     IJSRuntime js,
     JobsDbContext dbContext,

@@ -3,6 +3,7 @@ using JobScraper.Web.Features.Account;
 using JobScraper.Web.Modules.Persistence;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
+using AuthenticationStateProvider = JobScraper.Web.Features.Account.AuthenticationStateProvider;
 
 namespace JobScraper.Web.Modules.Auth;
 
@@ -14,7 +15,7 @@ public static class Setup
 
         builder.Services.AddCascadingAuthenticationState();
         builder.Services.AddScoped<IdentityRedirectManager>();
-        builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+        builder.Services.AddScoped<Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider, AuthenticationStateProvider>();
 
         var jwtSigningKey = builder.Configuration["Jwt:SigningKey"];
 
