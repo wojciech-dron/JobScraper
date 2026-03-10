@@ -24,7 +24,7 @@
                       @bind:event="oninput"
                       @onkeydown="HandleKeyDown"
                       @onkeydown:preventDefault="shouldPreventDefault"
-                      disabled="@IsWorking"/>
+                      disabled="@IsWorking"></textarea>
             <button type="submit" class="btn btn-primary btn-sm"
                     disabled="@(IsWorking || string.IsNullOrWhiteSpace(userMessage))">
                 Send

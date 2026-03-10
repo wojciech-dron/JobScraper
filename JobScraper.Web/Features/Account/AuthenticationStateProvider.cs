@@ -9,7 +9,7 @@ namespace JobScraper.Web.Features.Account;
 
 // This is a server-side AuthenticationStateProvider that revalidates the security stamp for the connected user
 // every 30 minutes an interactive circuit is connected.
-internal sealed class IdentityRevalidatingAuthenticationStateProvider(
+internal sealed class AuthenticationStateProvider(
     ILoggerFactory loggerFactory,
     IServiceScopeFactory scopeFactory,
     IOptions<IdentityOptions> options)

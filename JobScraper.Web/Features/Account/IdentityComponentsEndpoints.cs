@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace JobScraper.Web.Features.Account;
 
-internal static class IdentityComponentsEndpointRouteBuilderExtensions
+internal static class IdentityComponentsEndpoints
 {
     // These endpoints are required by the Identity Razor components defined in the /Components/Account/Pages directory of this project.
     public static IEndpointConventionBuilder MapAdditionalIdentityEndpoints(this IEndpointRouteBuilder endpoints)
@@ -35,7 +35,7 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
             async (
                 HttpContext context,
                 [FromServices] UserManager<ApplicationUser> userManager,
-                [FromServices] AuthenticationStateProvider authenticationStateProvider) =>
+                [FromServices] Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider authenticationStateProvider) =>
             {
                 var user = await userManager.GetUserAsync(context.User);
                 if (user is null)
