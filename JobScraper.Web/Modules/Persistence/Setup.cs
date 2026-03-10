@@ -19,13 +19,8 @@ public static class Setup
 
             ArgumentException.ThrowIfNullOrWhiteSpace(connectionString);
 
-            options
-                .UseSqlite(connectionString)
-                .AddInterceptors(new UpdatableInterceptor(), new OwnerInterceptor())
-                .UseProjectables()
-                .EnableSensitiveDataLogging();
-
-            options.ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
+            options.UseSqlite(connectionString);
+            options.DefaultAppConfiguration(serviceProvider);
         });
 
         // decorate IDbContextFactory with CurrentUserName resolution
@@ -37,12 +32,26 @@ public static class Setup
         return builder;
     }
 
+    internal static void DefaultAppConfiguration(this DbContextOptionsBuilder options,
+        IServiceProvider serviceProvider)
+    {
+        var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+
+        options
+            .AddInterceptors(new UpdatableInterceptor(), new OwnerInterceptor())
+            .UseProjectables()
+            .UseLoggerFactory(loggerFactory)
+            .EnableSensitiveDataLogging()
+            .ConfigureWarnings(w => w.Ignore(RelationalEventId.PendingModelChangesWarning));
+    }
+
     public static async Task PrepareDbAsync(this IServiceProvider services)
     {
         using var scope = services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<JobsDbContext>();
 
-        EnsureDbDirectoryExists(dbContext);
+        if (dbContext.Database.GetDbConnection() is not SqliteConnection { DataSource: "" or ":memory:" })
+            EnsureDbDirectoryExists(dbContext);
 
         await dbContext.Database.MigrateAsync();
     }

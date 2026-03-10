@@ -12,6 +12,7 @@ using JobScraper.Web.Modules.QuestPdf;
 using JobScraper.Web.Modules.Security;
 using JobScraper.Web.Modules.Services;
 using JobScraper.Web.Modules.Settings;
+using JobScraper.Web.Modules.TimeProvider;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,7 @@ builder.AddJobs();
 builder.ConfigureSecurity();
 builder.AddScrapeServices();
 builder.Services.AddUserProvider();
+builder.Services.AddTimeProvider();
 builder.AddIntegrationServices();
 builder.AddQuestPdf();
 

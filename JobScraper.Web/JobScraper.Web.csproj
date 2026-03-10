@@ -76,6 +76,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="JobScraper.Tests"/>
+    <InternalsVisibleTo Include="JobScraper.IntegrationTests"/>
   </ItemGroup>
 
   <ItemGroup>
