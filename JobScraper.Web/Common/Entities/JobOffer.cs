@@ -1,5 +1,4 @@
-﻿using EntityFrameworkCore.Projectables;
-using JobScraper.Web.Modules.Persistence.Interceptors;
+﻿using JobScraper.Web.Modules.Persistence.Interceptors;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -27,10 +26,6 @@ public class JobOffer : IUpdatable
 
     public Company? Company { get; set; }
     public List<UserOffer> UserOffers { get; set; } = null!;
-
-    /// <remarks> Ownable query filter should make this work </remarks>
-    [Projectable(NullConditionalRewriteSupport = NullConditionalRewriteSupport.Rewrite)]
-    public UserOffer? UserOffer => UserOffers?.FirstOrDefault();
 }
 
 public enum DetailsScrapeStatus

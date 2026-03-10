@@ -1,4 +1,7 @@
+using System.Net.Http.Headers;
 using JobScraper.IntegrationTests.Host.Persistence;
+using JobScraper.IntegrationTests.Host.Services;
+using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using RichardSzalay.MockHttp;
 
@@ -16,6 +19,14 @@ public class BaseTestingFixture : IAsyncLifetime
     private DbRespawner respawner = null!;
 
     public Lazy<HttpClient> AnonymousClient => new(factory.CreateClient());
+
+    public HttpClient CreateAuthenticatedClient(string email = TestAuthHandler.DefaultUserEmail)
+    {
+        var client = factory.CreateDefaultClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue(TestAuthHandler.SchemeName);
+        client.DefaultRequestHeaders.Add("X-Test-User", email);
+        return client;
+    }
 
     public ITestOutputHelper? TestOutput
     {

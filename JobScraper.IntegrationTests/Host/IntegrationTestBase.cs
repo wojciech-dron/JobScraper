@@ -47,6 +47,9 @@ public abstract class IntegrationTestBase : IAsyncLifetime
         Scope.Dispose();
         Scope = Fixture.CreateScope();
 
+        TestOutput.Write(
+            "\n\n------------------------ New service scope ------------------------\n\n");
+
         DbContext.CurrentUserName = CurrentUserName;
     }
 
@@ -58,4 +61,7 @@ public abstract class IntegrationTestBase : IAsyncLifetime
     }
 
     protected HttpClient GetAnonymousClient() => Fixture.AnonymousClient.Value;
+
+    protected HttpClient GetAuthenticatedClient(string? email = null) =>
+        Fixture.CreateAuthenticatedClient(email ?? CurrentUserName);
 }
