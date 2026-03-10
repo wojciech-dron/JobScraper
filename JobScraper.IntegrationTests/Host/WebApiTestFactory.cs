@@ -1,7 +1,9 @@
 using JobScraper.IntegrationTests.Host.HttpMocks;
 using JobScraper.IntegrationTests.Host.Persistence;
 using JobScraper.IntegrationTests.Host.Services;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -43,6 +45,10 @@ internal sealed class WebApiTestFactory(string connectionString) : WebApplicatio
             s.MockAllHttpClients();
             s.AddTimeProviderMock();
             s.AddObjectMother();
+
+            s.AddAuthentication(TestAuthHandler.SchemeName)
+                .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
+                    TestAuthHandler.SchemeName, _ => { });
         });
     }
 }

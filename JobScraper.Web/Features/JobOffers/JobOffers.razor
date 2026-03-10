@@ -191,7 +191,7 @@
                 />
             </HeaderTemplate>
             <ChildContent>
-                <span>@string.Join(", ", context.MyKeywords)</span>
+                <span>@(string.Join(", ", context.MyKeywords))</span>
             </ChildContent>
         </TemplateColumn>
         <PropertyColumn class="col" Property="@(p => p.Details.ScrapedAt)" Format="yyyy-MM-dd" Sortable="true"/>

@@ -270,3 +270,4 @@ __pycache__/
 .roo/
 /JobScraper.Tests/Features/Cv/PdfGeneration/CV_output.pdf
 /.claude/
+/JobScraper.IntegrationTests/Features/Cv/Pdf/output.pdf
