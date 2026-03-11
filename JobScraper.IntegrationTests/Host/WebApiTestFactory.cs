@@ -3,9 +3,10 @@ using JobScraper.IntegrationTests.Host.Persistence;
 using JobScraper.IntegrationTests.Host.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace JobScraper.IntegrationTests.Host;
@@ -14,6 +15,7 @@ namespace JobScraper.IntegrationTests.Host;
 internal sealed class WebApiTestFactory(string connectionString) : WebApplicationFactory<Program>
 {
     private readonly TestLoggerProvider testLoggerProvider = new();
+    private SqliteConnection? keepAliveConnection;
 
     public ITestOutputHelper? TestOutput
     {
@@ -41,14 +43,26 @@ internal sealed class WebApiTestFactory(string connectionString) : WebApplicatio
 
         builder.ConfigureServices(s =>
         {
-            s.AddTestPersistence(connectionString);
+            keepAliveConnection = s.AddTestPersistence(connectionString);
             s.MockAllHttpClients();
             s.AddTimeProviderMock();
             s.AddObjectMother();
 
             s.AddAuthentication(TestAuthHandler.SchemeName)
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(
-                    TestAuthHandler.SchemeName, _ => { });
+                    TestAuthHandler.SchemeName,
+                    _ =>
+                    { });
         });
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (!disposing)
+            return;
+
+        keepAliveConnection?.Dispose();
+        keepAliveConnection = null;
     }
 }

@@ -345,6 +345,7 @@
         {
             await _applicationOfferModal.ShowAsync(selectedOffer);
             pageTitle = $"{selectedOffer.Details.CompanyName} - Apply";
+            StateHasChanged();
         }
     }
 

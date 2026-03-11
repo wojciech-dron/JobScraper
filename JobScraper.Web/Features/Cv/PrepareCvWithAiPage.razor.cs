@@ -65,7 +65,9 @@ public sealed partial class PrepareCvWithAiPage(
         if (!firstRender)
             return;
 
-        module = await js.InvokeAsync<IJSObjectReference>("import", "./Features/Cv/PrepareCvWithAi.razor.js");
+        module = await js.InvokeAsync<IJSObjectReference>("import",
+            $"./Features/Cv/{nameof(PrepareCvWithAiPage)}.razor.js");
+
         await module.InvokeVoidAsync("initPrepareCvResizers");
 
         ArgumentNullException.ThrowIfNull(diffEditor);
