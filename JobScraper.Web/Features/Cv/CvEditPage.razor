@@ -4,7 +4,7 @@
 @using Blazored.FluentValidation
 @using JobScraper.Web.Features.Cv.Components
 
-<AppPageTitle Title="Edit CV"/>
+<AppPageTitle Title="@($"{cvEntity.Name} - Edit CV")"/>
 
 <NavigationLock ConfirmExternalNavigation="@PreventNavigation"
                 OnBeforeInternalNavigation="OnBeforeInternalNavigation"/>

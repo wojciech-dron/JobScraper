@@ -9,7 +9,7 @@
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.EntityFrameworkCore
 
-<AppPageTitle Title="Job offers"/>
+<AppPageTitle Title="@pageTitle"/>
 
 <h1>Job offers</h1>
 
@@ -241,6 +241,7 @@
         ItemsPerPage = 50,
     };
     ApplicationOfferModal _applicationOfferModal = null!;
+    string pageTitle = "Job offers";
     List<string> myKeywordsOptions = [];
     string[] currencyOptions = [];
     readonly string[] originOptions = Enum.GetValues<DataOrigin>().Select(x => x.ToString()).ToArray();
@@ -341,12 +342,16 @@
             .FirstOrDefaultAsync(x => x.OfferUrl == offerUrl);
 
         if (selectedOffer is not null)
+        {
             await _applicationOfferModal.ShowAsync(selectedOffer);
+            pageTitle = $"{selectedOffer.Details.CompanyName} - Apply";
+        }
     }
 
     private async Task OpenApplyModal(UserOffer offer)
     {
         await _applicationOfferModal.ShowAsync(offer);
+        pageTitle = $"{offer.Details.CompanyName} - Apply";
 
         var offerUrl = HttpUtility.UrlEncode(offer.OfferUrl);
         NavigationManager.NavigateTo($"?offerUrl={offerUrl}");
@@ -354,6 +359,7 @@
 
     private void OnModalClose()
     {
+        pageTitle = "Job offers";
         var uriWithoutOffer = NavigationManager.GetUriWithQueryParameter("offerUrl", (string?)null);
         NavigationManager.NavigateTo(uriWithoutOffer, replace: true);
     }
