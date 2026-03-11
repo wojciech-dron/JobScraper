@@ -222,6 +222,7 @@ public sealed partial class PrepareCvWithAiPage(
         }
 
         _toasts.PushMessage("CV saved successfully");
+        _hasEditorChanges = false;
     }
 
     private async Task DeleteCvAsync()
@@ -273,7 +274,7 @@ public sealed partial class PrepareCvWithAiPage(
     private bool _hasEditorChanges;
 
     private bool PreventNavigation => isWorking ||
-        _hasEditorChanges ||
+        _hasEditorChanges                       ||
         dbContext.Entry(cvEntity).State == EntityState.Modified;
 
     private async Task OnEditorContentChanged()
