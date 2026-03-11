@@ -184,7 +184,8 @@ public sealed partial class PrepareCvWithAiPage(
             OfferSummary: offer?.AiSummary,
             ExistingChatHistory: cvEntity.ChatHistory,
             ProviderName: config.SmartAiModel ?? config.DefaultAiModel,
-            UserCvRules: config.UserCvRules);
+            UserCvRules: config.UserCvRules,
+            OriginCvContent: cvEntity.OriginCv?.MarkdownContent);
 
         var result = await mediator.Send(request, _cts.Token);
 

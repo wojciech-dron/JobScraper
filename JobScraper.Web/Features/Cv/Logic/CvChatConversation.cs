@@ -20,7 +20,8 @@ public partial class CvChatConversation
         string? OfferSummary,
         List<ChatItem> ExistingChatHistory,
         string ProviderName,
-        string? UserCvRules = null
+        string? UserCvRules = null,
+        string? OriginCvContent = null
     ) : IRequest<Response>;
 
     public record Response(List<ChatItem> ChatHistory, string? AdjustedCvContent = null);
@@ -164,6 +165,8 @@ public partial class CvChatConversation
 
                      CV content:
                      {request.CurrentCvContent}
+
+                     {(request.OriginCvContent is not null ? $"Original (base) CV content that was used as a starting point:\n{request.OriginCvContent}" : "")}
 
                      {(request.OfferContent is not null ? $"Job offer content:\n{request.OfferContent}" : "")}
 
