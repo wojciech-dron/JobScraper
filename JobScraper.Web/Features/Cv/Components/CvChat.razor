@@ -51,7 +51,7 @@
             return;
 
         module ??= await JS.InvokeAsync<IJSObjectReference>("import",
-            "./Features/Cv/Components/AiCvChat.razor.js");
+            $"./Features/Cv/Components/{nameof(CvChat)}.razor.js");
 
         await module.InvokeVoidAsync("scrollToBottom", chatContainerRef);
     }

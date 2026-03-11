@@ -50,7 +50,10 @@ public static class Setup
         using var scope = services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<JobsDbContext>();
 
-        if (dbContext.Database.GetDbConnection() is not SqliteConnection { DataSource: "" or ":memory:" })
+        var sqliteConn = dbContext.Database.GetDbConnection() as SqliteConnection;
+        var csb = new SqliteConnectionStringBuilder(sqliteConn?.ConnectionString);
+        var isInMemory = csb.Mode == SqliteOpenMode.Memory || csb.DataSource is "" or ":memory:";
+        if (!isInMemory)
             EnsureDbDirectoryExists(dbContext);
 
         await dbContext.Database.MigrateAsync();
