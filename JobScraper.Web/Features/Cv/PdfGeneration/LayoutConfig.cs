@@ -16,7 +16,7 @@ public class LayoutConfig
     public float ImageBorderRadius { get; set; } = 15;
     public float ImageBorderThickness { get; set; } = 1;
     public string ImageBorderColor { get; set; } = Colors.Grey.Lighten1;
-    public int TextBlocksAlignedWithImage { get; set; } = 8;
+    public int TextBlocksAlignedWithImage { get; set; } = 7;
 
     // font sizes & headers
     public float DefaultFontSize { get; set; } = 8.6f;

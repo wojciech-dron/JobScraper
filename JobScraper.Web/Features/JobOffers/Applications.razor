@@ -154,7 +154,7 @@
         .WhereIf(!string.IsNullOrEmpty(TitleFilter), a => a.Offer.Details.Title.ToLower().Contains(TitleFilter!.ToLower()))
         .WhereIf(!string.IsNullOrEmpty(CompanyFilter), a => a.Offer.Details.CompanyName!.ToLower().Contains(CompanyFilter!.ToLower()))
         .WhereIf(StatusFilter?.Length > 0, jo => StatusFilter!.Contains(jo.Status, null))
-        .OrderByDescending(jo => jo.RespondedAt)
+        .OrderByDescending(jo => jo.UpdatedAt)
         .ThenByDescending(jo => jo.AppliedAt);
 
     protected override async Task OnInitializedAsync() => context = await DbFactory.CreateDbContextAsync();

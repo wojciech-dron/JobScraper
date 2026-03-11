@@ -233,16 +233,16 @@ public class GenerateCvPdfFromMarkdown
                         if (emphasis.DelimiterCount == 2) textSpan.Bold();
                         if (emphasis.DelimiterCount == 1) textSpan.Italic();
                         break;
+                    case LineBreakInline { IsHard: false }:
+                        text.Span(" ");
+                        break;
                     case LineBreakInline:
                         break;
                     case HtmlInline html:
                         text.Span(html.Tag);
                         break;
-                    case not null when inline.GetType().Name == "SoftlineBreakInline":
-                        text.Span(" ");
-                        break;
                     case LinkInline link:
-                        text.Span(GetInlineText(link))
+                        text.Hyperlink(GetInlineText(link), link.Url ?? "")
                             .FontColor(layoutConfig.UrlColor)
                             .Underline();
                         break;

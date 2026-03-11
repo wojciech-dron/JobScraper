@@ -31,14 +31,14 @@ public class GenerateCvPdfFromMarkdownTests
             currentDir = currentDir.Parent;
 
         var projectDir = Path.Combine(currentDir!.FullName, "JobScraper.Tests");
-        var markdownPath = Path.Combine(projectDir, "Features", "Cv", "PdfGeneration", "CV content.md");
+        var markdownPath = Path.Combine(projectDir, "Features", "Cv", "PdfGeneration", "CV_content.md");
         var outputPath = Path.Combine(projectDir, "Features", "Cv", "PdfGeneration", "CV_output.pdf");
         var imagePath = Path.Combine(projectDir, "Features", "Cv", "PdfGeneration", "image.jpg");
 
         if (!File.Exists(markdownPath))
         {
             // Fallback for different environments
-            markdownPath = Path.Combine(AppContext.BaseDirectory, "Features", "Cv", "CV content.md");
+            markdownPath = Path.Combine(AppContext.BaseDirectory, "Features", "Cv", "CV_content.md");
             outputPath = Path.Combine(Path.GetDirectoryName(markdownPath)!, "CV_output.pdf");
             imagePath = Path.Combine(Path.GetDirectoryName(markdownPath)!, "image.jpg");
         }
