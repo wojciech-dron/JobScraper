@@ -150,6 +150,7 @@ public sealed partial class CvEditPage(
         }
 
         _toasts.PushMessage("CV saved successfully");
+        _hasEditorChanges = false;
 
         if (Id == 0) // redirect if new cv
             navigationManager.NavigateTo($"cv/edit/{cvEntity.Id}", true);
