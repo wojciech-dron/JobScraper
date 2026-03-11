@@ -7,14 +7,14 @@
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.EntityFrameworkCore
 
-<AppPageTitle Title="Applications"/>
+<AppPageTitle Title="@pageTitle"/>
 
 <h1>Applications</h1>
 
 <div id="table-container" class="overflow-auto h-100">
     <QuickGrid @ref="@grid" Items="applications" Pagination="@pagination" class="table">
         <TemplateColumn Title="Details">
-            <button class="btn btn-primary" @onclick="_ => _applicationOfferModal.ShowAsync(context.Offer)">Modify
+            <button class="btn btn-primary" @onclick="_ => OpenApplicationModal(context.Offer)">Modify
             </button>
         </TemplateColumn>
         <TemplateColumn SortBy="@(GridSort<Application>.ByAscending(p => p.Status))" Title="Rejected">
@@ -124,7 +124,8 @@
     </Paginator>
 </div>
 
-<ApplicationOfferModal @ref="_applicationOfferModal" OnUpdate="@(() => grid.RefreshDataAsync())"/>
+<ApplicationOfferModal @ref="_applicationOfferModal" OnUpdate="@(() => grid.RefreshDataAsync())"
+                       OnHide="@(() => pageTitle = "Applications")"/>
 
 @inject IDbContextFactory<JobsDbContext> DbFactory
 @inject NavigationManager NavigationManager
@@ -137,6 +138,7 @@
         ItemsPerPage = 50,
     };
     ApplicationOfferModal _applicationOfferModal = null!;
+    string pageTitle = "Applications";
 
     readonly string[] originOptions = Enum.GetValues<DataOrigin>().Select(x => x.ToString()).ToArray();
 
@@ -169,6 +171,12 @@
         application.Status = ApplyStatus.Applied;
         await context.SaveChangesAsync();
         await grid.RefreshDataAsync();
+    }
+
+    private async Task OpenApplicationModal(UserOffer offer)
+    {
+        await _applicationOfferModal.ShowAsync(offer);
+        pageTitle = $"{offer.Details.CompanyName} - Apply";
     }
 
     public async ValueTask DisposeAsync() => await context.DisposeAsync();
