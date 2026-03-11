@@ -86,7 +86,7 @@
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted"
                   title="Space From Text - minimal size of the gap between text and image">Space From Text</span>
-            <InputNumber @bind-Value="Config.ImageMinSpaceFromText" class="form-control"/>
+            <InputNumber @bind-Value="Config.ImageMinSpaceFromText" class="form-control" Step="0.1"/>
         </div>
     </div>
     <div class="flex-col">
@@ -98,7 +98,7 @@
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Border Thick">Border Thick</span>
-            <InputNumber @bind-Value="Config.ImageBorderThickness" class="form-control"/>
+            <InputNumber @bind-Value="Config.ImageBorderThickness" class="form-control" Step="0.1"/>
         </div>
     </div>
     <div class="flex-col">
@@ -165,7 +165,7 @@
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted"
                   title="Max Level - maximum level of header that will have included underline">Max Level</span>
-            <InputNumber @bind-Value="Config.HeaderUnderlineMaxLevel" class="form-control"/>
+            <InputNumber @bind-Value="Config.HeaderUnderlineMaxLevel" class="form-control" Step="0.1"/>
         </div>
     </div>
     <div class="flex-col">
@@ -223,21 +223,21 @@
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Heading Pad Top">Heading Pad Top</span>
-            <InputNumber @bind-Value="Config.HeadingPaddingTop" class="form-control"/>
+            <InputNumber @bind-Value="Config.HeadingPaddingTop" class="form-control" Step="0.1"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted"
                   title="Heading Pad Bottom">Heading Pad Bottom</span>
-            <InputNumber @bind-Value="Config.HeadingPaddingBottom" class="form-control"/>
+            <InputNumber @bind-Value="Config.HeadingPaddingBottom" class="form-control" Step="0.1"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted"
                   title="Paragraph Pad Bottom">Paragraph Pad Bottom</span>
-            <InputNumber @bind-Value="Config.ParagraphPaddingBottom" class="form-control"/>
+            <InputNumber @bind-Value="Config.ParagraphPaddingBottom" class="form-control" Step="0.1"/>
         </div>
     </div>
 
@@ -245,19 +245,19 @@
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Pad Left">Pad Left</span>
-            <InputNumber @bind-Value="Config.ListPaddingLeft" class="form-control"/>
+            <InputNumber @bind-Value="Config.ListPaddingLeft" class="form-control" Step="0.1"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Bullet Text">Bullet Text</span>
-            <InputText @bind-Value="Config.ListBulletText" class="form-control"/>
+            <InputText @bind-Value="Config.ListBulletText" class="form-control" Step="0.1"/>
         </div>
     </div>
     <div class="flex-col">
         <div class="input-group input-group-sm">
             <span class="input-group-text px-1 py-0 small text-muted" title="Bullet Width">Bullet Width</span>
-            <InputNumber @bind-Value="Config.ListBulletWidth" class="form-control"/>
+            <InputNumber @bind-Value="Config.ListBulletWidth" class="form-control" Step="0.1"/>
         </div>
     </div>
 
