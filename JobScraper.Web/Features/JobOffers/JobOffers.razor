@@ -279,7 +279,7 @@
         .WhereIf(SalaryMinFilter.HasValue, jo => jo.Details.SalaryMinMonth >= SalaryMinFilter)
         .WhereIf(SalaryMaxFilter.HasValue, jo => jo.Details.SalaryMaxMonth <= SalaryMaxFilter)
         .OrderByDescending(jo => jo.HideStatus)
-        .ThenByDescending(jo => jo.Details.SalaryMaxMonth);
+        .ThenByDescending(jo => jo.Details.ScrapedAt);
 
     protected override async Task OnInitializedAsync()
     {
