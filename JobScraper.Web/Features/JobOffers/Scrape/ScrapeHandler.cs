@@ -194,6 +194,7 @@ public sealed partial class ScrapeHandler(
     private async Task MarkOffersForAiSummary(IEnumerable<string> offerUrls)
     {
         var offers = await dbContext.UserOffers
+            .Where(uo => uo.HideStatus != HideStatus.Hidden)
             .Where(uo => offerUrls.Contains(uo.OfferUrl))
             .ToArrayAsync();
 
