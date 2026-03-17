@@ -9,9 +9,9 @@ using Serilog.Context;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 
-public abstract partial class DetailsScrapperBaseHandler<TScrapeCommand>(
+public abstract partial class DetailsScraperBaseHandler<TScrapeCommand>(
     IOptions<AppSettings> config,
-    ILogger<DetailsScrapperBaseHandler<TScrapeCommand>> logger,
+    ILogger<DetailsScraperBaseHandler<TScrapeCommand>> logger,
     JobsDbContext dbContext
 ) : ScrapperBaseHandler(config, logger, dbContext), IRequestHandler<TScrapeCommand, ScrapeResponse>
     where TScrapeCommand : ScrapeDetailsCommand
