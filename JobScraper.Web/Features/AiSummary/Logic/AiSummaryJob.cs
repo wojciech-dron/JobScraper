@@ -154,7 +154,7 @@ public sealed partial class AiSummaryJob(
         if (!result.Success)
             return;
 
-        var newCvName = $"{cvTemplate.Name} - {offer.Details.CompanyName} - {offer.Details.Title}";
+        var newCvName = $"{offer.Details.CompanyName} - {offer.Details.Title}";
 
         if (await dbContext.Cvs.AnyAsync(x => x.Name == newCvName, cancellationToken))
             newCvName = $"{newCvName} - {DateTime.UtcNow:yyyyMMddHHmm}";

@@ -137,7 +137,13 @@ public sealed partial class PrepareCvWithAiPage(
         StateHasChanged();
         _toasts.PushMessage("Preparing CV content. It could take a while");
 
-        var config = dbContext.AiSummaryConfigs.First();
+        var config = await dbContext.AiSummaryConfigs.FirstOrDefaultAsync();
+        if (config is null)
+        {
+            _toasts.PushMessage("AI summary config not set. Please set this config before update", ToastType.Warning);
+            isWorking = false;
+            return;
+        }
 
         var request = new AdjustCvForOffer.Request(
             CvContent: cvContent,
@@ -175,7 +181,13 @@ public sealed partial class PrepareCvWithAiPage(
         isWorking = true;
         StateHasChanged();
 
-        var config = dbContext.AiSummaryConfigs.First();
+        var config = await dbContext.AiSummaryConfigs.FirstOrDefaultAsync();
+        if (config is null)
+        {
+            _toasts.PushMessage("AI summary config not set. Please set this config before update", ToastType.Warning);
+            isWorking = false;
+            return;
+        }
 
         var request = new CvChatConversation.Request(
             UserMessage: message,
