@@ -49,8 +49,7 @@ public abstract partial class DetailsScrapperBaseHandler<TScrapeCommand>(
             {
                 LogScrapingJobDetails(Logger, DataOrigin, jobOffer.OfferUrl);
 
-                await RetryPolicy.ExecuteAsync(async () =>
-                    await ScrapeJobDetails(jobOffer));
+                await ScrapeJobDetails(jobOffer);
 
                 jobOffer.DetailsScrapeStatus = DetailsScrapeStatus.Scraped;
 

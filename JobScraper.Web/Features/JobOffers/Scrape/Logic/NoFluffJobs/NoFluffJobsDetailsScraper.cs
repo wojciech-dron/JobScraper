@@ -24,8 +24,6 @@ public class NoFluffJobsDetailsScraper
 
         public override async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
         {
-            Logger.LogInformation("Scraping {DataOrigin} job details for {OfferUrl}", DataOrigin, jobOffer.OfferUrl);
-
             var page = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: ScrapeConfig.WaitForDetailsSeconds);
 
             await SaveScreenshot(jobOffer, page);

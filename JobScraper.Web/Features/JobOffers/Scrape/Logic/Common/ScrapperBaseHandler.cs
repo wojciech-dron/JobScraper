@@ -2,8 +2,6 @@
 using JobScraper.Web.Modules.Persistence;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
-using Polly;
-using Polly.Retry;
 
 // ReSharper disable VirtualMemberCallInConstructor
 
@@ -30,9 +28,6 @@ public abstract class ScrapperBaseHandler : IDisposable
     private IPlaywright? _playwright;
 
     protected abstract DataOrigin DataOrigin { get; }
-    public static readonly AsyncRetryPolicy<JobOffer> RetryPolicy =
-        Policy<JobOffer>.Handle<Exception>()
-            .WaitAndRetryAsync(1, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
 
     public bool IsEnabled { get; }
     public string BaseUrl { get; }
