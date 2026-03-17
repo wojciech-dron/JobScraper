@@ -46,9 +46,7 @@ public class JobOfferModelBuilder : IEntityTypeConfiguration<JobOffer>
         builder.Property(j => j.Title).HasMaxLength(255);
         builder.Property(j => j.Origin).HasConversion<string>().HasMaxLength(24);
         builder.Property(j => j.CompanyName).HasMaxLength(255);
-        builder.Property(j => j.Location).HasMaxLength(255);
         builder.Property(j => j.Location).HasMaxLength(100);
-        // builder.Property(j => j.Comments).HasMaxLength(500);
         builder.Property(j => j.DetailsScrapeStatus)
             .HasConversion<string>()
             .HasMaxLength(24)
@@ -57,12 +55,10 @@ public class JobOfferModelBuilder : IEntityTypeConfiguration<JobOffer>
         builder.Property(j => j.Description).HasMaxLength(5000);
         builder.Property(j => j.HtmlPath).HasMaxLength(1024);
         builder.Property(j => j.ScreenShotPath).HasMaxLength(1024);
-        // builder.PrimitiveCollection(j => j.MyKeywords);
 
         builder.Property(j => j.SalaryCurrency).HasMaxLength(10);
         builder.PrimitiveCollection(j => j.OfferKeywords);
 
-        // builder.HasIndex(j => j.HideStatus);
         builder.HasIndex(j => j.ScrapedAt);
         builder.HasIndex(j => j.UpdatedAt);
         builder.HasIndex(j => j.Location);

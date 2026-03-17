@@ -43,7 +43,7 @@
                 }
             </div>
 
-            <div class="form-group col-md-8">
+            <div class="form-group col-md-7">
                 <label for="SearchUrl">Search Url:</label>
                 <div class="d-flex">
                     <InputText
@@ -61,6 +61,14 @@
                         </a>
                     }
                 </div>
+            </div>
+
+            <div class="form-group col-md-1 d-flex flex-column">
+                <label for="PagesLimit"
+                       title="Number of pages that will be scraped. You should order offers by newest in search urls.">
+                    Pages limit:
+                </label>
+                <InputNumber id="PagesLimit" @bind-Value="@source.PagesLimit" class="form-control"/>
             </div>
 
             <div class="form-group col-md-1 d-flex flex-column">

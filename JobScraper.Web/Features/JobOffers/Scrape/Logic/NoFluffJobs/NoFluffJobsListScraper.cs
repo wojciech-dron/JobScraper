@@ -33,7 +33,7 @@ public partial class NoFluffJobsListScraper
             var page = await LoadUntilAsync(searchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds);
 
             var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
-            var pageNumber = 0;
+            var pageNumber = 1;
 
             await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
             await SavePage(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.html");
@@ -46,6 +46,9 @@ public partial class NoFluffJobsListScraper
             {
                 pageNumber++;
                 previousJobs.AddRange(newJobs);
+
+                if (sourceConfig.PagesLimit.HasValue && pageNumber > sourceConfig.PagesLimit.Value)
+                    break;
 
                 Logger.LogInformation("{DataOrigin} - scraping page {PageNumber}", DataOrigin, pageNumber);
 

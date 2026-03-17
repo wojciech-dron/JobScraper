@@ -42,6 +42,7 @@ public class SourceConfig
     public string SearchUrl { get; set; } = "";
     public DataOrigin DataOrigin { get; set; } = DataOrigin.PracujPl;
     public bool Disabled { get; set; } = false;
+    public int? PagesLimit { get; set; } = 5;
 }
 
 public class ScraperConfigModelBuilder : IEntityTypeConfiguration<ScraperConfig>
