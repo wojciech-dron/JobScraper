@@ -45,13 +45,22 @@
 
             <div class="form-group col-md-8">
                 <label for="SearchUrl">Search Url:</label>
-                <InputText
-                    id="SearchUrl"
-                    class="form-control"
-                    placeholder="Enter full search url"
-                    @bind-Value="@source.SearchUrl"
-                    @bind-Value:after="() => TrySetOrigin(source)"
-                    disabled="@source.Disabled"/>
+                <div class="d-flex">
+                    <InputText
+                        id="SearchUrl"
+                        class="form-control"
+                        placeholder="Enter full search url"
+                        @bind-Value="@source.SearchUrl"
+                        @bind-Value:after="() => TrySetOrigin(source)"
+                        disabled="@source.Disabled"/>
+                    @if (Uri.IsWellFormedUriString(source.SearchUrl, UriKind.Absolute))
+                    {
+                        <a href="@source.SearchUrl" target="_blank"
+                           class="btn btn-outline-primary ms-2">
+                            Open
+                        </a>
+                    }
+                </div>
             </div>
 
             <div class="form-group col-md-1 d-flex flex-column">
