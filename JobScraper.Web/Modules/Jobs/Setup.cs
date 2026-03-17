@@ -19,7 +19,7 @@ public static class Setup
             options.SetExceptionHandler<JobsExceptionHandler>();
             options.ConfigureScheduler(scheduler =>
             {
-                scheduler.MaxConcurrency = 10;                         // Maximum concurrent worker threads
+                scheduler.MaxConcurrency = 1;                          // Maximum concurrent worker threads
                 scheduler.NodeIdentifier = "production-server-01";     // Unique node identifier
                 scheduler.IdleWorkerTimeOut = TimeSpan.FromMinutes(1); // Idle worker timeout
                 scheduler.SchedulerTimeZone = TimeZoneInfo.Local;      // Timezone for scheduling
