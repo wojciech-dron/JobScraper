@@ -192,7 +192,7 @@ public sealed partial class CvEditPage(
             return;
         }
 
-        var fileName = $"{cvEntity.Name}.pdf";
+        var fileName = $"{cvEntity.Name.ToFileName()}.pdf";
         var pdfBytes = result.Value;
         using var stream = new MemoryStream(pdfBytes);
         using var streamRef = new DotNetStreamReference(stream);
@@ -212,7 +212,7 @@ public sealed partial class CvEditPage(
         if (string.IsNullOrWhiteSpace(mdContent))
             return;
 
-        var fileName = $"{cvEntity.Name}.md";
+        var fileName = $"{cvEntity.Name.ToFileName()}.md";
         var bytes = Encoding.UTF8.GetBytes(mdContent);
         using var stream = new MemoryStream(bytes);
         using var streamRef = new DotNetStreamReference(stream);
@@ -275,7 +275,7 @@ public sealed partial class CvEditPage(
     private bool _hasEditorChanges;
 
     private bool PreventNavigation => isWorking ||
-        _hasEditorChanges ||
+        _hasEditorChanges                       ||
         dbContext.Entry(cvEntity).State == EntityState.Modified;
 
     private async Task OnEditorContentChanged()
