@@ -84,6 +84,7 @@ public abstract partial class ListScraperBaseHandler<TScrapeCommand>(
                 .ToArrayAsync(cancellationToken);
 
             var companiesToAdd = companyNames
+                .Distinct()
                 .Except(existingKeys)
                 .Select(name => new Company
                 {
@@ -116,6 +117,7 @@ public abstract partial class ListScraperBaseHandler<TScrapeCommand>(
         var existingOfferUrls = existingJobs.Select(jo => jo.OfferUrl);
 
         var jobsToAdd = jobs
+            .DistinctBy(jo => jo.OfferUrl)
             .Where(jo => !existingOfferUrls.Contains(jo.OfferUrl))
             .ToList();
 
@@ -139,6 +141,7 @@ public abstract partial class ListScraperBaseHandler<TScrapeCommand>(
         var existingOfferUrls = existingUserOffers.Select(jo => jo.OfferUrl);
 
         var userOffersToAdd = jobs
+            .DistinctBy(jo => jo.OfferUrl)
             .Where(jo => !existingOfferUrls.Contains(jo.OfferUrl))
             .Select(jo => new UserOffer(jo).ProcessKeywords(ScrapeConfig))
             .ToArray();
