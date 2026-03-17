@@ -27,13 +27,17 @@ public class IndeedListScraper
             var page = await LoadUntilAsync(searchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds);
 
             var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
-            var pageNumber = 0;
+            var pageNumber = 1;
 
             await SaveScreenshot(page, $"indeed/list/{fetchDate}/{pageNumber}.png");
             await SavePage(page, $"indeed/list/{fetchDate}/{pageNumber}.html");
             while (true)
             {
                 pageNumber++;
+
+                if (sourceConfig.PagesLimit.HasValue && pageNumber > sourceConfig.PagesLimit.Value)
+                    break;
+
                 Logger.LogInformation("Indeed scraping page {PageCount}...", pageNumber);
 
                 var scrappedJobs = await ScrapeJobsFromList(page);

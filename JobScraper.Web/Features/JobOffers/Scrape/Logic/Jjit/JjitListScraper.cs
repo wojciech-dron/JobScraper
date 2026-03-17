@@ -35,7 +35,7 @@ public class JjitListScraper
             await AcceptCookies(page);
 
             var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
-            var pageNumber = 0;
+            var pageNumber = 1;
 
             await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
             await SavePage(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.html");
@@ -48,6 +48,9 @@ public class JjitListScraper
             while (newJobs.Count > 0)
             {
                 pageNumber++;
+
+                if (sourceConfig.PagesLimit.HasValue && pageNumber > sourceConfig.PagesLimit.Value)
+                    break;
 
                 Logger.LogInformation("{DataOrigin} - scraping page {PageNumber}", DataOrigin, pageNumber);
 
