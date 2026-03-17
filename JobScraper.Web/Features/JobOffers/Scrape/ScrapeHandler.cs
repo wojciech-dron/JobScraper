@@ -21,7 +21,7 @@ namespace JobScraper.Web.Features.JobOffers.Scrape;
 public record struct ScrapeRequest(string Owner);
 
 public sealed partial class ScrapeHandler(
-    IMediator mediator,
+    IServiceProvider serviceProvider,
     UserProvider userProvider,
     JobsDbContext dbContext,
     ILogger<ScrapeHandler> logger
@@ -93,6 +93,8 @@ public sealed partial class ScrapeHandler(
 
                 try
                 {
+                    await using var scope = serviceProvider.CreateAsyncScope();
+                    var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
                     var result = await mediator.Send(command, cancellationToken);
                     offersCount += result.ScrapedOffersCount;
                 }
@@ -150,6 +152,8 @@ public sealed partial class ScrapeHandler(
 
                 try
                 {
+                    await using var scope = serviceProvider.CreateAsyncScope();
+                    var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
                     var result = await mediator.Send(command, cancellationToken);
                     offersScraped.AddRange(result.OffersUrls);
                 }

@@ -32,8 +32,9 @@ public abstract partial class DetailsScrapperBaseHandler<TScrapeCommand>(
         var statuses = command.StatusesToScrape;
         var offerUrls = command.OfferUrls;
         var userOffers = await DbContext.UserOffers
-            .Include(j => j.Details.Company) // TODO: check if join contains query filter
-            .Where(j => j.Details.Origin == DataOrigin)
+            .Include(j => j.Details.Company)
+            .Where(j => j.Details.Company != null)
+            .Where(j => j.Details.Origin  == DataOrigin)
             .Where(j => statuses.Any(s => s == j.Details.DetailsScrapeStatus))
             .WhereIf(offerUrls.Length > 0, j => offerUrls.Contains(j.OfferUrl))
             .ToListAsync(cancellationToken);
