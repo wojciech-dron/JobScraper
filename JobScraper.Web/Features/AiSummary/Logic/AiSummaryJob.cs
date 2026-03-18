@@ -191,8 +191,10 @@ public sealed partial class AiSummaryJob(
 
     [LoggerMessage(LogLevel.Information, "Summarizing offer {offerUrl}")]
     static partial void LogSummaryOfferStart(ILogger<ScrapeHandler> logger, string offerUrl);
+
     [LoggerMessage(LogLevel.Information, "Selected CV template {cvName}")]
     static partial void LogSelectedCvTemplate(ILogger<ScrapeHandler> logger, string cvName);
+
     [LoggerMessage(LogLevel.Information, "Created dedicated CV for offer with id {CvId}")]
     static partial void LogCreatedDedicatedCv(ILogger<ScrapeHandler> logger, long CvId);
 }
