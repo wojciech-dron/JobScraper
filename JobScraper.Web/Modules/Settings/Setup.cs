@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using System.Runtime.Versioning;
 using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Common.Models;
 
 namespace JobScraper.Web.Modules.Settings;
 

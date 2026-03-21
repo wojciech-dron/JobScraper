@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Common.Models;
 using JobScraper.Web.Features.AiSummary.Logic;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Custom;

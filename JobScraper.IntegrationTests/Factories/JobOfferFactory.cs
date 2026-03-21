@@ -1,5 +1,6 @@
 ﻿using JobScraper.IntegrationTests.Host.Services;
 using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Common.Models;
 
 namespace JobScraper.IntegrationTests.Factories;
 

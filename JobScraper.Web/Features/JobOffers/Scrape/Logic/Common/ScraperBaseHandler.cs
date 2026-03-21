@@ -1,4 +1,5 @@
 using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Common.Models;
 using JobScraper.Web.Modules.Persistence;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;

@@ -1,6 +1,7 @@
 using JobScraper.IntegrationTests.Factories;
 using JobScraper.IntegrationTests.Host;
 using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Common.Models;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Custom;
 using JobScraper.Web.Modules.Persistence;
