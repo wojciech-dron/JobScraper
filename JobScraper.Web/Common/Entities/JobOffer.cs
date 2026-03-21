@@ -10,7 +10,7 @@ public class JobOffer : IUpdatable
     public DateTime? UpdatedAt { get; set; }
 
     public string Title { get; set; } = null!;
-    public DataOrigin? Origin { get; set; }
+    public string? Origin { get; set; }
     public string? CompanyName { get; set; }
     public string? Location { get; set; }
     public DateTime ScrapedAt { get; set; } = DateTime.UtcNow;
@@ -44,7 +44,7 @@ public class JobOfferModelBuilder : IEntityTypeConfiguration<JobOffer>
         builder.HasKey(j => j.OfferUrl);
         builder.Property(j => j.OfferUrl).HasMaxLength(500);
         builder.Property(j => j.Title).HasMaxLength(255);
-        builder.Property(j => j.Origin).HasConversion<string>().HasMaxLength(24);
+        builder.Property(j => j.Origin).HasMaxLength(100);
         builder.Property(j => j.CompanyName).HasMaxLength(255);
         builder.Property(j => j.Location).HasMaxLength(100);
         builder.Property(j => j.DetailsScrapeStatus)

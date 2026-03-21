@@ -244,7 +244,11 @@
     string pageTitle = "Job offers";
     List<string> myKeywordsOptions = [];
     string[] currencyOptions = [];
-    readonly string[] originOptions = Enum.GetValues<DataOrigin>().Select(x => x.ToString()).ToArray();
+    readonly string[] originOptions =
+    [
+        DataOrigins.Manual, DataOrigins.Indeed, DataOrigins.JustJoinIt, DataOrigins.NoFluffJobs,
+        DataOrigins.LinkedIn, DataOrigins.PracujPl, DataOrigins.RocketJobs, DataOrigins.Olx,
+    ];
 
     public string? TitleFilter { get; set; } = "";
     public string? LocationFilter { get; set; } = "";

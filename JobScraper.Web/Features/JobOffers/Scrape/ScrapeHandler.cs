@@ -2,6 +2,7 @@
 using JobScraper.Web.Common.Entities;
 using JobScraper.Web.Features.AiSummary.Logic;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
+using JobScraper.Web.Features.JobOffers.Scrape.Logic.Custom;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Indeed;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Jjit;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.NoFluffJobs;
@@ -77,13 +78,13 @@ public sealed partial class ScrapeHandler(
                 .Where(s => !s.Disabled)
                 .Select<SourceConfig, ScrapeCommand>(source => source.DataOrigin switch
                 {
-                    DataOrigin.Indeed      => new IndeedListScraper.Command(source),
-                    DataOrigin.JustJoinIt  => new JjitListScraper.Command(source),
-                    DataOrigin.NoFluffJobs => new NoFluffJobsListScraper.Command(source),
-                    DataOrigin.PracujPl    => new PracujPlListScraper.Command(source),
-                    DataOrigin.RocketJobs  => new RocketJobsListScraper.Command(source),
-                    DataOrigin.Olx         => new OlxListScraper.Command(source),
-                    _                      => throw new ArgumentOutOfRangeException($"List scraping not implemented for {source}"),
+                    DataOrigins.Indeed      => new IndeedListScraper.Command(source),
+                    DataOrigins.JustJoinIt  => new JjitListScraper.Command(source),
+                    DataOrigins.NoFluffJobs => new NoFluffJobsListScraper.Command(source),
+                    DataOrigins.PracujPl    => new PracujPlListScraper.Command(source),
+                    DataOrigins.RocketJobs  => new RocketJobsListScraper.Command(source),
+                    DataOrigins.Olx         => new OlxListScraper.Command(source),
+                    _                       => new CustomListScraper.Command(source),
                 }).ToArray();
 
             for (var idx = 0; idx < listCommands.Length; idx++)
@@ -132,14 +133,13 @@ public sealed partial class ScrapeHandler(
                 .Where(s => !s.Disabled)
                 .Select<SourceConfig, ScrapeCommand?>(source => source.DataOrigin switch
                 {
-                    DataOrigin.Indeed      => new IndeedDetailsScraper.Command(source),
-                    DataOrigin.JustJoinIt  => new JjitDetailsScraper.Command(source),
-                    DataOrigin.NoFluffJobs => new NoFluffJobsDetailsScraper.Command(source),
-                    DataOrigin.RocketJobs  => new RocketJobsDetailsScraper.Command(source),
-                    DataOrigin.PracujPl    => null,
-                    DataOrigin.Olx         => null,
-
-                    _ => throw new NotImplementedException($"List scraping not implemented for {source}"),
+                    DataOrigins.Indeed      => new IndeedDetailsScraper.Command(source),
+                    DataOrigins.JustJoinIt  => new JjitDetailsScraper.Command(source),
+                    DataOrigins.NoFluffJobs => new NoFluffJobsDetailsScraper.Command(source),
+                    DataOrigins.RocketJobs  => new RocketJobsDetailsScraper.Command(source),
+                    DataOrigins.PracujPl    => null,
+                    DataOrigins.Olx         => null,
+                    _                       => new CustomDetailsScraper.Command(source),
                 }).Where(c => c is not null)
                 .ToArray();
 

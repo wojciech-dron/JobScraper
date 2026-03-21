@@ -26,7 +26,7 @@ public class ScraperConfig : IOwnable, IUpdatable
 
     public string ScrapeCron { get; set; } = "0 15 * * *"; // default: every day at 15:00
 
-    public bool IsEnabled(DataOrigin origin) => Sources.Any(x => x.DataOrigin == origin && !x.Disabled);
+    public bool IsEnabled(string origin) => Sources.Any(x => x.DataOrigin == origin && !x.Disabled);
 }
 
 public enum BrowserTypeEnum
@@ -40,7 +40,7 @@ public class SourceConfig
 {
     // ReSharper disable once EntityFramework.ModelValidation.UnlimitedStringLength
     public string SearchUrl { get; set; } = "";
-    public DataOrigin DataOrigin { get; set; } = DataOrigin.PracujPl;
+    public string DataOrigin { get; set; } = "PracujPl";
     public bool Disabled { get; set; } = false;
     public int? PagesLimit { get; set; } = 5;
 }

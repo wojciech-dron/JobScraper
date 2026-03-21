@@ -11,20 +11,14 @@ public class JjitDetailsScraper
 {
     public record Command(SourceConfig Source) : ScrapeDetailsCommand(Source);
 
-    public class Handler : DetailsScraperBaseHandler<Command>
+    public class Handler(
+        IOptions<AppSettings> config,
+        ILogger<Handler> logger,
+        JobsDbContext dbContext)
+        : DetailsScraperBaseHandler<Command>(config, logger, dbContext)
     {
-
-        protected override DataOrigin DataOrigin => DataOrigin.JustJoinIt;
-        public Handler(IOptions<AppSettings> config,
-            ILogger<Handler> logger,
-            JobsDbContext dbContext)
-            : base(config, logger, dbContext)
-        { }
-
         public override async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
         {
-            Logger.LogInformation("Scraping {DataOrigin} job details for {OfferUrl}", DataOrigin, jobOffer.OfferUrl);
-
             var page = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: ScrapeConfig.WaitForDetailsSeconds);
             await page.WaitForTimeoutAsync(ScrapeConfig.WaitForDetailsSeconds * 1000); // Wait for the page to load
 

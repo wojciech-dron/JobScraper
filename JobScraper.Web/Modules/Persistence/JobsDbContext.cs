@@ -18,6 +18,7 @@ public class JobsDbContext(DbContextOptions<JobsDbContext> options)
     public DbSet<Company> Companies { get; set; }
     public DbSet<Application> Applications { get; set; }
     public DbSet<ScraperConfig> ScraperConfigs { get; set; }
+    public DbSet<CustomScraperConfig> CustomScraperConfigs { get; set; }
     public DbSet<AiSummaryConfig> AiSummaryConfigs { get; set; }
 
     public DbSet<TimeTickerEntity> TimeTickers { get; set; }
@@ -34,6 +35,7 @@ public class JobsDbContext(DbContextOptions<JobsDbContext> options)
         modelBuilder.ApplyConfiguration(new CompanyModelBuilder());
         modelBuilder.ApplyConfiguration(new ApplicationModelBuilder());
         modelBuilder.ApplyConfiguration(new ScraperConfigModelBuilder());
+        modelBuilder.ApplyConfiguration(new CustomScraperConfigModelBuilder());
         modelBuilder.ApplyConfiguration(new AiSummaryConfigModelBuilder());
         modelBuilder.ApplyConfiguration(new CvEntityModelBuilder());
         modelBuilder.ApplyConfiguration(new ImageEntityModelBuilder());

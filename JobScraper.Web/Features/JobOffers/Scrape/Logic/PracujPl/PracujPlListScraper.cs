@@ -13,28 +13,23 @@ public class PracujPlListScraper
 {
     public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
-    public class Handler : ListScraperBaseHandler<Command>
+    public class Handler(
+        IOptions<AppSettings> config,
+        ILogger<Handler> logger,
+        JobsDbContext dbContext)
+        : ListScraperBaseHandler<Command>(config, logger, dbContext)
     {
-
-        protected override DataOrigin DataOrigin => DataOrigin.PracujPl;
-        public Handler(IOptions<AppSettings> config,
-            ILogger<Handler> logger,
-            JobsDbContext dbContext)
-            : base(config, logger, dbContext)
-        { }
-
         public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs(SourceConfig sourceConfig)
         {
             var searchUrl = sourceConfig.SearchUrl;
-            Logger.LogInformation("{DataOrigin} scraping for url {SearchUrl}", DataOrigin, searchUrl);
 
             var page = await LoadUntilAsync(searchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds);
 
             var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
             var pageNumber = 1;
 
-            await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
-            await SavePage(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.html");
+            await SaveScreenshot(page, $"{Origin}/list/{fetchDate}/{pageNumber}.png");
+            await SavePage(page, $"{Origin}/list/{fetchDate}/{pageNumber}.html");
 
             var cookieButton = await page.QuerySelectorAsync("button[data-test='button-submitCookie']");
             if (cookieButton is not null)
@@ -53,7 +48,7 @@ public class PracujPlListScraper
                 if (sourceConfig.PagesLimit.HasValue && pageNumber > sourceConfig.PagesLimit.Value)
                     break;
 
-                Logger.LogInformation("{DataOrigin} - scraping page {PageNumber}", DataOrigin, pageNumber);
+                Logger.LogInformation("{DataOrigin} - scraping page {PageNumber}", Origin, pageNumber);
 
                 var nextButton = await page.QuerySelectorAsync("button[data-test='bottom-pagination-button-next']");
                 if (nextButton is null)
@@ -74,7 +69,7 @@ public class PracujPlListScraper
                 yield return newJobs;
             }
 
-            Logger.LogInformation("{DataOrigin} - scrapping complete", DataOrigin);
+            Logger.LogInformation("{DataOrigin} - scrapping complete", Origin);
         }
 
         private async Task<List<JobOffer>> ScrapeJobsFromList(IPage page)
@@ -129,7 +124,7 @@ public class PracujPlListScraper
                     OfferKeywords = data.JobKeys.ToList(),
                     CompanyName = data.CompanyName,
                     Location = dataLocation,
-                    Origin = DataOrigin,
+                    Origin = Origin,
                     Description = description,
                     PublishedAt = ParseDate(data.PublishDate),
                     DetailsScrapeStatus = DetailsScrapeStatus.Scraped, // skip details scraping

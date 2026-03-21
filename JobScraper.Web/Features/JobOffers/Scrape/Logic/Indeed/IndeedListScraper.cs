@@ -10,20 +10,15 @@ public class IndeedListScraper
 {
     public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
-    public class Handler : ListScraperBaseHandler<Command>
+    public class Handler(
+        IOptions<AppSettings> config,
+        ILogger<Handler> logger,
+        JobsDbContext dbContext)
+        : ListScraperBaseHandler<Command>(config, logger, dbContext)
     {
-        protected override DataOrigin DataOrigin => DataOrigin.Indeed;
-        public Handler(IOptions<AppSettings> config,
-            ILogger<Handler> logger,
-            JobsDbContext dbContext)
-            : base(config, logger, dbContext)
-        { }
-
         public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs(SourceConfig sourceConfig)
         {
             var searchUrl = sourceConfig.SearchUrl;
-            Logger.LogInformation("Indeed scraping for url {SearchUrl}", searchUrl);
-
             var page = await LoadUntilAsync(searchUrl, waitSeconds: ScrapeConfig.WaitForListSeconds);
 
             var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
@@ -50,8 +45,8 @@ public class IndeedListScraper
                 await nextButton.ClickAsync();
                 await page.WaitForTimeoutAsync(ScrapeConfig.WaitForListSeconds * 1000);
 
-                await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
-                await SavePage(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.html");
+                await SaveScreenshot(page, $"{Origin}/list/{fetchDate}/{pageNumber}.png");
+                await SavePage(page, $"{Origin}/list/{fetchDate}/{pageNumber}.html");
             }
 
             Logger.LogInformation("Indeed scraping complete");
@@ -87,7 +82,7 @@ public class IndeedListScraper
                 {
                     Title = titles[i],
                     CompanyName = companyNames[i],
-                    Origin = DataOrigin.Indeed,
+                    Origin = Origin,
                     Location = locations[i],
                     OfferUrl = offerUrl,
                 };

@@ -12,35 +12,37 @@ public abstract partial class ListScraperBaseHandler<TScrapeCommand>(
     IOptions<AppSettings> config,
     ILogger<ListScraperBaseHandler<TScrapeCommand>> logger,
     JobsDbContext dbContext
-) : ScrapperBaseHandler(config, logger, dbContext), IRequestHandler<TScrapeCommand, ScrapeResponse>
+) : ScraperBaseHandler(config, logger, dbContext), IRequestHandler<TScrapeCommand, ScrapeResponse>
     where TScrapeCommand : ScrapeCommand
 {
     public async ValueTask<ScrapeResponse> Handle(TScrapeCommand scrape, CancellationToken cancellationToken = default)
     {
-        using var userNameScope = LogContext.PushProperty("UserName", DbContext.CurrentUserName);
-        using var dataOriginScope = LogContext.PushProperty("DataOrigin", DataOrigin);
+        ScrapeConfig = DbContext.ScraperConfigs.First();
+        SourceConfig = scrape.Source;
 
-        if (!IsEnabled)
+        using var userNameScope = LogContext.PushProperty("UserName", DbContext.CurrentUserName);
+        using var dataOriginScope = LogContext.PushProperty("DataOrigin", Origin);
+
+        if (scrape.Source.Disabled)
         {
             Logger.LogWarning("Scraper is disabled. Please configure {DataOrigin} origin in scraper configuration",
-                DataOrigin);
+                Origin);
 
             return new ScrapeResponse();
         }
 
-        if (scrape.Source.DataOrigin != DataOrigin)
-            throw new InvalidOperationException("Source data origin does not match scraper type.");
-
         if (string.IsNullOrEmpty(scrape.Source.SearchUrl))
-            throw new InvalidOperationException($"Search url is empty. Please provide a valid search url for {DataOrigin} origin");
+            throw new InvalidOperationException(
+                $"Search url is empty. Please provide a valid search url for {Origin} origin");
 
-        LogScrapingJobsList(Logger, DataOrigin);
+        LogScrapingJobsList(Logger, Origin);
+
+        Logger.LogInformation("{DataOrigin} scraping for url {SearchUrl}", Origin, scrape.Source.SearchUrl);
 
         var userOffersUrls = new List<string>();
-
         await foreach (var jobs in ScrapeJobs(scrape.Source).WithCancellation(cancellationToken))
         {
-            LogSyncingJobs(Logger, DataOrigin);
+            LogSyncingJobs(Logger, Origin);
             var newUserOffers = await SyncJobsFromList(jobs, cancellationToken);
 
             userOffersUrls.AddRange(newUserOffers);
@@ -155,13 +157,13 @@ public abstract partial class ListScraperBaseHandler<TScrapeCommand>(
     }
 
     [LoggerMessage(LogLevel.Information, "Scraping {dataOrigin} jobs list...")]
-    static partial void LogScrapingJobsList(ILogger<ScrapperBaseHandler> logger, DataOrigin dataOrigin);
+    static partial void LogScrapingJobsList(ILogger<ScraperBaseHandler> logger, string dataOrigin);
 
     [LoggerMessage(LogLevel.Information, "Syncing {dataOrigin} jobs...")]
-    static partial void LogSyncingJobs(ILogger<ScrapperBaseHandler> logger, DataOrigin dataOrigin);
+    static partial void LogSyncingJobs(ILogger<ScraperBaseHandler> logger, string dataOrigin);
 
     [LoggerMessage(LogLevel.Information, "Saving {jobsCount} new user offers")]
-    static partial void LogSavingUserOffers(ILogger<ScrapperBaseHandler> logger, int jobsCount);
+    static partial void LogSavingUserOffers(ILogger<ScraperBaseHandler> logger, int jobsCount);
     [LoggerMessage(LogLevel.Information, "Saving {CompaniesCount} new companies")]
-    static partial void LogSavingNewCompanies(ILogger<ScrapperBaseHandler> logger, int CompaniesCount);
+    static partial void LogSavingNewCompanies(ILogger<ScraperBaseHandler> logger, int CompaniesCount);
 }
