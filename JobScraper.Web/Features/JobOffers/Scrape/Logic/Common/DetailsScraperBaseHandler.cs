@@ -68,7 +68,7 @@ public abstract partial class DetailsScraperBaseHandler<TScrapeCommand>(
             }
             finally
             {
-                Dispose();
+                await DisposeAsync();
             }
         }
 
