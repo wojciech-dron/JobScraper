@@ -16,6 +16,8 @@ public class CustomScraperConfig : IOwnable, IUpdatable
     public string? DetailsScraperScript { get; set; }
     public string? PaginationScript { get; set; }
     public string Domain { get; set; } = "";
+    public string? TestListUrl { get; set; }
+    public string? TestDetailsUrl { get; set; }
 }
 
 public class CustomScraperConfigModelBuilder : IEntityTypeConfiguration<CustomScraperConfig>
@@ -31,5 +33,7 @@ public class CustomScraperConfigModelBuilder : IEntityTypeConfiguration<CustomSc
         builder.Property(x => x.DetailsScraperScript).HasMaxLength(10000);
         builder.Property(x => x.PaginationScript).HasMaxLength(10000);
         builder.Property(x => x.Domain).HasMaxLength(253);
+        builder.Property(x => x.TestListUrl).HasMaxLength(2048);
+        builder.Property(x => x.TestDetailsUrl).HasMaxLength(2048);
     }
 }

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Features.CustomScrapers.Models;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 using JobScraper.Web.Modules.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -35,7 +36,7 @@ public class CustomDetailsScraper
             var page = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: ScrapeConfig.WaitForDetailsSeconds);
 
             var result = await page.EvaluateAsync<string>(cachedConfig.DetailsScraperScript);
-            var data = JsonSerializer.Deserialize<DetailsData>(result, JsonOptions);
+            var data = JsonSerializer.Deserialize<CustomDetailsData>(result, JsonOptions);
 
             if (data is null)
                 return jobOffer;
@@ -54,6 +55,5 @@ public class CustomDetailsScraper
             PropertyNameCaseInsensitive = true,
         };
 
-        private record DetailsData(string? Description, List<string>? Keywords);
     }
 }

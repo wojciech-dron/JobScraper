@@ -10,7 +10,7 @@ public class JobOffer : IUpdatable
     public DateTime? UpdatedAt { get; set; }
 
     public string Title { get; set; } = null!;
-    public string? Origin { get; set; }
+    public string Origin { get; set; } = null!;
     public string? CompanyName { get; set; }
     public string? Location { get; set; }
     public DateTime ScrapedAt { get; set; } = DateTime.UtcNow;

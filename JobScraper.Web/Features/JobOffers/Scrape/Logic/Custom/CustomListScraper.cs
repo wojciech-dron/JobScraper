@@ -1,5 +1,6 @@
 using System.Text.Json;
 using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Features.CustomScrapers.Models;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 using JobScraper.Web.Modules.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -39,7 +40,7 @@ public class CustomListScraper
                 Logger.LogInformation("{DataOrigin} custom scraper - page {PageNumber}", Origin, pageNumber);
 
                 var result = await page.EvaluateAsync<string>(config.ListScraperScript);
-                var scrapedOffers = JsonSerializer.Deserialize<JobData[]>(result, JsonOptions) ?? [];
+                var scrapedOffers = JsonSerializer.Deserialize<CustomJobData[]>(result, JsonOptions) ?? [];
 
                 var jobs = scrapedOffers
                     .Select(d =>
@@ -81,7 +82,7 @@ public class CustomListScraper
                     $"(pageNumber) => {{ const fn = {config.PaginationScript}; return fn(pageNumber); }}",
                     pageNumber);
 
-                var paginationResult = JsonSerializer.Deserialize<PaginationResult>(pagination, JsonOptions);
+                var paginationResult = JsonSerializer.Deserialize<CustomPaginationResult>(pagination, JsonOptions);
                 if (paginationResult?.HasNextPage != true)
                     break;
 
@@ -98,19 +99,5 @@ public class CustomListScraper
             PropertyNameCaseInsensitive = true,
         };
 
-        private record JobData(
-            string? Title,
-            string? Url,
-            string? CompanyName,
-            string? Location,
-            string? Description,
-            List<string>? OfferKeywords,
-            string? SalaryToParse,
-            int? SalaryMinMonth,
-            int? SalaryMaxMonth,
-            string? SalaryCurrency
-        );
-
-        private record PaginationResult(bool HasNextPage, string? NextPageUrl);
     }
 }
