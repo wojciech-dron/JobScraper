@@ -12,16 +12,12 @@ public class NoFluffJobsDetailsScraper
 {
     public record Command(SourceConfig Source) : ScrapeDetailsCommand(Source);
 
-    public class Handler : DetailsScraperBaseHandler<Command>
+    public class Handler(
+        IOptions<AppSettings> config,
+        ILogger<Handler> logger,
+        JobsDbContext dbContext)
+        : DetailsScraperBaseHandler<Command>(config, logger, dbContext)
     {
-
-        protected override DataOrigin DataOrigin => DataOrigin.NoFluffJobs;
-        public Handler(IOptions<AppSettings> config,
-            ILogger<Handler> logger,
-            JobsDbContext dbContext)
-            : base(config, logger, dbContext)
-        { }
-
         public override async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
         {
             var page = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: ScrapeConfig.WaitForDetailsSeconds);

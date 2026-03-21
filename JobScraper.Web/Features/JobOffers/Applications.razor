@@ -140,7 +140,11 @@
     ApplicationOfferModal _applicationOfferModal = null!;
     string pageTitle = "Applications";
 
-    readonly string[] originOptions = Enum.GetValues<DataOrigin>().Select(x => x.ToString()).ToArray();
+    readonly string[] originOptions =
+    [
+        DataOrigins.Manual, DataOrigins.Indeed, DataOrigins.JustJoinIt, DataOrigins.NoFluffJobs,
+        DataOrigins.LinkedIn, DataOrigins.PracujPl, DataOrigins.RocketJobs, DataOrigins.Olx,
+    ];
 
     public bool? IsRejectedFilter { get; set; } = false;
     public string? TitleFilter { get; set; } = "";

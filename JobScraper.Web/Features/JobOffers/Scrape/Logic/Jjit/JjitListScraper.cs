@@ -13,20 +13,15 @@ public class JjitListScraper
 {
     public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
-    public class Handler : ListScraperBaseHandler<Command>
+    public class Handler(
+        IOptions<AppSettings> config,
+        ILogger<Handler> logger,
+        JobsDbContext dbContext)
+        : ListScraperBaseHandler<Command>(config, logger, dbContext)
     {
-
-        protected override DataOrigin DataOrigin => DataOrigin.JustJoinIt;
-        public Handler(IOptions<AppSettings> config,
-            ILogger<Handler> logger,
-            JobsDbContext dbContext)
-            : base(config, logger, dbContext)
-        { }
-
         public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs(SourceConfig sourceConfig)
         {
             var searchUrl = sourceConfig.SearchUrl;
-            Logger.LogInformation("{DataOrigin} scraping for url {SearchUrl}", DataOrigin, searchUrl);
 
             var page = await LoadUntilAsync(searchUrl,
                 waitSeconds: ScrapeConfig.WaitForListSeconds,
@@ -37,8 +32,8 @@ public class JjitListScraper
             var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
             var pageNumber = 1;
 
-            await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
-            await SavePage(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.html");
+            await SaveScreenshot(page, $"{Origin}/list/{fetchDate}/{pageNumber}.png");
+            await SavePage(page, $"{Origin}/list/{fetchDate}/{pageNumber}.html");
 
             var newJobs = await ScrapeJobsFromList(page);
             yield return newJobs;
@@ -52,15 +47,15 @@ public class JjitListScraper
                 if (sourceConfig.PagesLimit.HasValue && pageNumber > sourceConfig.PagesLimit.Value)
                     break;
 
-                Logger.LogInformation("{DataOrigin} - scraping page {PageNumber}", DataOrigin, pageNumber);
+                Logger.LogInformation("{DataOrigin} - scraping page {PageNumber}", Origin, pageNumber);
 
                 // scroll down
                 var scrollHeight = pageNumber * 1800;
                 await page.EvaluateAsync($"window.scrollTo(0, {scrollHeight});");
                 await page.WaitForTimeoutAsync(ScrapeConfig.WaitForScrollSeconds * 1000);
 
-                await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
-                await SavePage(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.html");
+                await SaveScreenshot(page, $"{Origin}/list/{fetchDate}/{pageNumber}.png");
+                await SavePage(page, $"{Origin}/list/{fetchDate}/{pageNumber}.html");
 
                 var jobsFromPage = await ScrapeJobsFromList(page);
 
@@ -72,7 +67,7 @@ public class JjitListScraper
                 yield return newJobs;
             }
 
-            Logger.LogInformation("{DataOrigin} - scrapping complete", DataOrigin);
+            Logger.LogInformation("{DataOrigin} - scrapping complete", Origin);
         }
 
         private async Task AcceptCookies(IPage page)
@@ -81,7 +76,7 @@ public class JjitListScraper
             if (cookiesAccept is null)
                 return;
 
-            Logger.LogInformation("{DataOrigin} - accepting cookies", DataOrigin);
+            Logger.LogInformation("{DataOrigin} - accepting cookies", Origin);
             await cookiesAccept.ClickAsync();
 
             await page.WaitForTimeoutAsync(1 * 1000);
@@ -103,7 +98,7 @@ public class JjitListScraper
                     CompanyName = data.CompanyName,
                     Location = data.Location,
                     OfferKeywords = data.OfferKeywords,
-                    Origin = DataOrigin,
+                    Origin = Origin,
                     DetailsScrapeStatus = DetailsScrapeStatus.ToScrape,
                 };
 

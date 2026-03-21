@@ -13,19 +13,20 @@ public abstract partial class DetailsScraperBaseHandler<TScrapeCommand>(
     IOptions<AppSettings> config,
     ILogger<DetailsScraperBaseHandler<TScrapeCommand>> logger,
     JobsDbContext dbContext
-) : ScrapperBaseHandler(config, logger, dbContext), IRequestHandler<TScrapeCommand, ScrapeResponse>
+) : ScraperBaseHandler(config, logger, dbContext), IRequestHandler<TScrapeCommand, ScrapeResponse>
     where TScrapeCommand : ScrapeDetailsCommand
 {
     public async ValueTask<ScrapeResponse> Handle(TScrapeCommand command, CancellationToken cancellationToken = default)
     {
+        ScrapeConfig = DbContext.ScraperConfigs.First();
+        SourceConfig = command.Source;
+
         using var userNameScope = LogContext.PushProperty("UserName", DbContext.CurrentUserName);
-        using var dataOriginScope = LogContext.PushProperty("DataOrigin", DataOrigin);
+        using var dataOriginScope = LogContext.PushProperty("DataOrigin", Origin);
 
-        if (!IsEnabled)
+        if (command.Source.Disabled)
         {
-            Logger.LogWarning("Scraper is disabled. Please configure {DataOrigin} origin in scraper configuration",
-                DataOrigin);
-
+            Logger.LogWarning("Scraper is disabled. Please configure {DataOrigin} origin in scraper configuration", Origin);
             return new ScrapeResponse();
         }
 
@@ -34,7 +35,7 @@ public abstract partial class DetailsScraperBaseHandler<TScrapeCommand>(
         var userOffers = await DbContext.UserOffers
             .Include(j => j.Details.Company)
             .Where(j => j.Details.Company != null)
-            .Where(j => j.Details.Origin  == DataOrigin)
+            .Where(j => j.Details.Origin  == Origin)
             .Where(j => statuses.Any(s => s == j.Details.DetailsScrapeStatus))
             .WhereIf(offerUrls.Length > 0, j => offerUrls.Contains(j.OfferUrl))
             .ToListAsync(cancellationToken);
@@ -48,7 +49,7 @@ public abstract partial class DetailsScraperBaseHandler<TScrapeCommand>(
 
             try
             {
-                LogScrapingJobDetails(Logger, DataOrigin, jobOffer.OfferUrl);
+                LogScrapingJobDetails(Logger, Origin, jobOffer.OfferUrl);
 
                 await ScrapeJobDetails(jobOffer);
 
@@ -77,8 +78,8 @@ public abstract partial class DetailsScraperBaseHandler<TScrapeCommand>(
     public abstract Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer);
 
     [LoggerMessage(LogLevel.Information, "Found {count} jobs to scrape details")]
-    static partial void LogFoundJobsToScrapeDetails(ILogger<ScrapperBaseHandler> logger, int count);
+    static partial void LogFoundJobsToScrapeDetails(ILogger<ScraperBaseHandler> logger, int count);
 
     [LoggerMessage(LogLevel.Information, "Scraping {dataOrigin} job details for {offerUrl}")]
-    static partial void LogScrapingJobDetails(ILogger<ScrapperBaseHandler> logger, DataOrigin dataOrigin, string offerUrl);
+    static partial void LogScrapingJobDetails(ILogger<ScraperBaseHandler> logger, string dataOrigin, string offerUrl);
 }

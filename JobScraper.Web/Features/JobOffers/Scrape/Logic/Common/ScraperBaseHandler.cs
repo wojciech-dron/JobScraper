@@ -3,11 +3,13 @@ using JobScraper.Web.Modules.Persistence;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 
-// ReSharper disable VirtualMemberCallInConstructor
-
 namespace JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 
-public abstract class ScrapperBaseHandler : IDisposable
+public abstract class ScraperBaseHandler(
+    IOptions<AppSettings> appSettings,
+    ILogger<ScraperBaseHandler> logger,
+    JobsDbContext dbContext)
+    : IDisposable
 {
     private static readonly string[] _userAgentStrings =
     [
@@ -19,33 +21,22 @@ public abstract class ScrapperBaseHandler : IDisposable
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
     ];
 
-    protected readonly AppSettings AppSettings;
-    protected readonly JobsDbContext DbContext;
-    protected readonly ILogger<ScrapperBaseHandler> Logger;
-    protected readonly ScraperConfig ScrapeConfig;
-    protected readonly SourceConfig Source;
+    protected readonly AppSettings AppSettings = appSettings.Value;
+    protected readonly JobsDbContext DbContext = dbContext;
+    protected readonly ILogger<ScraperBaseHandler> Logger = logger;
     private IBrowser? _browser;
     private IPlaywright? _playwright;
 
-    protected abstract DataOrigin DataOrigin { get; }
 
-    public bool IsEnabled { get; }
-    public string BaseUrl { get; }
+    protected ScraperConfig ScrapeConfig { get; set; } = null!;
+    protected SourceConfig SourceConfig { get; set; } = null!;
+    protected string Origin => SourceConfig.DataOrigin;
 
-    public ScrapperBaseHandler(IOptions<AppSettings> appSettings,
-        ILogger<ScrapperBaseHandler> logger,
-        JobsDbContext dbContext)
-    {
-        AppSettings = appSettings.Value;
-        DbContext = dbContext;
-        Logger = logger;
-        ScrapeConfig = DbContext.ScraperConfigs.First();
-        Source = ScrapeConfig.Sources.FirstOrDefault(x => x.DataOrigin == DataOrigin) ?? new SourceConfig();
-        IsEnabled = ScrapeConfig.IsEnabled(DataOrigin);
+    public bool IsEnabled => ScrapeConfig.IsEnabled(Origin);
 
-        var uri = new Uri(Source.SearchUrl);
-        BaseUrl = $"{uri.Scheme}://{uri.Host}";
-    }
+    public string BaseUrl => Uri.TryCreate(SourceConfig.SearchUrl, UriKind.Absolute, out var uri)
+        ? $"{uri.Scheme}://{uri.Host}"
+        : "";
 
 
 #pragma warning disable CA1862, CA2012, CA1816
@@ -146,7 +137,7 @@ public abstract class ScrapperBaseHandler : IDisposable
         if (!ScrapeConfig.SaveScreenshots)
             return;
 
-        jobOffer.ScreenShotPath = $"{DataOrigin}/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.png";
+        jobOffer.ScreenShotPath = $"{Origin}/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.png";
         await SaveScreenshot(page, jobOffer.ScreenShotPath);
     }
 
@@ -169,7 +160,7 @@ public abstract class ScrapperBaseHandler : IDisposable
         if (!ScrapeConfig.SavePages)
             return;
 
-        jobOffer.HtmlPath = $"{DataOrigin}/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.html";
+        jobOffer.HtmlPath = $"{Origin}/{jobOffer.CompanyName}/{DateTime.UtcNow:yyMMdd_HHmm}.html";
         await SavePage(page, jobOffer.HtmlPath);
     }
 
@@ -218,7 +209,7 @@ public abstract class ScrapperBaseHandler : IDisposable
                     {
                         Steps = 5,
                     });
-                await SavePage(page, Path.Combine($"{DataOrigin}", "error", $"{DateTime.Now:hh_mm}.html"));
+                await SavePage(page, Path.Combine($"{Origin}", "error", $"{DateTime.Now:hh_mm}.html"));
             }
 
             retryAttempts++;

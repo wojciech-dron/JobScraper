@@ -13,21 +13,15 @@ public partial class RocketJobsListScraper
 {
     public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
-    public partial class Handler : ListScraperBaseHandler<Command>
+    public partial class Handler(
+        IOptions<AppSettings> config,
+        ILogger<Handler> logger,
+        JobsDbContext dbContext)
+        : ListScraperBaseHandler<Command>(config, logger, dbContext)
     {
-
-        protected override DataOrigin DataOrigin => DataOrigin.RocketJobs;
-        public Handler(IOptions<AppSettings> config,
-            ILogger<Handler> logger,
-            JobsDbContext dbContext)
-            : base(config, logger, dbContext)
-        { }
-
         public override async IAsyncEnumerable<List<JobOffer>> ScrapeJobs(SourceConfig sourceConfig)
         {
             var searchUrl = sourceConfig.SearchUrl;
-            Logger.LogInformation("{DataOrigin} scraping for url {SearchUrl}", DataOrigin, searchUrl);
-
             var page = await LoadUntilAsync(searchUrl,
                 waitSeconds: ScrapeConfig.WaitForListSeconds,
                 successCondition: async p => (await p.QuerySelectorAllAsync("li")).Count > 6);
@@ -37,8 +31,8 @@ public partial class RocketJobsListScraper
             var fetchDate = DateTime.UtcNow.ToString("yyMMdd_HHmm");
             var pageNumber = 1;
 
-            await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
-            await SavePage(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.html");
+            await SaveScreenshot(page, $"{Origin}/list/{fetchDate}/{pageNumber}.png");
+            await SavePage(page, $"{Origin}/list/{fetchDate}/{pageNumber}.html");
 
             var newJobs = await ScrapeJobsFromList(page);
             yield return newJobs;
@@ -51,15 +45,15 @@ public partial class RocketJobsListScraper
                 if (sourceConfig.PagesLimit.HasValue && pageNumber > sourceConfig.PagesLimit.Value)
                     break;
 
-                Logger.LogInformation("{DataOrigin} - scraping page {PageNumber}", DataOrigin, pageNumber);
+                Logger.LogInformation("{DataOrigin} - scraping page {PageNumber}", Origin, pageNumber);
 
                 // scroll down
                 var scrollHeight = pageNumber * 1200;
                 await page.EvaluateAsync($"window.scrollTo(0, {scrollHeight});");
                 await page.WaitForTimeoutAsync(ScrapeConfig.WaitForScrollSeconds * 1000);
 
-                await SaveScreenshot(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.png");
-                await SavePage(page, $"{DataOrigin}/list/{fetchDate}/{pageNumber}.html");
+                await SaveScreenshot(page, $"{Origin}/list/{fetchDate}/{pageNumber}.png");
+                await SavePage(page, $"{Origin}/list/{fetchDate}/{pageNumber}.html");
 
                 var jobsFromPage = await ScrapeJobsFromList(page);
 
@@ -69,7 +63,7 @@ public partial class RocketJobsListScraper
                 yield return newJobs;
             }
 
-            LogDataOriginScrappingComplete(Logger, DataOrigin);
+            LogOriginKeyScrappingComplete(Logger, Origin);
         }
 
         private async Task AcceptCookies(IPage page)
@@ -78,7 +72,7 @@ public partial class RocketJobsListScraper
             if (cookiesAccept is null)
                 return;
 
-            Logger.LogInformation("{DataOrigin} - accepting cookies", DataOrigin);
+            Logger.LogInformation("{DataOrigin} - accepting cookies", Origin);
             await cookiesAccept.ClickAsync();
 
             await page.WaitForTimeoutAsync(1 * 1000);
@@ -102,7 +96,7 @@ public partial class RocketJobsListScraper
                     CompanyName = data.CompanyName,
                     Location = data.Location,
                     OfferKeywords = data.OfferKeywords,
-                    Origin = DataOrigin,
+                    Origin = Origin,
                     DetailsScrapeStatus = DetailsScrapeStatus.ToScrape,
                 };
 
@@ -112,7 +106,7 @@ public partial class RocketJobsListScraper
                 jobs.Add(jobOffer);
             }
 
-            Logger.LogInformation("{DataOrigin} scraping completed. Total jobs: {JobsCount}", DataOrigin, jobs.Count);
+            Logger.LogInformation("{DataOrigin} scraping completed. Total jobs: {JobsCount}", Origin, jobs.Count);
 
             return jobs;
         }
@@ -149,6 +143,6 @@ public partial class RocketJobsListScraper
         );
 
         [LoggerMessage(LogLevel.Information, "{dataOrigin} - scrapping complete")]
-        static partial void LogDataOriginScrappingComplete(ILogger<ScrapperBaseHandler> logger, DataOrigin dataOrigin);
+        static partial void LogOriginKeyScrappingComplete(ILogger<ScraperBaseHandler> logger, string dataOrigin);
     }
 }

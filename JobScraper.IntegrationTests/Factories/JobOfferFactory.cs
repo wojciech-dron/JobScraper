@@ -8,7 +8,7 @@ public static class JobOfferFactory
     public static JobOffer CreateJobOffer(this ObjectMother objectMother,
         string offerUrl = "https://example.com/job/1",
         string title = "Software Engineer",
-        DataOrigin? origin = DataOrigin.Indeed,
+        string? origin = DataOrigins.Indeed,
         string? companyName = "Test Company",
         string? location = "Remote",
         DateTime? scrapedAt = null,
