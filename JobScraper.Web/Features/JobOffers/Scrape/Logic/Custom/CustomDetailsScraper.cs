@@ -17,17 +17,24 @@ public class CustomDetailsScraper
         JobsDbContext dbContext)
         : DetailsScraperBaseHandler<Command>(config, logger, dbContext)
     {
+        CustomScraperConfig? cachedConfig;
+        string? cachedOrigin;
+
         public override async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
         {
-            var config = await DbContext.Set<CustomScraperConfig>()
-                .FirstOrDefaultAsync(x => x.DataOrigin == jobOffer.Origin);
+            if (cachedOrigin != jobOffer.Origin)
+            {
+                cachedConfig = await DbContext.Set<CustomScraperConfig>()
+                    .FirstOrDefaultAsync(x => x.DataOrigin == jobOffer.Origin);
+                cachedOrigin = jobOffer.Origin;
+            }
 
-            if (config is null || !config.DetailsScrapingEnabled || string.IsNullOrEmpty(config.DetailsScraperScript))
+            if (cachedConfig is null || !cachedConfig.DetailsScrapingEnabled || string.IsNullOrEmpty(cachedConfig.DetailsScraperScript))
                 return jobOffer;
 
             var page = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: ScrapeConfig.WaitForDetailsSeconds);
 
-            var result = await page.EvaluateAsync<string>(config.DetailsScraperScript);
+            var result = await page.EvaluateAsync<string>(cachedConfig.DetailsScraperScript);
             var data = JsonSerializer.Deserialize<DetailsData>(result, JsonOptions);
 
             if (data is null)
