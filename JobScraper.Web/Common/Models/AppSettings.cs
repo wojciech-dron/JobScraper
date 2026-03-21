@@ -1,6 +1,7 @@
-﻿using JobScraper.Web.Modules.Jobs;
+﻿using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Modules.Jobs;
 
-namespace JobScraper.Web.Common.Entities;
+namespace JobScraper.Web.Common.Models;
 
 public class AppSettings
 {

@@ -1,6 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using FluentValidation;
 using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Common.Models;
 using Microsoft.Extensions.Options;
 
 namespace JobScraper.Web.Validators;

@@ -1,4 +1,5 @@
 ﻿using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Common.Models;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Extensions;
 using JobScraper.Web.Modules.Extensions;
 using JobScraper.Web.Modules.Persistence;

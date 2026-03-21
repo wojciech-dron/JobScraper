@@ -1,4 +1,5 @@
 using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Common.Models;
 using Microsoft.Playwright;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;

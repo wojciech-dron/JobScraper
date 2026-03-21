@@ -85,4 +85,8 @@
     <EmbeddedResource Include="Features\JobOffers\Scrape\Logic\NoFluffJobs\no-fluff-jobs-list.js"/>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Modules\Persistence\Seed\SuctomScrapers\" />
+  </ItemGroup>
+
 </Project>

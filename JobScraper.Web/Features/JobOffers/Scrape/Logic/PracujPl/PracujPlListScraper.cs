@@ -2,6 +2,7 @@
 using System.Text;
 using System.Text.Json;
 using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Common.Models;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 using JobScraper.Web.Modules.Persistence;
 using Microsoft.Extensions.Options;

@@ -1,4 +1,4 @@
-﻿namespace JobScraper.Web.Common.Entities;
+﻿namespace JobScraper.Web.Common.Models;
 
 public static class DataOrigins
 {
