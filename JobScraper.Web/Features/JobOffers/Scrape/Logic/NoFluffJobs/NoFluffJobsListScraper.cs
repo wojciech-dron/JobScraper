@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using System.Text.RegularExpressions;
+using System.Text.Json;
 using JobScraper.Web.Common.Entities;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Extensions;
@@ -13,7 +12,7 @@ public partial class NoFluffJobsListScraper
 {
     public record Command(SourceConfig Source) : ScrapeCommand(Source);
 
-    public partial class Handler(
+    public class Handler(
         IOptions<AppSettings> config,
         ILogger<Handler> logger,
         JobsDbContext dbContext)
@@ -97,7 +96,7 @@ public partial class NoFluffJobsListScraper
                     DetailsScrapeStatus = DetailsScrapeStatus.ToScrape,
                 };
 
-                SetSalary(jobOffer, data.Salary);
+                SalaryParser.TryParseSalary(jobOffer, data.Salary);
                 jobOffer.SetDefaultDescription();
 
                 jobs.Add(jobOffer);
@@ -105,23 +104,6 @@ public partial class NoFluffJobsListScraper
 
             return jobs;
         }
-
-        private static void SetSalary(JobOffer jobOffer, string salary)
-        {
-            // Example: 19 000  – 24 000  PLN
-            // Example: 18000–24000PLN
-            var match = SalaryRegex().Match(salary.Replace(" ", "").Replace(" ", ""));
-
-            if (!match.Success)
-                return;
-
-            jobOffer.SalaryMinMonth = int.Parse(match.Groups[1].Value);
-            jobOffer.SalaryMaxMonth = int.Parse(match.Groups[2].Value);
-            jobOffer.SalaryCurrency = match.Groups[3].Value;
-        }
-
-        [GeneratedRegex(@"^(\d+)–(\d+)([A-Z]+)$")]
-        private static partial Regex SalaryRegex();
 
         private record JobData(
             string Title,

@@ -46,7 +46,7 @@ public class CustomListScraper
                     {
                         var job = new JobOffer
                         {
-                            Title = d.Title ?? "",
+                            Title = d.Title  ?? "",
                             OfferUrl = d.Url ?? "",
                             CompanyName = d.CompanyName,
                             Location = d.Location,
@@ -65,9 +65,7 @@ public class CustomListScraper
                             job.SalaryCurrency = d.SalaryCurrency ?? "PLN";
                         }
                         else
-                        {
                             SalaryParser.TryParseSalary(job, d.SalaryToParse ?? "");
-                        }
 
                         return job;
                     })
@@ -105,9 +103,9 @@ public class CustomListScraper
             string? Url,
             string? CompanyName,
             string? Location,
-            string? SalaryToParse,
             string? Description,
             List<string>? OfferKeywords,
+            string? SalaryToParse,
             int? SalaryMinMonth,
             int? SalaryMaxMonth,
             string? SalaryCurrency

@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using System.Text.RegularExpressions;
 using JobScraper.Web.Common.Entities;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Extensions;
@@ -100,7 +99,7 @@ public partial class RocketJobsListScraper
                     DetailsScrapeStatus = DetailsScrapeStatus.ToScrape,
                 };
 
-                SetSalary(jobOffer, data.Salary);
+                SalaryParser.TryParseSalary(jobOffer, data.Salary);
                 jobOffer.SetDefaultDescription();
 
                 jobs.Add(jobOffer);
@@ -111,27 +110,6 @@ public partial class RocketJobsListScraper
             return jobs;
         }
 
-        // 20 000 - 26 000 PLN/month
-        // 100 - 130 PLN/h
-        private static void SetSalary(JobOffer job, string rawSalary)
-        {
-            if (string.IsNullOrEmpty(rawSalary))
-                return;
-
-            rawSalary = rawSalary.Replace(" ", "");
-
-            var minMaxMatch = Regex.Match(rawSalary, @"(\d+)-(\d+)");
-            var currencyMatch = Regex.Match(rawSalary, @"[A-Z]{3}");
-            if (!minMaxMatch.Success || !currencyMatch.Success)
-                return;
-
-            var period = SalaryPeriod.Month;
-            if (rawSalary.Contains('h')) period = SalaryPeriod.Hour;
-
-            job.SalaryMinMonth = int.Parse(minMaxMatch.Groups[1].Value).ApplyMonthPeriod(period);
-            job.SalaryMaxMonth = int.Parse(minMaxMatch.Groups[2].Value).ApplyMonthPeriod(period);
-            job.SalaryCurrency = currencyMatch.Value;
-        }
 
         private record JobData(
             string Title,
