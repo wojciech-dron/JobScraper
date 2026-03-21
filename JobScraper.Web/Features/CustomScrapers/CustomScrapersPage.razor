@@ -1,0 +1,96 @@
+@page "/custom-scrapers"
+
+<AppPageTitle Title="Custom Scrapers"/>
+
+<div class="d-flex justify-content-between align-items-center">
+    <h1>Custom Scrapers</h1>
+    <div class="ms-2">
+        <a class="btn btn-primary" href="custom-scrapers/edit">Create new</a>
+    </div>
+</div>
+
+<div id="table-container">
+    <QuickGrid @ref="grid" Items="scrapers" Pagination="@pagination" Class="table small-padding-table align-items-center">
+        <TemplateColumn class="col-2" Title="Edit">
+            <ChildContent>
+                <a class="btn btn-primary btn-sm" href="/custom-scrapers/edit/@context.Id">Edit</a>
+            </ChildContent>
+        </TemplateColumn>
+        <PropertyColumn class="col-3" Property="@(c => c.DataOrigin)" Title="Data Origin" Sortable="true"/>
+        <PropertyColumn class="col-3" Property="@(c => c.Domain)" Title="Domain" Sortable="true"/>
+        <PropertyColumn class="col-2" Property="@(c => c.DetailsScrapingEnabled)" Title="Details Enabled" Sortable="true"/>
+        <PropertyColumn class="col-2" Property="@(c => c.UpdatedAt)" Title="Updated" Format="yyyy-MM-dd HH:mm" Sortable="true"/>
+        <TemplateColumn class="col-2" Title="Delete">
+            <ChildContent>
+                <button class="btn btn-danger btn-sm" @onclick="() => DeleteAsync(context.Id)">Delete</button>
+            </ChildContent>
+        </TemplateColumn>
+    </QuickGrid>
+</div>
+
+@if (pagination.TotalItemCount is 0)
+{
+    <div class="d-flex justify-content-center align-items-center">
+        <p>No custom scrapers found. Create your first one.</p>
+    </div>
+}
+
+<div class="footer">
+    <Paginator State="@pagination">
+        <SummaryTemplate>
+            <div class="d-flex justify-content-between align-items-center w-auto text-nowrap">
+                <span class="pe-1">Page size:</span>
+                <select @bind="pagination.ItemsPerPage">
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                </select>
+                <span class="ps-3">Total: <strong>@pagination.TotalItemCount</strong></span>
+            </div>
+        </SummaryTemplate>
+    </Paginator>
+</div>
+
+<ConfirmDialog @ref="dialog"/>
+
+@inject IDbContextFactory<JobsDbContext> DbFactory
+@using BlazorBootstrap
+@using JobScraper.Web.Common.Entities
+@using JobScraper.Web.Modules.Persistence
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.EntityFrameworkCore
+@implements IAsyncDisposable
+
+@code {
+    QuickGrid<CustomScraperConfig> grid = null!;
+    JobsDbContext dbContext = null!;
+    ConfirmDialog dialog = null!;
+
+    readonly PaginationState pagination = new() { ItemsPerPage = 20 };
+
+    IQueryable<CustomScraperConfig> scrapers => dbContext.CustomScraperConfigs
+        .OrderBy(c => c.DataOrigin);
+
+    protected override async Task OnInitializedAsync() =>
+        dbContext = await DbFactory.CreateDbContextAsync();
+
+    private async Task DeleteAsync(long id)
+    {
+        var confirmation = await dialog.ShowAsync(
+            title: "Are you sure you want to delete this?",
+            message1: "This will delete the custom scraper config. Once deleted it cannot be rolled back.",
+            message2: "Do you want to proceed?");
+
+        if (!confirmation)
+            return;
+
+        var config = await dbContext.CustomScraperConfigs.FindAsync(id);
+        if (config is null)
+            return;
+
+        dbContext.Remove(config);
+        await dbContext.SaveChangesAsync();
+        await grid.RefreshDataAsync();
+    }
+
+    public async ValueTask DisposeAsync() => await dbContext.DisposeAsync();
+}

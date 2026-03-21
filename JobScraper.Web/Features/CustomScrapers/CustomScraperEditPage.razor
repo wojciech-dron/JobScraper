@@ -1,0 +1,141 @@
+@page "/custom-scrapers/edit"
+@page "/custom-scrapers/edit/{Id:long}"
+@using BlazorBootstrap
+@using BlazorMonaco.Editor
+
+<AppPageTitle Title="@(IsNew ? "New Custom Scraper" : $"Edit - {config.DataOrigin}")"/>
+
+<NavigationLock OnBeforeInternalNavigation="OnBeforeInternalNavigation"/>
+
+<Toasts class="p-3" Messages="_toasts" Placement="ToastsPlacement.TopRight"/>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>@(IsNew ? "New Custom Scraper" : $"Edit: {config.DataOrigin}")</h1>
+    <a class="btn btn-secondary btn-sm" href="custom-scrapers">Back to list</a>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-4">
+        <div class="input-group input-group-sm mb-2">
+            <span class="input-group-text small text-muted">Data Origin</span>
+            <input class="form-control" @bind="config.DataOrigin" placeholder="e.g. MyJobBoard"/>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="input-group input-group-sm mb-2">
+            <span class="input-group-text small text-muted">Domain</span>
+            <input class="form-control" @bind="config.Domain" placeholder="e.g. myjobboard.com"/>
+        </div>
+    </div>
+    <div class="col-md-4 d-flex align-items-center">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="detailsEnabled" @bind="config.DetailsScrapingEnabled"/>
+            <label class="form-check-label" for="detailsEnabled">Details Scraping Enabled</label>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label class="form-label fw-bold">List Scraper Script <span class="text-danger">*</span></label>
+        <StandaloneCodeEditor @ref="listScriptEditor"
+                              Id="list-script-editor"
+                              ConstructionOptions="ListScriptEditorOptions"
+                              CssClass="editor-primary"/>
+        <small class="text-muted d-block mb-1">
+            Must return JSON array of objects: <code>Title, Url, CompanyName, Location, Description, OfferKeywords,
+                SalaryToParse, SalaryMinMonth, SalaryMaxMonth, SalaryCurrency</code>
+        </small>
+    </div>
+
+    <div class="col-md-6">
+        <div class="mb-3 @(!config.DetailsScrapingEnabled ? "opacity-50" : "")">
+            <label class="form-label fw-bold">Details Scraper Script</label>
+            <StandaloneCodeEditor @ref="detailsScriptEditor"
+                                  Id="details-script-editor"
+                                  ConstructionOptions="DetailsScriptEditorOptions"
+                                  CssClass="editor-secondary"/>
+            <small class="text-muted d-block mb-1">
+                Must return JSON object: <code>Description, Keywords</code>
+            </small>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-bold">Pagination Script</label>
+            <StandaloneCodeEditor @ref="paginationScriptEditor"
+                                  Id="pagination-script-editor"
+                                  ConstructionOptions="PaginationScriptEditorOptions"
+                                  CssClass="editor-secondary"/>
+            <small class="text-muted d-block mb-1">
+                Called with <code>pageNumber</code> argument. Must return JSON object: <code>HasNextPage,
+                    NextPageUrl</code>
+            </small>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2 mb-4">
+    <button class="btn btn-primary" @onclick="SaveAsync" disabled="@isWorking">
+        @if (isWorking)
+        {
+            <span class="spinner-border spinner-border-sm me-1"></span>
+        }
+        Save
+    </button>
+</div>
+
+<hr/>
+
+<h4>Test Scraping</h4>
+
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text small text-muted">List / Pagination URL</span>
+            <input class="form-control" @bind="config.TestListUrl" placeholder="https://example.com/jobs"/>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="input-group input-group-sm">
+            <span class="input-group-text small text-muted">Details URL</span>
+            <input class="form-control" @bind="config.TestDetailsUrl" placeholder="https://example.com/jobs/123"/>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex gap-2 mb-3">
+    <button class="btn btn-outline-primary btn-sm" @onclick="TestListScriptAsync" disabled="@isTesting">
+        Test List Script
+    </button>
+    <button class="btn btn-outline-primary btn-sm" @onclick="TestDetailsScriptAsync"
+            disabled="@(isTesting || !config.DetailsScrapingEnabled)">
+        Test Details Script
+    </button>
+    <button class="btn btn-outline-primary btn-sm" @onclick="TestPaginationScriptAsync"
+            disabled="@isTesting">
+        Test Pagination Script
+    </button>
+    <button class="btn btn-outline-success btn-sm" @onclick="TestFullScenarioAsync" disabled="@isTesting">
+        Test Full Scenario
+    </button>
+    @if (isTesting)
+    {
+        <span class="spinner-border spinner-border-sm me-1"></span>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(testResult))
+{
+    <pre class="bg-dark text-light p-3 rounded"
+         style="max-height: 400px; overflow-y: auto; font-size: 12px;"><code>@testResult</code></pre>
+}
+
+<style>
+    .editor-primary {
+        height: 570px;
+    }
+
+    .editor-secondary {
+        height: 250px;
+    }
+</style>
