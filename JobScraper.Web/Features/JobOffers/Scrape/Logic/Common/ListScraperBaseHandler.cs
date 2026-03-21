@@ -48,7 +48,7 @@ public abstract partial class ListScraperBaseHandler<TScrapeCommand>(
             userOffersUrls.AddRange(newUserOffers);
         }
 
-        Dispose();
+        await DisposeAsync();
 
         return new ScrapeResponse([.. userOffersUrls]);
     }

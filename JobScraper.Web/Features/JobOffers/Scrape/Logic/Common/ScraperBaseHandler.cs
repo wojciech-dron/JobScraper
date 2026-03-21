@@ -1,4 +1,4 @@
-﻿using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Common.Entities;
 using JobScraper.Web.Modules.Persistence;
 using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
@@ -9,24 +9,13 @@ public abstract class ScraperBaseHandler(
     IOptions<AppSettings> appSettings,
     ILogger<ScraperBaseHandler> logger,
     JobsDbContext dbContext)
-    : IDisposable
+    : IAsyncDisposable
 {
-    private static readonly string[] _userAgentStrings =
-    [
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.2227.0 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.3497.92 Safari/537.36",
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36",
-    ];
-
     protected readonly AppSettings AppSettings = appSettings.Value;
     protected readonly JobsDbContext DbContext = dbContext;
     protected readonly ILogger<ScraperBaseHandler> Logger = logger;
-    private IBrowser? _browser;
-    private IPlaywright? _playwright;
 
+    internal IPageFactory? PageFactory { get; set; }
 
     protected ScraperConfig ScrapeConfig { get; set; } = null!;
     protected SourceConfig SourceConfig { get; set; } = null!;
@@ -38,99 +27,24 @@ public abstract class ScraperBaseHandler(
         ? $"{uri.Scheme}://{uri.Host}"
         : "";
 
-
-#pragma warning disable CA1862, CA2012, CA1816
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
-        if (_playwright is not null)
-        {
-            _playwright.Dispose();
-            _playwright = null;
-        }
+        if (PageFactory is not null)
+            await PageFactory.DisposeAsync();
 
-        if (_browser is not null)
-        {
-            _browser.DisposeAsync().GetAwaiter().GetResult();
-            _browser = null;
-        }
+        GC.SuppressFinalize(this);
     }
 
-#pragma warning restore CA1862, CA2012, CA1816
-    public async Task<IPage> NewPageAsync()
+    public Task<IPage> NewPageAsync()
     {
-        Dispose();
-
-        _playwright = await Playwright.CreateAsync();
-
-        if (!AppSettings.ContainerizedApp)
-            Install();
-
-        var browserType = ScrapeConfig.BrowserType switch
+        PageFactory ??= new DefaultPageFactory()
         {
-            BrowserTypeEnum.Chromium => _playwright.Chromium,
-            BrowserTypeEnum.Firefox  => _playwright.Firefox,
-            BrowserTypeEnum.Webkit   => _playwright.Webkit,
-            _                        => throw new ArgumentOutOfRangeException(nameof(ScrapeConfig.BrowserType)),
+            AppSettings = AppSettings,
+            ScrapeConfig = ScrapeConfig,
         };
 
-        _browser = AppSettings.PlaywrightMode switch
-        {
-            PlaywrightModeEnum.OverCdp => await ConnectOverCdpAsync(browserType),
-            PlaywrightModeEnum.Local   => await LaunchLocalBrowser(browserType),
-            _                          => throw new ArgumentOutOfRangeException(nameof(AppSettings.PlaywrightMode)),
-        };
-
-
-        var page = await _browser.NewPageAsync(new BrowserNewPageOptions
-        {
-            UserAgent = _userAgentStrings[Random.Shared.Next() % _userAgentStrings.Length],
-        });
-
-        page.SetDefaultTimeout(5           * 60 * 1000); // 5 minutes for lists
-        page.SetDefaultNavigationTimeout(5 * 60 * 1000); // 5 minutes for lists
-
-        return page;
+        return PageFactory.NewPageAsync();
     }
-
-    private async Task<IBrowser> LaunchLocalBrowser(IBrowserType browserType)
-    {
-        var launchOptions = new BrowserTypeLaunchOptions
-        {
-            Headless = !ScrapeConfig.ShowBrowserWhenScraping,
-        };
-        var browser = await browserType.LaunchAsync(launchOptions);
-        Logger.LogTrace("Browser launched with mode: {PlaywrightMode}", AppSettings.PlaywrightMode);
-
-        return browser;
-    }
-
-    private async Task<IBrowser> ConnectOverCdpAsync(IBrowserType browserType)
-    {
-        if (string.IsNullOrWhiteSpace(AppSettings.CdpEndpointUrl))
-            throw new ArgumentException("Playwright connection string is not set");
-
-        var launchOptions = new BrowserTypeConnectOverCDPOptions();
-        var browser = await browserType.ConnectOverCDPAsync(AppSettings.CdpEndpointUrl, launchOptions);
-
-        Logger.LogTrace("Browser launched with mode: {PlaywrightMode}, endpoint: {CdpEndpointUrl}",
-            AppSettings.PlaywrightMode,
-            AppSettings.CdpEndpointUrl);
-
-        return browser;
-    }
-
-    public void Install()
-    {
-        var num = Microsoft.Playwright.Program.Main([
-            "install",
-            "--with-deps",
-            ScrapeConfig.BrowserType.ToString().ToLower(),
-        ]);
-
-        if (num != 0)
-            throw new Exception($"Playwright exited with code {num}");
-    }
-
 
     protected async Task SaveScreenshot(JobOffer jobOffer, IPage page)
     {
