@@ -1,4 +1,5 @@
 using JobScraper.Web.Common.Entities;
+using JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 using Shouldly;
 using SalaryParser = JobScraper.Web.Features.JobOffers.Scrape.Logic.Common.SalaryParser;
 

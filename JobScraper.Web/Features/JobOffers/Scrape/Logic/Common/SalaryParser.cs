@@ -1,18 +1,18 @@
-﻿using System.Text.RegularExpressions;
-using JobScraper.Web.Common.Entities;
+﻿using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 
 public partial class SalaryParser
 {
-    public static bool TryParseSalary(JobOffer jobOffer, string rawSalary)
+    public static bool TryParseSalary(string rawSalary,
+        out int? salaryMinMonth,
+        out int? salaryMaxMonth,
+        out string? currency)
     {
-        // Examples:
-        // "22 000 zł netto (+ VAT) / mies."
-        // "11 000–16 000 zł netto (+ VAT) / mies."
-        // "7 000–10 000 zł / mies. (zal. od umowy)"
-        // "130–150 zł netto (+ VAT) / godz."
-
+        salaryMinMonth = null;
+        salaryMaxMonth = null;
+        currency = null;
 
         if (string.IsNullOrWhiteSpace(rawSalary))
             return false;
@@ -21,11 +21,19 @@ public partial class SalaryParser
             return false;
 
         rawSalary = rawSalary
-            .Replace("\u00a0", "")
+            .Replace("\u00a0", " ")
             .Replace("–", "-")
-            .Replace("-", "-");
+            .Replace("\u2013", "-")
+            .Replace("–", "-")
+            .Replace("—", "-")
+            .Replace("‑", "-")
+            .Replace("&nbsp;", " ")
+            .Replace(" ", " ");
 
-        // Extract numbers from the salary string
+        currency = GetCurrency(rawSalary);
+        var taxRate = GetTaxRate(rawSalary);
+        var period = GetPeriod(rawSalary);
+
         var numbers = ExtractNumbers(rawSalary);
         if (numbers.Count == 0)
             return false;
@@ -33,36 +41,40 @@ public partial class SalaryParser
         var minSalary = numbers[0];
         decimal? maxSalary = numbers.Count > 1 ? numbers[1] : null;
 
-        // Determine tax rate
-        var taxRate = 0m;
+        salaryMinMonth = minSalary.ApplyMonthPeriod(period).ToNetValue(taxRate);
+
+        salaryMaxMonth = maxSalary.HasValue
+            ? maxSalary.Value.ApplyMonthPeriod(period).ToNetValue(taxRate)
+            : salaryMinMonth;
+
+        return true;
+    }
+
+    private static decimal GetTaxRate(string rawSalary)
+    {
         var isContractDependent = rawSalary.Contains("zal. od umowy");
         var isBrutto = rawSalary.Contains("brutto");
 
-        if (isBrutto && !isContractDependent)
-            taxRate = 0.23m;
+        return isBrutto && !isContractDependent ? 0.23m : 0m;
+    }
 
-        // Determine period
-        var period = SalaryPeriod.Month;
-        if (rawSalary.Contains("godz"))
-            period = SalaryPeriod.Hour;
-        else if (rawSalary.Contains("dzień"))
-            period = SalaryPeriod.Day;
-        else if (rawSalary.Contains("tydz"))
-            period = SalaryPeriod.Week;
-        else if (rawSalary.Contains("rok"))
-            period = SalaryPeriod.Year;
+    private static SalaryPeriod GetPeriod(string rawSalary)
+    {
+        var lower = rawSalary.ToLowerInvariant();
 
-        // Set salary values
-        jobOffer.SalaryMinMonth = minSalary.ApplyMonthPeriod(period).ToNetValue(taxRate);
+        // Polish
+        if (lower.Contains("godz")) return SalaryPeriod.Hour;
+        if (lower.Contains("dzień")) return SalaryPeriod.Day;
+        if (lower.Contains("tydz")) return SalaryPeriod.Week;
+        if (lower.Contains("rok")) return SalaryPeriod.Year;
 
-        if (maxSalary.HasValue)
-            jobOffer.SalaryMaxMonth = maxSalary.Value.ApplyMonthPeriod(period).ToNetValue(taxRate);
-        else
-            jobOffer.SalaryMaxMonth = jobOffer.SalaryMinMonth;
+        // English
+        if (lower.Contains("/h")    || lower.Contains("hour")) return SalaryPeriod.Hour;
+        if (lower.Contains("/day")  || lower.Contains("a day")) return SalaryPeriod.Day;
+        if (lower.Contains("/week") || lower.Contains("a week")) return SalaryPeriod.Week;
+        if (lower.Contains("year")) return SalaryPeriod.Year;
 
-        jobOffer.SalaryCurrency = GetCurrency(rawSalary);
-
-        return true;
+        return SalaryPeriod.Month;
     }
 
     private static List<decimal> ExtractNumbers(string input)
@@ -71,36 +83,45 @@ public partial class SalaryParser
 
         input = input.Replace(" ", "");
 
-        // First, check if there's a range with '–' character
         if (input.Contains('-'))
         {
             var parts = input.Split('-');
             if (parts.Length >= 2)
             {
-                // Extract the first number (before '–')
-                var firstNumberStr = ExtractNumberString(parts[0]);
-                if (decimal.TryParse(firstNumberStr, out var firstNumber))
+                var firstNumberStr = NormalizeNumberString(ExtractNumberString(parts[0]));
+                if (decimal.TryParse(firstNumberStr, CultureInfo.InvariantCulture, out var firstNumber))
                     result.Add(firstNumber);
 
-                // Extract the second number (after '–')
-                var secondNumberStr = ExtractNumberString(parts[1]);
-                if (decimal.TryParse(secondNumberStr, out var secondNumber))
+                var secondNumberStr = NormalizeNumberString(ExtractNumberString(parts[1]));
+                if (decimal.TryParse(secondNumberStr, CultureInfo.InvariantCulture, out var secondNumber))
                     result.Add(secondNumber);
 
                 return result;
             }
         }
 
-        // If no range found, extract all numbers
         var matches = SalaryRegex().Matches(input);
         foreach (Match match in matches)
         {
-            var numberStr = match.Value.Replace(" ", "");
-            if (int.TryParse(numberStr, out var number))
+            var numberStr = NormalizeNumberString(match.Value);
+            if (decimal.TryParse(numberStr, CultureInfo.InvariantCulture, out var number))
                 result.Add(number);
         }
 
         return result;
+    }
+
+    private static string NormalizeNumberString(string numberStr)
+    {
+        if (string.IsNullOrEmpty(numberStr))
+            return numberStr;
+
+        // Comma followed by exactly 3 digits = thousands separator → strip
+        if (ThousandsSeparatorRegex().IsMatch(numberStr))
+            return numberStr.Replace(",", "");
+
+        // Comma as decimal separator (e.g. "30,50") → replace with dot
+        return numberStr.Replace(",", ".");
     }
 
     private static string ExtractNumberString(string input)
@@ -114,11 +135,16 @@ public partial class SalaryParser
 
     private static string GetCurrency(string rawSalary)
     {
-        var match = CurrencyRegex().Match(rawSalary);
-        if (!match.Success)
-            return "PLN";
+        if (rawSalary.Contains('$')) return "USD";
+        if (rawSalary.Contains('€')) return "EUR";
+        if (rawSalary.Contains('£')) return "GBP";
+        if (rawSalary.Contains("zł")) return "zł";
 
-        return match.Groups[0].Value;
+        var upperMatch = UppercaseCurrencyRegex().Match(rawSalary);
+        if (upperMatch.Success)
+            return upperMatch.Value;
+
+        return "PLN";
     }
 
     [GeneratedRegex(@"\d")]
@@ -127,6 +153,10 @@ public partial class SalaryParser
     [GeneratedRegex(@"\d+[\d,.]*")]
     private static partial Regex SalaryRegex();
 
-    [GeneratedRegex(@"[a-zA-Ząćęłńóśźż]{1,3}")]
-    private static partial Regex CurrencyRegex();
+    [GeneratedRegex(@"\d{1,3}(,\d{3})+")]
+    private static partial Regex ThousandsSeparatorRegex();
+
+    [GeneratedRegex(@"[A-Z]{3}")]
+    private static partial Regex UppercaseCurrencyRegex();
+
 }

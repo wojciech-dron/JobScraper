@@ -1,4 +1,6 @@
-﻿namespace JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
+﻿using JobScraper.Web.Common.Entities;
+
+namespace JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 
 public enum SalaryPeriod
 {
@@ -11,6 +13,22 @@ public enum SalaryPeriod
 
 public static class SalaryExtensions
 {
+    extension(SalaryParser)
+    {
+        public static bool TryParseSalary(JobOffer jobOffer, string rawSalary)
+        {
+            if (!SalaryParser.TryParseSalary(rawSalary, out var salaryMinMonth, out var salaryMaxMonth, out var currency))
+                return false;
+
+            jobOffer.SalaryMinMonth = salaryMinMonth;
+            jobOffer.SalaryMaxMonth = salaryMaxMonth;
+            jobOffer.SalaryCurrency = currency;
+
+            return true;
+        }
+
+    }
+
     public static int ApplyMonthPeriod(this int amount, SalaryPeriod period) =>
         amount * (int)period / 12;
 

@@ -1,5 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using JobScraper.Web.Common.Entities;
+﻿using JobScraper.Web.Common.Entities;
 using JobScraper.Web.Features.JobOffers.Scrape.Logic.Common;
 using JobScraper.Web.Modules.Persistence;
 using Microsoft.Extensions.Options;
@@ -46,25 +45,7 @@ public class IndeedDetailsScraper
             if (string.IsNullOrEmpty(rawSalary))
                 return;
 
-            rawSalary = rawSalary.Replace(",", "");
-
-            var minMaxMatch = Regex.Match(rawSalary, @"\$(\d+) - \$(\d+)");
-            if (!minMaxMatch.Success)
-                return;
-
-            var period = SalaryPeriod.Month;
-            if (rawSalary.Contains("hour")) period = SalaryPeriod.Hour;
-            if (rawSalary.Contains("day")) period = SalaryPeriod.Day;
-            if (rawSalary.Contains("week")) period = SalaryPeriod.Week;
-            if (rawSalary.Contains("year")) period = SalaryPeriod.Year;
-
-            var minMonth = int.Parse(minMaxMatch.Groups[1].Value);
-            job.SalaryMinMonth = minMonth.ApplyMonthPeriod(period);
-
-            var maxMonth = int.Parse(minMaxMatch.Groups[2].Value);
-            job.SalaryMaxMonth = maxMonth.ApplyMonthPeriod(period);
-
-            job.SalaryCurrency = "USD";
+            SalaryParser.TryParseSalary(job, rawSalary);
         }
 
         private static async Task ScrapDescription(JobOffer jobOffer, IPage page)
