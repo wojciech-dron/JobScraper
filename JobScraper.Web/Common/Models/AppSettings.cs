@@ -11,6 +11,7 @@ public class AppSettings
     public bool ContainerizedApp { get; init; } = false;
     public PlaywrightModeEnum PlaywrightMode { get; init; }
     public string? CdpEndpointUrl { get; init; }
+    public bool EnableLegacyScrapers { get; init; }
 
     public BrowserTypeEnum[] AllowedBrowsers()
     {

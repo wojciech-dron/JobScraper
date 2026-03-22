@@ -14,6 +14,7 @@ using JobScraper.Web.Modules.Persistence;
 using JobScraper.Web.Modules.Services;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.Playwright;
 using Serilog.Context;
 using TickerQ.Utilities.Base;
@@ -26,6 +27,7 @@ public sealed partial class ScrapeHandler(
     IMediator mediator,
     UserProvider userProvider,
     JobsDbContext dbContext,
+    IOptions<AppSettings> appSettings,
     ILogger<ScrapeHandler> logger
 )
 {
@@ -75,9 +77,10 @@ public sealed partial class ScrapeHandler(
 
         try
         {
+            var enableLegacy = appSettings.Value.EnableLegacyScrapers;
             var listCommands = sources
                 .Where(s => !s.Disabled)
-                .Select<SourceConfig, ScrapeCommand>(source => source.DataOrigin switch
+                .Select<SourceConfig, ScrapeCommand>(source => enableLegacy ? source.DataOrigin switch
                 {
                     DataOrigins.Indeed      => new IndeedListScraper.Command(source),
                     DataOrigins.JustJoinIt  => new JjitListScraper.Command(source),
@@ -86,7 +89,8 @@ public sealed partial class ScrapeHandler(
                     DataOrigins.RocketJobs  => new RocketJobsListScraper.Command(source),
                     DataOrigins.Olx         => new OlxListScraper.Command(source),
                     _                       => new CustomListScraper.Command(source),
-                }).ToArray();
+                } : new CustomListScraper.Command(source))
+                .ToArray();
 
             for (var idx = 0; idx < listCommands.Length; idx++)
             {
@@ -130,9 +134,10 @@ public sealed partial class ScrapeHandler(
 
         try
         {
+            var enableLegacy = appSettings.Value.EnableLegacyScrapers;
             var detailsCommands = sources
                 .Where(s => !s.Disabled)
-                .Select<SourceConfig, ScrapeCommand?>(source => source.DataOrigin switch
+                .Select<SourceConfig, ScrapeCommand?>(source => enableLegacy ? source.DataOrigin switch
                 {
                     DataOrigins.Indeed      => new IndeedDetailsScraper.Command(source),
                     DataOrigins.JustJoinIt  => new JjitDetailsScraper.Command(source),
@@ -141,7 +146,8 @@ public sealed partial class ScrapeHandler(
                     DataOrigins.PracujPl    => null,
                     DataOrigins.Olx         => null,
                     _                       => new CustomDetailsScraper.Command(source),
-                }).Where(c => c is not null)
+                } : new CustomDetailsScraper.Command(source))
+                .Where(c => c is not null)
                 .ToArray();
 
             for (var idx = 0; idx < detailsCommands.Length; idx++)
