@@ -83,10 +83,7 @@
     <EmbeddedResource Include="Features\JobOffers\Scrape\Logic\Jjit\jjit-list.js"/>
     <EmbeddedResource Include="Features\JobOffers\Scrape\Logic\NoFluffJobs\no-fluff-jobs-details.js"/>
     <EmbeddedResource Include="Features\JobOffers\Scrape\Logic\NoFluffJobs\no-fluff-jobs-list.js"/>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Modules\Persistence\Seed\SuctomScrapers\" />
+    <EmbeddedResource Include="Modules\Persistence\Seed\CustomScrapers\Scripts\*.js"/>
   </ItemGroup>
 
 </Project>

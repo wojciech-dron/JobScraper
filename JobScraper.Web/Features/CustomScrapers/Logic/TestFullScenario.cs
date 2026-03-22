@@ -8,6 +8,7 @@ using JobScraper.Web.Modules.Persistence;
 using Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.Playwright;
 
 namespace JobScraper.Web.Features.CustomScrapers.Logic;
 
@@ -46,6 +47,7 @@ public partial class TestFullScenario
 
             LogTesting(logger, command.ListUrl);
 
+            IPage? page = null;
             try
             {
                 var scrapeConfig = await dbContext.ScraperConfigs.AsNoTracking().FirstAsync(ct);
@@ -56,7 +58,7 @@ public partial class TestFullScenario
                     ScrapeConfig = scrapeConfig,
                 };
 
-                var page = await _pageFactory.NewPageAsync();
+                page = await _pageFactory.NewPageAsync();
                 await page.GotoAsync(command.ListUrl, new() { Timeout = 30_000 });
                 await page.WaitForTimeoutAsync(3000);
 
@@ -129,6 +131,11 @@ public partial class TestFullScenario
             {
                 LogTestFailed(logger, ex);
                 return Error.Failure(description: ex.Message);
+            }
+            finally
+            {
+                if (page is not null)
+                    await page.CloseAsync();
             }
         }
 

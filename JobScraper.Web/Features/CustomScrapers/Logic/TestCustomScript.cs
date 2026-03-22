@@ -51,6 +51,7 @@ public partial class TestCustomScript
 
             LogTesting(logger, command.Type, command.TestUrl);
 
+            IPage? page = null;
             try
             {
                 var scrapeConfig = await dbContext.ScraperConfigs.AsNoTracking().FirstAsync(ct);
@@ -61,7 +62,7 @@ public partial class TestCustomScript
                     ScrapeConfig = scrapeConfig,
                 };
 
-                var page = await _pageFactory.NewPageAsync();
+                page = await _pageFactory.NewPageAsync();
                 await page.GotoAsync(command.TestUrl,
                     new PageGotoOptions
                     {
@@ -91,6 +92,11 @@ public partial class TestCustomScript
             {
                 LogTestFailed(logger, ex);
                 return Error.Failure(description: ex.Message);
+            }
+            finally
+            {
+                if (page is not null)
+                    await page.CloseAsync();
             }
         }
 

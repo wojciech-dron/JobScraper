@@ -17,7 +17,7 @@ public static class ScraperConfigFactory
         var entity = new ScraperConfig
         {
             Owner = owner,
-            MyKeywords = myKeywords ?? [],
+            MyKeywords = myKeywords       ?? [],
             AvoidKeywords = avoidKeywords ?? [],
             StarMyKeywords = starMyKeywords,
             WaitForListSeconds = waitForListSeconds,
@@ -31,7 +31,6 @@ public static class ScraperConfigFactory
     }
 
     public static CustomScraperConfig CreateCustomScraperConfig(this ObjectMother objectMother,
-        string owner = "test@email.com",
         string dataOrigin = "TestSite",
         string listScraperScript = "() => JSON.stringify([])",
         bool detailsScrapingEnabled = false,
@@ -41,7 +40,6 @@ public static class ScraperConfigFactory
     {
         var entity = new CustomScraperConfig
         {
-            Owner = owner,
             DataOrigin = dataOrigin,
             ListScraperScript = listScraperScript,
             DetailsScrapingEnabled = detailsScrapingEnabled,

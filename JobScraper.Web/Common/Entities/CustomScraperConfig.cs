@@ -1,13 +1,13 @@
 using JobScraper.Web.Modules.Persistence.Interceptors;
+using JobScraper.Web.Modules.Persistence.Seed.CustomScrapers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace JobScraper.Web.Common.Entities;
 
-public class CustomScraperConfig : IOwnable, IUpdatable
+public class CustomScraperConfig : IUpdatable
 {
     public long Id { get; set; }
-    public string? Owner { get; set; }
     public DateTime? UpdatedAt { get; set; }
 
     public string DataOrigin { get; set; } = "";
@@ -27,7 +27,6 @@ public class CustomScraperConfigModelBuilder : IEntityTypeConfiguration<CustomSc
         builder.ToTable("CustomScraperConfigs");
 
         builder.HasKey(x => x.Id);
-        builder.Property(x => x.Owner).HasMaxLength(255);
         builder.Property(x => x.DataOrigin).HasMaxLength(100);
         builder.Property(x => x.ListScraperScript).HasMaxLength(10000);
         builder.Property(x => x.DetailsScraperScript).HasMaxLength(10000);
@@ -35,5 +34,7 @@ public class CustomScraperConfigModelBuilder : IEntityTypeConfiguration<CustomSc
         builder.Property(x => x.Domain).HasMaxLength(253);
         builder.Property(x => x.TestListUrl).HasMaxLength(2048);
         builder.Property(x => x.TestDetailsUrl).HasMaxLength(2048);
+
+        builder.HasData(CustomScraperSeeder.GetData());
     }
 }

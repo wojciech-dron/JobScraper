@@ -19,8 +19,8 @@ public class CustomDetailsScraper
         JobsDbContext dbContext)
         : DetailsScraperBaseHandler<Command>(config, logger, dbContext)
     {
-        CustomScraperConfig? cachedConfig;
-        string? cachedOrigin;
+        private CustomScraperConfig? cachedConfig;
+        private string? cachedOrigin;
 
         public override async Task<JobOffer> ScrapeJobDetails(JobOffer jobOffer)
         {
@@ -31,7 +31,9 @@ public class CustomDetailsScraper
                 cachedOrigin = jobOffer.Origin;
             }
 
-            if (cachedConfig is null || !cachedConfig.DetailsScrapingEnabled || string.IsNullOrEmpty(cachedConfig.DetailsScraperScript))
+            if (cachedConfig is null
+             || !cachedConfig.DetailsScrapingEnabled
+             || string.IsNullOrEmpty(cachedConfig.DetailsScraperScript))
                 return jobOffer;
 
             var page = await LoadUntilAsync(jobOffer.OfferUrl, waitSeconds: ScrapeConfig.WaitForDetailsSeconds);

@@ -28,6 +28,7 @@ public partial class ScrapePage(
 
     private bool isWorking;
     private bool dashboardEnabled;
+    private string[] availableOrigins = [];
     private CronTickerEntity? scrapeJobTicker;
     private FluentValidationValidator validator = null!;
     private byte[] requestBytes = [];
@@ -41,6 +42,12 @@ public partial class ScrapePage(
 
         config = await dbContext.ScraperConfigs.FirstOrDefaultAsync() ?? new ScraperConfig();
         dashboardEnabled = _appSettings.TickerQ?.Dashboard?.Enabled == true;
+
+        availableOrigins = await dbContext.CustomScraperConfigs
+            .Select(x => x.DataOrigin)
+            .Concat(DataOriginHelpers.Scrapable)
+            .Distinct()
+            .ToArrayAsync();
 
         requestBytes = TickerHelper.CreateTickerRequest(
             new ScrapeRequest(dbContext.CurrentUserName));
@@ -97,7 +104,7 @@ public partial class ScrapePage(
 
         try
         {
-            using var scope = serviceProvider.CreateScope();
+            await using var scope = serviceProvider.CreateAsyncScope();
             var scrapeHandler = scope.ServiceProvider.GetRequiredService<ScrapeHandler>();
             var sources = config.Sources.Where(x => !x.Disabled).ToArray();
 
